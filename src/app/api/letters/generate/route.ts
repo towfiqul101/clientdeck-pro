@@ -125,12 +125,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json(
-      { error: "AI letter generation is not configured (missing API key)." },
-      { status: 500 }
-    );
-  }
+  // No ANTHROPIC_API_KEY is fine — generateDisputeLetter() returns a realistic
+  // mock letter so the round → letters → PDF flow stays fully previewable.
 
   const supabase = await createServerSupabaseClient();
   const agencyId = session.agency.id;

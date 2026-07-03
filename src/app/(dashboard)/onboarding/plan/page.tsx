@@ -19,7 +19,7 @@ export default async function PlanSelectionPage() {
         </p>
       </div>
 
-      <PlanCards />
+      <PlanCards billingEnabled={!!process.env.STRIPE_SECRET_KEY} />
 
       <p className="text-center text-sm text-gray-500">
         Not ready?{" "}

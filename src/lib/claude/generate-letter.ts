@@ -60,9 +60,65 @@ function injectVariables(template: string, variables: Record<string, string>): s
   return result;
 }
 
+/**
+ * Deterministic FCRA dispute letter used when ANTHROPIC_API_KEY is not set.
+ * Lets the whole round → letters → PDF flow be previewed with no API calls.
+ */
+function generateMockLetter(params: GenerateLetterParams): string {
+  const { client, item } = params;
+  const today = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const cityStateZip = `${client.city || "[CITY]"}, ${client.state || "[STATE]"} ${client.zip || "[ZIP]"}`;
+
+  return `${today}
+
+${BUREAU_ADDRESSES[item.bureau] || "[BUREAU ADDRESS]"}
+
+RE: Dispute of Inaccurate Information — ${item.creditor_name} (Account ending ${item.account_number_last4 || "XXXX"})
+
+To Whom It May Concern:
+
+I am writing pursuant to my rights under the Fair Credit Reporting Act (FCRA), 15 U.S.C. § 1681 et seq., to dispute inaccurate information appearing on my credit report.
+
+My name is ${client.first_name} ${client.last_name} and I reside at ${client.address_line1 || "[ADDRESS]"}, ${cityStateZip}.
+
+I am disputing the following account which is being reported inaccurately:
+
+Creditor: ${item.creditor_name}
+Account Type: ${item.account_type || "Unknown"}
+Reported Issue: ${item.negative_type.replace(/_/g, " ").toUpperCase()}
+${item.balance ? `Balance: $${item.balance.toFixed(2)}` : ""}
+
+This information is inaccurate and I am requesting that you investigate this matter pursuant to Section 611 of the FCRA (15 U.S.C. § 1681i). Under the FCRA, you are required to conduct a reasonable investigation within 30 days of receiving this dispute.
+
+If you are unable to verify this information with the original furnisher, you are required to delete it from my credit report immediately.
+
+Please provide me with written confirmation of the results of your investigation, including any changes made to my credit report.
+
+Sincerely,
+
+${client.first_name} ${client.last_name}
+${client.address_line1 || ""}
+${cityStateZip}
+
+Enclosures:
+- Copy of Government-issued ID
+- Copy of Proof of Address
+
+[THIS IS A PREVIEW LETTER — AI generation requires ANTHROPIC_API_KEY]`;
+}
+
 export async function generateDisputeLetter(
   params: GenerateLetterParams
 ): Promise<{ content: string; tokensUsed: number }> {
+  // No API key → return a realistic mock so the app is fully previewable.
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { content: generateMockLetter(params), tokensUsed: 0 };
+  }
+
   const variables = buildPromptVariables(params);
   const prompt = injectVariables(params.template.prompt_template, variables);
 

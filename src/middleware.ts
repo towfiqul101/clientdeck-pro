@@ -81,6 +81,18 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
+  // Super-admin area: must be signed in AND match ADMIN_EMAIL exactly.
+  if (pathname.startsWith("/admin")) {
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+    if (!user || !adminEmail || user.email?.toLowerCase() !== adminEmail) {
+      const url = request.nextUrl.clone();
+      url.pathname = user ? "/dashboard" : "/login";
+      url.search = "";
+      return redirectWithCookies(url, response);
+    }
+    return response;
+  }
+
   // Signed-out user hitting a protected route → login (carry refreshed cookies).
   if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();

@@ -28,8 +28,17 @@ export default async function BillingSettingsPage() {
     Math.round((currentClients / agency.max_clients) * 100)
   );
 
+  const billingEnabled = !!process.env.STRIPE_SECRET_KEY;
+
   return (
     <div className="space-y-6">
+      {!billingEnabled && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Billing is not yet configured — plan changes are managed manually.
+          Contact support to upgrade or change your plan.
+        </div>
+      )}
+
       {/* Current plan */}
       <Card>
         <CardHeader
@@ -107,7 +116,9 @@ export default async function BillingSettingsPage() {
                     </li>
                   ))}
                 </ul>
-                {!current && <UpgradeButton planId={plan.id} planName={plan.name} />}
+                {!current && billingEnabled && (
+                  <UpgradeButton planId={plan.id} planName={plan.name} />
+                )}
               </div>
             );
           })}

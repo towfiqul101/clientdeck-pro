@@ -1,36 +1,34 @@
-import { notFound, redirect } from "next/navigation";
-import { getSessionContext } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardHeader } from "@/components/ui/card";
-import { cn, getStatusColor } from "@/lib/utils/helpers";
+import { cn, getStatusColor, formatDate } from "@/lib/utils/helpers";
 import { StatusButtons } from "./status-buttons";
 import type { SnapshotRequest } from "@/types";
 
+const ORDER: Record<string, number> = { pending: 0, sent: 1, installed: 2 };
+
 export default async function SnapshotRequestsAdminPage() {
-  const session = await getSessionContext();
-  if (!session) redirect("/login");
-
-  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
-  if (!adminEmail || session.agency.owner_email.toLowerCase() !== adminEmail) {
-    notFound();
-  }
-
   const admin = createAdminClient();
   const { data } = await admin
     .from("snapshot_requests")
     .select("*")
     .order("created_at", { ascending: false });
-  const requests = (data ?? []) as SnapshotRequest[];
+
+  const requests = ((data ?? []) as SnapshotRequest[]).sort(
+    (a, b) =>
+      (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9) ||
+      +new Date(b.created_at) - +new Date(a.created_at)
+  );
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader
           title="Snapshot Requests"
-          description="Internal queue for delivering the GHL snapshot."
+          description={`${pendingCount} pending · queue for delivering the GHL snapshot.`}
         />
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
               <tr>
                 <th className="px-5 py-3 font-medium">Name</th>
@@ -51,7 +49,7 @@ export default async function SnapshotRequestsAdminPage() {
                 </tr>
               ) : (
                 requests.map((r) => (
-                  <tr key={r.id}>
+                  <tr key={r.id} className="hover:bg-gray-50">
                     <td className="px-5 py-3 font-medium text-gray-900">{r.name}</td>
                     <td className="px-5 py-3 text-gray-600">{r.email}</td>
                     <td className="px-5 py-3 text-gray-600">{r.agency_name ?? "—"}</td>
@@ -68,9 +66,7 @@ export default async function SnapshotRequestsAdminPage() {
                         {r.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-gray-500">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </td>
+                    <td className="px-5 py-3 text-gray-500">{formatDate(r.created_at)}</td>
                     <td className="px-5 py-3">
                       <StatusButtons id={r.id} status={r.status} />
                     </td>

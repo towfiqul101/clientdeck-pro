@@ -52,7 +52,12 @@ async function notifyOwner(input: {
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const to = process.env.ADMIN_EMAIL;
-  if (!apiKey || !to) return;
+  if (!apiKey || !to) {
+    console.log(
+      `[DEV] Snapshot-request email would send to: ${to || "ADMIN_EMAIL unset"} — from ${input.name} <${input.email}>`
+    );
+    return;
+  }
 
   try {
     await fetch("https://api.resend.com/emails", {

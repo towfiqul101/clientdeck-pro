@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/toast";
 import { PLANS } from "@/lib/billing/plans";
 import { createCheckoutSession } from "@/app/(dashboard)/settings/billing/checkout-actions";
 
-export function PlanCards() {
+export function PlanCards({ billingEnabled = true }: { billingEnabled?: boolean }) {
   const { toast } = useToast();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -53,16 +53,21 @@ export function PlanCards() {
           </ul>
           <button
             onClick={() => choose(plan.id)}
-            disabled={loadingId !== null}
+            disabled={loadingId !== null || !billingEnabled}
+            title={billingEnabled ? undefined : "Payment setup required"}
             className={cn(
               "mt-5 w-full rounded-md px-4 py-2 text-sm font-medium",
               plan.highlight
                 ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
-              "disabled:opacity-60"
+              "disabled:cursor-not-allowed disabled:opacity-60"
             )}
           >
-            {loadingId === plan.id ? "Redirecting…" : "Start 14-day free trial"}
+            {!billingEnabled
+              ? "Payment setup required"
+              : loadingId === plan.id
+                ? "Redirecting…"
+                : "Start 14-day free trial"}
           </button>
         </div>
       ))}
