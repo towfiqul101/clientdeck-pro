@@ -8,6 +8,21 @@ import type { Plan, PlanStatus } from "@/types";
 // Stripe requires the raw, unparsed body for signature verification.
 export const dynamic = "force-dynamic";
 
+function mapSubscriptionStatus(s: Stripe.Subscription["status"]): PlanStatus {
+  switch (s) {
+    case "trialing":
+      return "trialing";
+    case "active":
+      return "active";
+    case "past_due":
+      return "past_due";
+    case "canceled":
+      return "cancelled";
+    default:
+      return "paused";
+  }
+}
+
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
@@ -53,7 +68,8 @@ export async function POST(req: NextRequest) {
       max_clients: maxClientsForPlan(plan),
     };
     if (subscriptionId) update.stripe_subscription_id = subscriptionId;
-    await admin.from("agencies").update(update).eq("id", agencyId);
+    const { error } = await admin.from("agencies").update(update).eq("id", agencyId);
+    if (error) console.error("applyPlan update failed:", error);
   }
 
   try {
@@ -65,10 +81,17 @@ export async function POST(req: NextRequest) {
           (await findAgencyId(s.customer as string));
         const plan = (s.metadata?.plan as Plan | undefined) ?? null;
         if (agencyId && plan) {
+          let status: PlanStatus = "active";
+          if (s.subscription) {
+            const sub = await stripe.subscriptions.retrieve(
+              s.subscription as string
+            );
+            status = mapSubscriptionStatus(sub.status);
+          }
           await applyPlan(
             agencyId,
             plan,
-            "active",
+            status,
             (s.subscription as string) ?? undefined
           );
           await admin
@@ -85,16 +108,7 @@ export async function POST(req: NextRequest) {
         const priceId = sub.items.data[0]?.price?.id ?? null;
         const plan = priceId ? planFromPriceId(priceId) : null;
         if (agencyId && plan) {
-          const status: PlanStatus =
-            sub.status === "trialing"
-              ? "trialing"
-              : sub.status === "past_due"
-              ? "past_due"
-              : sub.status === "active"
-              ? "active"
-              : sub.status === "canceled"
-              ? "cancelled"
-              : "paused";
+          const status = mapSubscriptionStatus(sub.status);
           await applyPlan(agencyId, plan, status, sub.id);
         }
         break;

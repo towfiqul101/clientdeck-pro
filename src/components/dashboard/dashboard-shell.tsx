@@ -38,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
 
 // Derive a page title from the first path segment.
 const TITLES: Record<string, string> = {
-  "": "Dashboard",
+  dashboard: "Dashboard",
   clients: "Clients",
   rounds: "Rounds",
   templates: "Templates",

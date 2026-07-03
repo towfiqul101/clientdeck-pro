@@ -41,10 +41,11 @@ export async function createCheckoutSession(plan: Plan): Promise<CheckoutResult>
     });
     customerId = customer.id;
     const admin = createAdminClient();
-    await admin
+    const { error } = await admin
       .from("agencies")
       .update({ stripe_customer_id: customerId })
       .eq("id", agency.id);
+    if (error) console.error("Persisting stripe_customer_id failed:", error);
   }
 
   try {

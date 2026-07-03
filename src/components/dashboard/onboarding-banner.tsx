@@ -5,11 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Rocket, Check, ChevronDown, ChevronUp, PartyPopper } from "lucide-react";
 import { cn } from "@/lib/utils/helpers";
-import { updateOnboardingStep } from "@/app/(dashboard)/onboarding/actions";
 import type { OnboardingSteps } from "@/types";
 
 interface Props {
-  agencyId: string;
   steps: OnboardingSteps;
   completedCount: number;
   total: number;

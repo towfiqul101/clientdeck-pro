@@ -50,7 +50,7 @@ export async function checkClientLimit(agencyId: string): Promise<{
 
   const { data: agency } = await supabase
     .from("agencies")
-    .select("max_clients")
+    .select("max_clients, plan_status")
     .eq("id", agencyId)
     .single();
 
@@ -62,9 +62,12 @@ export async function checkClientLimit(agencyId: string): Promise<{
 
   const current = count || 0;
   const max = agency?.max_clients || 15;
+  const statusActive = agency
+    ? ["active", "trialing"].includes(agency.plan_status)
+    : true;
 
   return {
-    allowed: current < max,
+    allowed: current < max && statusActive,
     current,
     max,
   };

@@ -15,11 +15,12 @@ export async function markOnboardingStep(
 ): Promise<void> {
   const supabase = createAdminClient();
 
-  const { data: agency } = await supabase
+  const { data: agency, error: selectError } = await supabase
     .from("agencies")
     .select("settings")
     .eq("id", agencyId)
     .single();
+  if (selectError) console.error("markOnboardingStep select failed:", selectError);
   if (!agency) return;
 
   const settings = (agency.settings ?? {}) as AgencySettings;
@@ -33,8 +34,9 @@ export async function markOnboardingStep(
     nextSettings.onboarding_completed_at = new Date().toISOString();
   }
 
-  await supabase
+  const { error: updateError } = await supabase
     .from("agencies")
     .update({ settings: nextSettings })
     .eq("id", agencyId);
+  if (updateError) console.error("markOnboardingStep update failed:", updateError);
 }

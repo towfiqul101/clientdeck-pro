@@ -46,7 +46,7 @@ export default async function MarketingLayout({
             </div>
           </div>
           <p className="mt-10 border-t border-gray-800 pt-6 text-xs text-gray-500">
-            © 2025 ClientDeck Pro. All rights reserved.
+            © {new Date().getFullYear()} ClientDeck Pro. All rights reserved.
           </p>
         </div>
       </footer>

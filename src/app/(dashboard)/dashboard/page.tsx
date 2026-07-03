@@ -200,7 +200,6 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       {!onboarding.hidden && (
         <OnboardingBanner
-          agencyId={session.agency.id}
           steps={onboarding.steps}
           completedCount={onboarding.completedCount}
           total={onboarding.total}
