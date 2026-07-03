@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { OnboardingBanner } from "@/components/dashboard/onboarding-banner";
+import { computeOnboarding } from "@/lib/onboarding/steps";
 import {
   DeletionsChart,
   type MonthlyDeletion,
@@ -140,6 +142,8 @@ export default async function DashboardPage() {
   ]);
 
   const clients = clientsRes.data ?? [];
+  const onboarding = computeOnboarding(session.agency.settings);
+  const firstClientId = clients[0]?.id ?? null;
   const activeClients = clients.filter((c) =>
     ACTIVE_STATUSES.includes(c.status)
   );
@@ -194,6 +198,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {!onboarding.hidden && (
+        <OnboardingBanner
+          agencyId={session.agency.id}
+          steps={onboarding.steps}
+          completedCount={onboarding.completedCount}
+          total={onboarding.total}
+          showCongrats={onboarding.showCongrats}
+          allComplete={onboarding.allComplete}
+          firstClientId={firstClientId}
+        />
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
