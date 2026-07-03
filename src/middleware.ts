@@ -48,6 +48,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // 2b. If Supabase isn't configured yet (e.g. env vars not set on a fresh
+  //     deploy), don't crash every route with MIDDLEWARE_INVOCATION_FAILED.
+  //     Let requests through — pages self-protect via getSessionContext().
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return NextResponse.next({ request });
+  }
+
   // 3. Everything else is the agency app. Refresh the Supabase session.
   //    `response` accumulates any refreshed auth cookies; those MUST be copied
   //    onto any redirect we return, or the browser never updates and loops.
