@@ -25,7 +25,7 @@ function mapSubscriptionStatus(s: Stripe.Subscription["status"]): PlanStatus {
 
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret || !process.env.STRIPE_SECRET_KEY) {
+  if (!secret || !stripe) {
     // Preview/dev with no Stripe keys — acknowledge so senders don't retry.
     return NextResponse.json({ received: false, reason: "Stripe not configured" });
   }

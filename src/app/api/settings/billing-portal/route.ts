@@ -14,7 +14,7 @@ export async function GET() {
   if (!session) return NextResponse.redirect(appUrl("/login"));
 
   const customerId = session.agency.stripe_customer_id;
-  if (!customerId || !process.env.STRIPE_SECRET_KEY) {
+  if (!customerId || !stripe) {
     return NextResponse.redirect(appUrl("/settings/billing?error=no_customer"));
   }
 

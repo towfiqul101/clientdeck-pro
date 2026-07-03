@@ -20,7 +20,7 @@ function appUrl(path: string): string {
 export async function createCheckoutSession(plan: Plan): Promise<CheckoutResult> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };
-  if (!process.env.STRIPE_SECRET_KEY) {
+  if (!stripe) {
     return { success: false, error: "Billing is not configured yet." };
   }
 
