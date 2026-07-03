@@ -27,7 +27,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Clients", href: "/clients", icon: Users },
   { label: "Rounds", href: "/rounds", icon: Clock },
   { label: "Templates", href: "/templates", icon: FileText },
@@ -48,7 +48,7 @@ const TITLES: Record<string, string> = {
 };
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
+  if (href === "/dashboard") return pathname === "/dashboard";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

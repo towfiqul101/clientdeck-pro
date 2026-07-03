@@ -4,6 +4,9 @@ import { createServerClient } from "@supabase/ssr";
 // Agency auth pages — always reachable while signed out.
 const AUTH_ROUTES = ["/login", "/signup"];
 
+// Public marketing/legal pages — reachable while signed out.
+const PUBLIC_ROUTES = ["/", "/snapshot", "/terms", "/privacy"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -76,9 +79,10 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
   // Signed-out user hitting a protected route → login (carry refreshed cookies).
-  if (!user && !isAuthRoute) {
+  if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
@@ -88,7 +92,7 @@ export async function middleware(request: NextRequest) {
   // Signed-in user hitting /login or /signup → dashboard.
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     url.search = "";
     return redirectWithCookies(url, response);
   }

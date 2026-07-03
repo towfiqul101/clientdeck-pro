@@ -43,7 +43,7 @@ export default function SignupPage() {
       }
       // Full-page navigation so the fresh auth cookies are read server-side on
       // one clean request (avoids the refresh-token rotation race).
-      window.location.assign("/");
+      window.location.assign("/onboarding/plan");
     })();
     return () => {
       cancelled = true;
