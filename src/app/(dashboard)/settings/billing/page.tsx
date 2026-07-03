@@ -4,48 +4,9 @@ import { getSessionContext } from "@/lib/auth/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn, getStatusColor } from "@/lib/utils/helpers";
 import { ManageBillingButton } from "./manage-billing-button";
-import type { Plan } from "@/types";
+import { UpgradeButton } from "./upgrade-button";
+import { PLANS } from "@/lib/billing/plans";
 import { Check } from "lucide-react";
-
-const PLANS: {
-  id: Plan;
-  name: string;
-  price: string;
-  maxClients: number;
-  features: string[];
-}[] = [
-  {
-    id: "solo",
-    name: "Solo",
-    price: "$49/mo",
-    maxClients: 15,
-    features: ["Up to 15 clients", "AI letter generation", "Client portal"],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "$99/mo",
-    maxClients: 50,
-    features: [
-      "Up to 50 clients",
-      "GHL integration",
-      "Custom branding",
-      "Team members",
-    ],
-  },
-  {
-    id: "agency",
-    name: "Agency",
-    price: "$199/mo",
-    maxClients: 200,
-    features: [
-      "Up to 200 clients",
-      "Everything in Pro",
-      "Priority support",
-      "White-label portal",
-    ],
-  },
-];
 
 const ACTIVE_STATUSES = ["onboarding", "analysis", "active", "on_hold"];
 
@@ -133,7 +94,7 @@ export default async function BillingSettingsPage() {
                   )}
                 </div>
                 <p className="mt-2 text-xl font-semibold text-gray-900">
-                  {plan.price}
+                  {plan.priceLabel}
                 </p>
                 <ul className="mt-4 space-y-2">
                   {plan.features.map((feature) => (
@@ -146,6 +107,7 @@ export default async function BillingSettingsPage() {
                     </li>
                   ))}
                 </ul>
+                {!current && <UpgradeButton planId={plan.id} planName={plan.name} />}
               </div>
             );
           })}
