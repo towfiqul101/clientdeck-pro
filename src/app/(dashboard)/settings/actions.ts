@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { verifyGHLConnection } from "@/lib/ghl/api";
+import { markOnboardingStep } from "@/lib/onboarding/mark";
 import type { AgencySettings } from "@/types";
 
 export interface ActionResult {
@@ -91,6 +92,7 @@ export async function testGHLConnection(input: {
   });
 
   if (result.ok) {
+    await markOnboardingStep(session.agency.id, "ghl_connected", true);
     return {
       ok: true,
       message: result.locationName

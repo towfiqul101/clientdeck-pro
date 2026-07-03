@@ -52,11 +52,21 @@ export interface Agency {
   updated_at: string;
 }
 
+export interface OnboardingSteps {
+  ghl_connected: boolean;
+  first_client_added: boolean;
+  snapshot_installed: boolean;
+  test_portal_viewed: boolean;
+}
+
 export interface AgencySettings {
   timezone: string;
   letter_signature: string;
   default_monthly_fee: number;
   portal_branding_visible: boolean;
+  onboarding_completed?: boolean;
+  onboarding_completed_at?: string | null;
+  onboarding_steps?: OnboardingSteps;
 }
 
 export interface TeamMember {
@@ -208,6 +218,19 @@ export interface ActivityLog {
   action: string;
   description: string | null;
   metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export type SnapshotRequestStatus = "pending" | "sent" | "installed";
+
+export interface SnapshotRequest {
+  id: string;
+  name: string;
+  email: string;
+  ghl_location_id: string | null;
+  agency_name: string | null;
+  message: string | null;
+  status: SnapshotRequestStatus;
   created_at: string;
 }
 

@@ -4,6 +4,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { updateGHLContactFields } from "@/lib/ghl/api";
+import { markOnboardingStep } from "@/lib/onboarding/mark";
 
 /**
  * Rotates the client's portal token, returns a fresh magic-link URL, and
@@ -57,6 +58,8 @@ export async function generateAndSyncPortalLink(
     action: "Portal link generated",
     description: "A new client portal magic link was generated.",
   });
+
+  await markOnboardingStep(session.agency.id, "test_portal_viewed", true);
 
   return { success: true, url };
 }

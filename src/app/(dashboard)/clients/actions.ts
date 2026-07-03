@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { checkClientLimit } from "@/lib/utils/license";
 import { createGHLContact } from "@/lib/ghl/api";
+import { markOnboardingStep } from "@/lib/onboarding/mark";
 import type { CreditGoal } from "@/types";
 
 export interface ClientFormValues {
@@ -170,6 +171,8 @@ export async function createClient(
       notes: "Starting scores",
     });
   }
+
+  await markOnboardingStep(session.agency.id, "first_client_added", true);
 
   revalidatePath("/clients");
   return { success: true, clientId: data.id };
