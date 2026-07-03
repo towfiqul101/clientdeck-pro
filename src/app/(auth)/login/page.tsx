@@ -29,20 +29,22 @@ function LoginFormSkeleton() {
 }
 
 // Only follow an in-app redirect target; never bounce back to an auth route.
+// With no valid target we send the user to their dashboard, not the public
+// landing page.
 function safeDest(path: string): string {
-  if (!path.startsWith("/") || path.startsWith("//")) return "/";
+  if (!path.startsWith("/") || path.startsWith("//")) return "/dashboard";
   if (
     ["/login", "/signup", "/signout"].some((p) => path.startsWith(p)) ||
     path.startsWith("/portal")
   ) {
-    return "/";
+    return "/dashboard";
   }
   return path;
 }
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const redirectedFrom = searchParams.get("redirectedFrom") || "/";
+  const redirectedFrom = searchParams.get("redirectedFrom") || "/dashboard";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
