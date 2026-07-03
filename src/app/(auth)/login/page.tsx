@@ -1,0 +1,134 @@
+"use client";
+
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { Field, Input } from "@/components/ui/field";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFormSkeleton />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginFormSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <div className="h-6 w-32 animate-pulse rounded bg-gray-100" />
+        <div className="h-4 w-56 animate-pulse rounded bg-gray-100" />
+      </div>
+      <div className="h-40 animate-pulse rounded bg-gray-50" />
+    </div>
+  );
+}
+
+// Only follow an in-app redirect target; never bounce back to an auth route.
+function safeDest(path: string): string {
+  if (!path.startsWith("/") || path.startsWith("//")) return "/";
+  if (
+    ["/login", "/signup", "/signout"].some((p) => path.startsWith(p)) ||
+    path.startsWith("/portal")
+  ) {
+    return "/";
+  }
+  return path;
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const redirectedFrom = searchParams.get("redirectedFrom") || "/";
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setPending(true);
+
+    const supabase = createClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+
+    if (signInError) {
+      setError(signInError.message);
+      setPending(false);
+      return;
+    }
+
+    // Full-page navigation (not router.replace + refresh): a single request
+    // guarantees the freshly-set auth cookies are read server-side and avoids a
+    // refresh-token rotation race between concurrent RSC requests.
+    window.location.assign(safeDest(redirectedFrom));
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-xl font-semibold text-gray-900">Welcome back</h1>
+        <p className="text-sm text-gray-500">
+          Sign in to your ClientDeck Pro account.
+        </p>
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Email" htmlFor="email">
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@agency.com"
+            autoComplete="email"
+            required
+          />
+        </Field>
+
+        <Field label="Password" htmlFor="password">
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            required
+          />
+        </Field>
+
+        <Button type="submit" loading={pending} className="w-full">
+          {pending ? "Signing in…" : "Sign in"}
+        </Button>
+      </form>
+
+      <p className="text-center text-sm text-gray-500">
+        Don&apos;t have an account?{" "}
+        <Link
+          href="/signup"
+          className="font-medium text-blue-600 hover:text-blue-700"
+        >
+          Create one
+        </Link>
+      </p>
+    </div>
+  );
+}

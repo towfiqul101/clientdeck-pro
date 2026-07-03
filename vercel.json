@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/check-deadlines", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/retry-ghl-syncs", "schedule": "0 */6 * * *" }
+  ]
+}
