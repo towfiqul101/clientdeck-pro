@@ -3,6 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ToastProvider } from "@/components/ui/toast";
 
+// Admin reads cross-agency service-role data — never prerender or cache it.
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {

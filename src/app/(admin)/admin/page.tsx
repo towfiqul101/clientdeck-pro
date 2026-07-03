@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import type { Plan, PlanStatus } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 interface AgencyRow {
   id: string;
   name: string;

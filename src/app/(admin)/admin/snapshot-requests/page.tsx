@@ -4,6 +4,8 @@ import { cn, getStatusColor, formatDate } from "@/lib/utils/helpers";
 import { StatusButtons } from "./status-buttons";
 import type { SnapshotRequest } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 const ORDER: Record<string, number> = { pending: 0, sent: 1, installed: 2 };
 
 export default async function SnapshotRequestsAdminPage() {
