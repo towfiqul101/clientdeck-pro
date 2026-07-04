@@ -7,14 +7,15 @@ ClientDeck Pro is a B2B SaaS dispute management platform for credit repair agenc
 **Positioning:** "Practice management software for credit professionals" — NOT credit repair software (legal distinction).
 
 ## Tech Stack
-- **Framework:** Next.js 14 (App Router, TypeScript, `src/` directory)
+- **Framework:** Next.js 16 (App Router, React 19, TypeScript, `src/` directory)
 - **Styling:** Tailwind CSS (dark/professional theme, blue accent `#2563EB`)
 - **Database:** Supabase (PostgreSQL with Row Level Security)
-- **Auth:** Supabase Auth (email/password for agencies, magic links for client portal)
+- **Auth:** Supabase Auth (email/password for agencies, magic links for client portal). Super-admin `/admin` uses a **standalone password + cookie**, NOT Supabase Auth.
 - **AI:** Claude API (Sonnet 4.6) for dispute letter generation
-- **Payments:** Stripe (subscriptions + customer portal)
-- **CRM Sync:** GoHighLevel API v2 (two-way webhook sync)
-- **Hosting:** Vercel
+- **Payments:** Stripe (subscriptions + customer portal) + manual/off-platform payment recording via admin
+- **CRM Sync:** GoHighLevel API v2 (two-way webhook sync + native onboarding flow)
+- **Document backup:** Google Drive — per-agency OAuth (`drive.file` scope), non-blocking sync
+- **Hosting:** Vercel (Hobby plan — function `maxDuration` capped at 60s)
 - **PDF:** @react-pdf/renderer for letter exports
 - **Charts:** Recharts for portal score charts
 - **Icons:** Lucide React
@@ -29,42 +30,65 @@ ClientDeck Pro is a B2B SaaS dispute management platform for credit repair agenc
 ### Route Structure
 ```
 (auth)/          — Login, signup (agency staff)
-(dashboard)/     — Main app (protected, requires auth)
-  clients/       — Client list, detail, items, rounds, letters, docs
+(dashboard)/     — Main app (protected, requires Supabase auth)
+  clients/       — Client list, detail, items, rounds, letters, docs, signature
   templates/     — AI letter template management
   reports/       — Analytics dashboards
-  team/          — Staff management
-  settings/      — Agency profile, GHL config, billing, branding
+  team/          — Staff management (+ plan-based member limit)
+  settings/      — General, GHL config + field mapping, Documents (Drive), branding, billing
+(admin)/admin/   — Super-admin panel (password/cookie auth, cross-agency, force-dynamic)
+(admin-auth)/    — /admin/login (unguarded, separate route group)
 portal/          — Client-facing portal (magic link auth, white-labeled)
-api/             — API routes (GHL webhooks, letter generation, Stripe, etc.)
+api/
+  ghl/           — webhook (inbound), onboarding (native flow), sync, send-signature-request
+  google-drive/  — connect, callback, disconnect, backfill
+  admin/         — logout, agencies/[id] (panel data), tools/* (GHL fields/pipelines/sync/welcome)
+  letters/, stripe/, portal/, cron/, settings/
 ```
+
+**Route-group URL note:** the `(dashboard)` and `(admin)` groups are erased from the
+URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboard/...`).
 
 ### Key Flows
 1. **Client Intake:** GHL webhook → auto-create client in app OR manual creation
-2. **Dispute Round:** Select items → generate letters with Claude → review/edit → finalize → export PDF → mark sent → GHL sync fires
-3. **Results Logging:** Staff logs results per item → deletions update client stats → GHL gets win notification
-4. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload
+2. **GHL-Native Onboarding:** Lead pays → GHL onboarding form (+ e-signature) → tag `onboarding-complete` fires webhook → `/api/ghl/onboarding` pulls the contact, upserts the client (via `ghl_field_keys` mapping), generates the portal link, syncs docs to Drive + writes back to GHL. Always returns 200 to GHL.
+3. **Dispute Round:** Select items → generate letters with Claude → review/edit → finalize → export PDF → mark sent → GHL sync + Drive letter backup fires
+4. **Results Logging:** Staff logs results per item → deletions update client stats → GHL gets win notification
+5. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload (mirrored to Drive)
 
 ## Database Tables (Supabase)
-- `agencies` — SaaS customers (credit repair businesses)
-- `team_members` — Staff accounts linked to agencies
-- `clients` — Credit repair end-clients (with scores, status, portal token)
+- `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB GHL field map), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `max_clients`, `plan`/`plan_status`, `settings` (JSONB: onboarding_steps, admin_notes, etc.)
+- `team_members` — Staff accounts linked to agencies (roles: owner/admin/staff/viewer)
+- `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`
 - `negative_items` — Items on credit reports to dispute (per bureau)
 - `dispute_rounds` — Round lifecycle (preparing → sent → awaiting → complete)
 - `disputes` — Individual item disputes within a round (with AI-generated letter content)
-- `letter_templates` — AI prompt templates (system defaults + agency custom)
-- `documents` — File uploads (IDs, reports, letters) via Supabase Storage
+- `letter_templates` — AI prompt templates (system defaults + agency custom; incl. 609/611/623)
+- `documents` — File uploads (IDs, reports, letters) via Supabase Storage (`documents` bucket)
 - `activity_log` — Full audit trail
+- `manual_payments` — Off-platform payments recorded by admin (migration 009)
+- `snapshot_requests` — GHL snapshot install requests (migration 008)
+- `ghl_sync_log` — Outbound GHL sync attempts + failures (migration 005)
+- `score_history` — Bureau score snapshots per round for the portal chart (migration 006)
+
+### Migrations (`supabase/migrations/`, run in order in Supabase SQL editor)
+001 schema · 002 RLS · 003 seed templates · 004 finalized col · 005 ghl_sync_log ·
+006 score_history · 007 team RLS fix · 008 snapshot_requests · 009 manual_payments ·
+**010 609/611/623 templates · 011 signature+onboarding+ghl_field_keys · 012 google_drive**
 
 ## Key Libraries & Locations
-- `src/lib/supabase/client.ts` — Browser Supabase client
-- `src/lib/supabase/server.ts` — Server-side Supabase client (SSR)
-- `src/lib/supabase/admin.ts` — Service role client (bypasses RLS)
+- `src/lib/supabase/{client,server,admin}.ts` — browser / SSR / service-role clients
 - `src/lib/claude/generate-letter.ts` — AI letter generation (single + bulk)
-- `src/lib/ghl/api.ts` — GHL API v2 wrapper (contacts, tags, pipeline, tasks)
+- `src/lib/ghl/api.ts` — GHL API v2 wrapper (contacts, tags, pipeline, tasks, custom fields, pipelines)
 - `src/lib/ghl/webhook.ts` — Inbound GHL webhook handler
-- `src/lib/utils/helpers.ts` — Formatting, status colors, letter type logic
-- `src/lib/utils/license.ts` — License key validation
+- `src/lib/ghl/field-detect.ts` — heuristic GHL custom-field → CDP key mapping (auto-detect)
+- `src/lib/google-drive/{auth,client,sync,letter-sync}.ts` — OAuth, Drive API, non-blocking sync
+- `src/lib/admin/session.ts` — super-admin password/cookie auth (`cdp_admin_session`)
+- `src/lib/admin/{mrr,avatar,agency-panel,tool-helpers}.ts` — admin dashboard helpers
+- `src/lib/billing/plans.ts` — **single source of truth for plans/pricing/limits**
+- `src/lib/team/limits.ts` — team-member limit enforcement
+- `src/lib/utils/{helpers,license,portal-token}.ts` — formatting, license, portal links
+- `src/lib/auth/{session,admin}.ts` — staff session context / admin guard wrappers
 - `src/types/index.ts` — All TypeScript types matching the DB schema
 
 ## Code Style & Conventions
@@ -89,9 +113,30 @@ api/             — API routes (GHL webhooks, letter generation, Stripe, etc.)
 
 ## GHL Integration Details
 - **Inbound webhook URL:** `/api/ghl/webhook` — handles ContactCreate, ContactUpdate, ContactTagUpdate
+- **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `onboarding-complete`. Upserts client from contact + `ghl_field_keys`, generates portal link, syncs docs to Drive + writes `clientdeck_client_id`/`clientdeck_portal_link` back. Heavy work runs in Next `after()`; always 200.
+- **Signature request:** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow.
 - **Outbound sync:** Uses per-agency `ghl_api_key` stored in `agencies` table
 - **Sync events:** Round sent → pipeline move + tag + note. Deletion → tag + field update. Score update → custom fields. Completion → goal-achieved tag.
 - **GHL custom fields** the snapshot expects: `dispute_round_current`, `items_deleted_total`, `total_negative_items`, `next_dispute_date`, `credit_score_eq_current`, `credit_score_exp_current`, `credit_score_tu_current`, `clientdeck_portal_link`, `clientdeck_client_id`
+- **Field mapping (`agencies.ghl_field_keys` JSONB):** because GHL field IDs are unique per location, each agency maps its keys (SSN, DOB, scores, signature status/date, credit-report/ID/proof-of-address uploads) in Settings → GHL. Manual entry or heuristic "Auto-detect" (`field-detect.ts`).
+
+## Super-Admin Panel (`/admin`)
+- **Auth is standalone** — password (`ADMIN_PASSWORD`) → SHA-256 → httpOnly `cdp_admin_session` cookie. NO Supabase Auth. Middleware lets all `/admin/*` through; `(admin)/layout.tsx` guards via `requireAdmin()`; `/admin/login` lives in a separate `(admin-auth)` group. `ADMIN_EMAIL` is only an optional audit label.
+- **Features:** dashboard (agencies, MRR, pending-setup), agency **slide-over panel** (Status / GHL Config / Tools / Branding / Payments), Pending Setup queue, manual payments, snapshot requests, activity + system health (Supabase/Vercel/GHL sync failures).
+- **GHL setup tools** (`/api/admin/tools/*`): create 9 custom fields, create pipelines (best-effort), sync clients, resend welcome email.
+- All admin reads use `createAdminClient()` (service role, cross-agency).
+
+## Google Drive Integration
+- **Per-agency OAuth** (`drive.file` + `userinfo.email` scopes). Tokens on `agencies.google_drive_*`. Connect at Settings → Documents.
+- **Folder layout:** `ClientDeck Pro / {Client Name} / {Onboarding | Round_N | Bureau_Responses | Client_Uploads | Letters}`.
+- **ALWAYS non-blocking** via `syncDocumentToDrive()` (swallows errors, returns null if not connected). Triggered by: onboarding docs, round-sent letter PDFs (regenerated), portal uploads, and the Settings → Documents **backfill** button.
+- Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` + redirect URI `{APP_URL}/api/google-drive/callback` (see README).
+
+## Plans & Pricing (`src/lib/billing/plans.ts` — single source of truth)
+- **Starter** $49/mo — 100 clients, 2 team members (internal plan id stays `solo`)
+- **Pro** $129/mo — 700 clients, 5 team members
+- **Agency** $249/mo — unlimited clients + team, API/custom domain, removes branding
+- `enterprise` — provisioned manually. Limits enforced via `maxClientsForPlan()` / `maxTeamMembersForPlan()` and stored on `agencies.max_clients`.
 
 ## AI Letter Generation
 - Uses Claude API (Sonnet 4.6) via `src/lib/claude/generate-letter.ts`
@@ -110,36 +155,60 @@ api/             — API routes (GHL webhooks, letter generation, Stripe, etc.)
 - All webhook endpoints verify source (GHL signature, Stripe signature)
 
 ## Environment Variables Required
+See `.env.example` for the full annotated list. Notable:
 ```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-ANTHROPIC_API_KEY
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-STRIPE_PRICE_SOLO
-STRIPE_PRICE_PRO
-STRIPE_PRICE_AGENCY
-GHL_WEBHOOK_SECRET
-RESEND_API_KEY
+NEXT_PUBLIC_SUPABASE_URL / _ANON_KEY / SUPABASE_SERVICE_ROLE_KEY
 NEXT_PUBLIC_APP_URL
+ANTHROPIC_API_KEY                      # mock letters if empty
+STRIPE_SECRET_KEY / _WEBHOOK_SECRET / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+STRIPE_PRICE_SOLO                      # Starter plan ($49) — id stays "solo"
+STRIPE_PRICE_PRO                       # Pro ($129)
+STRIPE_PRICE_AGENCY                    # Agency ($249)
+GHL_WEBHOOK_SECRET
+RESEND_API_KEY                         # emails logged to console if empty
+CRON_SECRET
 PORTAL_TOKEN_SECRET
+ADMIN_PASSWORD                         # super-admin /admin login (required for admin access)
+ADMIN_EMAIL                            # optional audit label only
+GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET  # Google Drive OAuth (Drive no-ops if unset)
 ```
+> Vercel env changes only apply to the **next deployment** — redeploy after editing.
 
-## Build Phases (Current: Week 1)
-- Week 1: Foundation (schema, auth, layout, settings) ← CURRENT
-- Week 2: Client & item management + GHL inbound webhooks
-- Week 3: Dispute rounds + AI letter generation
-- Week 4: Round lifecycle + results logging + GHL outbound sync
-- Week 5: Client portal (magic link, dashboard, timeline, docs)
-- Week 6: GHL snapshot + dashboard analytics + polish
-- Week 7: Beta with Jetlag Recovery + landing page + launch
+## Build Status
+Core build complete (Weeks 1–7): schema, auth, clients/items, dispute rounds + AI
+letters, round lifecycle + results, GHL two-way sync, client portal, dashboard
+analytics, landing page.
+
+**Shipped since (post-launch sessions):**
+- **Session 1** — Super-admin panel rebuild (password auth, agency slide-over, GHL
+  tools, pending queue, system health); pricing overhaul (Starter/Pro/Agency) +
+  team-member limits; 609/611/623 letter templates (migration 010).
+- **Session 2** — GHL-native onboarding webhook + e-signature capture/display;
+  per-agency Google Drive integration (OAuth, non-blocking sync for onboarding
+  docs / round letters / portal uploads / backfill); GHL field-key mapping UI
+  (migrations 011 + 012).
+- **Session 5** — AI credit-report PDF parser (`/api/ai/parse-credit-report` →
+  Claude document extraction → staff review → reuses `addItems`); auto-create-next-round
+  cron (`/api/cron/auto-create-rounds`, gated on `settings.auto_create_rounds`) +
+  payment gate on `createRound`; client→team-member assignment (`clients.assigned_to`)
+  + team caseload dashboard + `?assigned=` list filter; bureau success-rate / negative-type /
+  retention reporting (`src/lib/reports/metrics.ts`); AI dispute-strategy advisor
+  (`/api/ai/strategy` + client-header panel); case-completion review-request automation
+  (extended `syncClientCompleted`, `/api/ghl/send-review-request`, portal celebration +
+  review/referral links); `personal_info_error` + `duplicate_account` item types
+  (migrations 013 + 014 + 015). Sessions 3–4 (GHL snapshot/workflow wiring) still deferred.
 
 ## Common Commands
 ```bash
-npm run dev          # Start dev server
+npm run dev          # Start dev server (restart fully after editing middleware.ts)
 npm run build        # Production build
-npm run lint         # ESLint
+npm run lint         # ESLint (React 19 rules: no Date.now()/setState-in-effect in render)
 npx tsc --noEmit     # Type check
 ```
+
+## Deploy
+- Local branch is **`master`**; Vercel production branch is **`main`**.
+  Deploy with `git push origin master:main`.
+- Vercel **Hobby plan**: function `maxDuration` must be ≤ 60s; crons are daily-only.
+- Long/after-response work uses Next 16 `after()` (not bare `.catch()`), which
+  survives the serverless response on Vercel.
