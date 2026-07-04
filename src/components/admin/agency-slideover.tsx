@@ -26,6 +26,19 @@ const STATUSES: PlanStatus[] = ["active", "trialing", "past_due", "paused", "can
 const TABS = ["Status", "GHL Config", "Tools", "Branding", "Payments"] as const;
 type Tab = (typeof TABS)[number];
 
+const WIRED_NOTIFICATION_TYPES = [
+  "round_sent",
+  "deletion_win",
+  "round_results_in",
+  "goal_achieved",
+  "payment_failed",
+  "portal_link",
+  "staff_new_client",
+  "staff_round_overdue",
+  "staff_next_round_ready",
+  "monthly_progress",
+] as const;
+
 const field =
   "w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 const label = "block text-xs font-medium text-gray-600 mb-1";
@@ -398,6 +411,32 @@ function GhlTab({
         {data.ghl.lastSyncAt && (
           <span className="text-gray-400">· last sync {formatDate(data.ghl.lastSyncAt)}</span>
         )}
+      </div>
+
+      <div className="rounded-lg border border-gray-200 p-4">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Notification Status
+        </h4>
+        <dl className="mt-2 space-y-1 text-sm">
+          {WIRED_NOTIFICATION_TYPES.map((type) => {
+            const configured = Boolean(a.settings?.ghl_webhook_triggers?.[type]);
+            return (
+              <div key={type} className="flex items-center justify-between gap-2">
+                <dt className="text-gray-600">{type}</dt>
+                <dd className="flex items-center gap-1.5">
+                  <span className={cn("h-1.5 w-1.5 rounded-full", configured ? "bg-green-500" : "bg-gray-300")} />
+                  <span className={configured ? "text-green-700" : "text-gray-400"}>
+                    {configured ? "Configured" : "Not set"}
+                  </span>
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+        <p className="mt-3 text-xs text-gray-500">
+          {WIRED_NOTIFICATION_TYPES.filter((t) => a.settings?.ghl_webhook_triggers?.[t]).length} of{" "}
+          {WIRED_NOTIFICATION_TYPES.length} configured
+        </p>
       </div>
 
       <div className="flex gap-2">
