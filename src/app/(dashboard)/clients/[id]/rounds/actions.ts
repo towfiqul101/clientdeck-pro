@@ -17,6 +17,7 @@ import {
   notifyRoundSent,
   notifyDeletionWin,
   notifyRoundResults,
+  notifyGoalAchieved,
   NOTIFIABLE_CLIENT_COLUMNS,
   type NotifiableClient,
 } from "@/lib/ghl/notifications";
@@ -586,27 +587,30 @@ export async function markClientCompleted(
     .eq("id", clientId);
   if (error) return { success: false, error: error.message };
 
+  const { data: notifClient } = await supabase
+    .from("clients")
+    .select(NOTIFIABLE_CLIENT_COLUMNS)
+    .eq("id", clientId)
+    .single();
+
   const { ghl_api_key, ghl_location_id } = session.agency;
-  if (ghl_api_key && ghl_location_id) {
-    const { data: client } = await supabase
-      .from("clients")
-      .select("ghl_contact_id")
-      .eq("id", clientId)
-      .single();
-    if (client?.ghl_contact_id) {
-      const contactId = client.ghl_contact_id;
-      await runGhlSync({
-        agencyId: session.agency.id,
-        clientId,
-        action: "sync_completed",
-        payload: { contactId },
-        run: () =>
-          syncClientCompleted(contactId, {
-            apiKey: ghl_api_key,
-            locationId: ghl_location_id,
-          }),
-      });
-    }
+  if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
+    const contactId = notifClient.ghl_contact_id;
+    await runGhlSync({
+      agencyId: session.agency.id,
+      clientId,
+      action: "sync_completed",
+      payload: { contactId },
+      run: () =>
+        syncClientCompleted(contactId, {
+          apiKey: ghl_api_key,
+          locationId: ghl_location_id,
+        }),
+    });
+  }
+
+  if (notifClient) {
+    await notifyGoalAchieved(session.agency, notifClient as NotifiableClient);
   }
 
   await supabase.from("activity_log").insert({
