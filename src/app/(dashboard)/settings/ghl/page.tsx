@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { BookOpen } from "lucide-react";
 import { getSessionContext } from "@/lib/auth/session";
 import { GHLForm } from "./ghl-form";
 import { GHLSyncActivity } from "./sync-activity";
@@ -21,6 +23,12 @@ export default async function GHLSettingsPage() {
 
   return (
     <div className="space-y-6">
+      <Link
+        href="/onboarding/ghl-setup"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+      >
+        <BookOpen className="h-4 w-4" /> View the full GHL workflow setup guide
+      </Link>
       <GHLForm
         initial={{
           locationId: agency.ghl_location_id ?? "",
