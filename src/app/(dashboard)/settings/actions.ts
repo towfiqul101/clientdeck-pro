@@ -8,6 +8,7 @@ import { detectFieldKeys } from "@/lib/ghl/field-detect";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
 import type { AgencySettings, GhlFieldKeys } from "@/types";
 import type { GHLNotificationType } from "@/lib/ghl/notifications";
+import type { PipelineStageKey } from "@/lib/ghl/pipeline";
 
 export interface ActionResult {
   success: boolean;
@@ -192,6 +193,38 @@ export async function updateNotificationWebhooks(input: {
     ...session.agency.settings,
     ghl_webhook_triggers: cleanTriggers,
     owner_ghl_contact_id: input.ownerGhlContactId.trim() || undefined,
+  };
+
+  const { error } = await supabase
+    .from("agencies")
+    .update({ settings: nextSettings })
+    .eq("id", session.agency.id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/ghl");
+  return { success: true };
+}
+
+/** Saves the agency's GHL pipeline id + stage-id mapping (agencies.settings). */
+export async function updatePipelineConfig(input: {
+  pipelineId: string;
+  stages: Partial<Record<PipelineStageKey, string>>;
+}): Promise<ActionResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const cleanStages: Partial<Record<PipelineStageKey, string>> = {};
+  for (const [key, value] of Object.entries(input.stages)) {
+    if (typeof value === "string" && value.trim()) {
+      cleanStages[key as PipelineStageKey] = value.trim();
+    }
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const nextSettings: AgencySettings = {
+    ...session.agency.settings,
+    ghl_pipeline_id: input.pipelineId.trim() || undefined,
+    ghl_pipeline_stages: cleanStages,
   };
 
   const { error } = await supabase

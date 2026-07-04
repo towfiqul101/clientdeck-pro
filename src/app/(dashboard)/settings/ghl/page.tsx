@@ -5,6 +5,7 @@ import { GHLSyncActivity } from "./sync-activity";
 import { GhlFieldMapping } from "./ghl-field-mapping";
 import { OnboardingWebhookCard } from "./onboarding-webhook-card";
 import { NotificationWebhooksForm } from "./notification-webhooks-form";
+import { PipelineConfigForm } from "./pipeline-config-form";
 import { ResendFallbackBanner } from "./resend-fallback-banner";
 
 export default async function GHLSettingsPage() {
@@ -34,6 +35,12 @@ export default async function GHLSettingsPage() {
         initial={{
           triggers: agency.settings?.ghl_webhook_triggers ?? {},
           ownerGhlContactId: agency.settings?.owner_ghl_contact_id ?? "",
+        }}
+      />
+      <PipelineConfigForm
+        initial={{
+          pipelineId: agency.settings?.ghl_pipeline_id ?? "",
+          stages: agency.settings?.ghl_pipeline_stages ?? {},
         }}
       />
       <GHLSyncActivity />
