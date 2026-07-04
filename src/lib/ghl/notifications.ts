@@ -396,3 +396,41 @@ export async function notifyStaffRoundOverdue(
     { agencyId: agency.id, clientId: client.id }
   );
 }
+
+export interface MonthlyProgressSummary {
+  scoreEq: number | null;
+  scoreExp: number | null;
+  scoreTu: number | null;
+  totalDeletions: number;
+  totalItems: number;
+  currentRound: number;
+  monthsInProgram: number;
+}
+
+export async function notifyMonthlyProgress(
+  agency: Agency,
+  client: NotifiableClient,
+  summary: MonthlyProgressSummary
+) {
+  return sendGHLNotification(
+    agency,
+    "monthly_progress",
+    {
+      contactId: client.ghl_contact_id ?? "",
+      firstName: client.first_name,
+      lastName: client.last_name,
+      email: client.email ?? undefined,
+      data: {
+        score_eq: summary.scoreEq ?? 0,
+        score_exp: summary.scoreExp ?? 0,
+        score_tu: summary.scoreTu ?? 0,
+        total_deletions: summary.totalDeletions,
+        total_items: summary.totalItems,
+        current_round: summary.currentRound,
+        months_in_program: summary.monthsInProgram,
+        portal_link: portalLinkFor(client),
+      },
+    },
+    { agencyId: agency.id, clientId: client.id }
+  );
+}

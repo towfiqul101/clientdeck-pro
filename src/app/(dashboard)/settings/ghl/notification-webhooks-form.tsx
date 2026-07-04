@@ -15,6 +15,7 @@ const CLIENT_TYPES: { key: GHLNotificationType; label: string }[] = [
   { key: "goal_achieved", label: "Goal Achieved" },
   { key: "payment_failed", label: "Payment Failed" },
   { key: "portal_link", label: "Portal Link Sent" },
+  { key: "monthly_progress", label: "Monthly Progress Update" },
 ];
 
 const STAFF_TYPES: { key: GHLNotificationType; label: string }[] = [
