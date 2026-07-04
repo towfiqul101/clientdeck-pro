@@ -41,28 +41,26 @@ export async function generateAndSyncPortalLink(
     };
   }
 
-  // Best-effort GHL field sync.
+  // Best-effort GHL field sync + webhook notification — run concurrently.
   const { ghl_api_key, ghl_location_id } = session.agency;
-  if (ghl_api_key && ghl_location_id && client.ghl_contact_id) {
-    try {
-      await updateGHLContactFields(
-        client.ghl_contact_id,
-        { clientdeck_portal_link: url },
-        { apiKey: ghl_api_key, locationId: ghl_location_id }
-      );
-    } catch (e) {
-      console.error("Failed to sync portal link to GHL:", e);
-    }
-  }
-
-  // Best-effort GHL webhook notification. `client.portal_token` was just
-  // rotated by generatePortalLink() above but the in-memory row still has the
-  // old value, so build the payload from the fresh `url` instead of relying
-  // on notifyPortalLink()'s own portal_token lookup.
-  await notifyPortalLink(session.agency, {
-    ...(client as NotifiableClient),
-    portal_token: new URL(url).searchParams.get("token"),
-  });
+  await Promise.allSettled([
+    (async () => {
+      if (ghl_api_key && ghl_location_id && client.ghl_contact_id) {
+        await updateGHLContactFields(
+          client.ghl_contact_id,
+          { clientdeck_portal_link: url },
+          { apiKey: ghl_api_key, locationId: ghl_location_id }
+        );
+      }
+    })().catch((e) => console.error("Failed to sync portal link to GHL:", e)),
+    // `client.portal_token` was just rotated by generatePortalLink() above but
+    // the in-memory row still has the old value, so build the payload from the
+    // fresh `url` instead of relying on notifyPortalLink()'s own lookup.
+    notifyPortalLink(session.agency, {
+      ...(client as NotifiableClient),
+      portal_token: new URL(url).searchParams.get("token"),
+    }),
+  ]);
 
   await supabase.from("activity_log").insert({
     agency_id: session.agency.id,

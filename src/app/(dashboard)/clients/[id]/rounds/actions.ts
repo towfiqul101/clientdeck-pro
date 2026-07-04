@@ -274,37 +274,42 @@ export async function markRoundSent(
     .eq("id", clientId)
     .single();
 
-  // Best-effort GHL field/tag sync (existing channel, logged to ghl_sync_log).
+  // Best-effort GHL field/tag sync + webhook notification — run concurrently,
+  // neither blocks the other (both are independently best-effort).
   const { ghl_api_key, ghl_location_id } = session.agency;
-  if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
-    const contactId = notifClient.ghl_contact_id;
-    await runGhlSync({
-      agencyId: session.agency.id,
-      clientId,
-      action: "sync_round_sent",
-      payload: {
-        contactId,
-        roundNumber: round.round_number,
-        itemsDisputed: round.total_items_disputed,
-      },
-      run: () =>
-        syncRoundSent(
-          contactId,
-          round.round_number,
-          round.total_items_disputed,
-          { apiKey: ghl_api_key, locationId: ghl_location_id }
-        ),
-    });
-  }
-
-  // Best-effort GHL webhook notification (independent channel — SMS/email content).
-  if (notifClient) {
-    await notifyRoundSent(session.agency, notifClient as NotifiableClient, {
-      round_number: round.round_number,
-      total_items_disputed: round.total_items_disputed,
-      response_deadline: deadline,
-    });
-  }
+  await Promise.allSettled([
+    (async () => {
+      if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
+        const contactId = notifClient.ghl_contact_id;
+        await runGhlSync({
+          agencyId: session.agency.id,
+          clientId,
+          action: "sync_round_sent",
+          payload: {
+            contactId,
+            roundNumber: round.round_number,
+            itemsDisputed: round.total_items_disputed,
+          },
+          run: () =>
+            syncRoundSent(
+              contactId,
+              round.round_number,
+              round.total_items_disputed,
+              { apiKey: ghl_api_key, locationId: ghl_location_id }
+            ),
+        });
+      }
+    })(),
+    (async () => {
+      if (notifClient) {
+        await notifyRoundSent(session.agency, notifClient as NotifiableClient, {
+          round_number: round.round_number,
+          total_items_disputed: round.total_items_disputed,
+          response_deadline: deadline,
+        });
+      }
+    })(),
+  ]);
 
   await supabase.from("activity_log").insert({
     agency_id: session.agency.id,
@@ -459,6 +464,12 @@ export async function logResults(
     if (scores!.tu !== null) scoreUpdate.score_tu_current = scores!.tu;
     await supabase.from("clients").update(scoreUpdate).eq("id", clientId);
 
+    // Keep notifClient in sync so downstream notifications (deletion_win)
+    // report this round's freshly-written scores, not the pre-update values.
+    if (notifClient) {
+      Object.assign(notifClient, scoreUpdate);
+    }
+
     await supabase.from("score_history").insert({
       client_id: clientId,
       agency_id: session.agency.id,
@@ -513,48 +524,54 @@ export async function logResults(
       .eq("dispute_status", "deleted"),
   ]);
 
-  if (tally.deletions > 0) {
-    const { ghl_api_key, ghl_location_id } = session.agency;
-    if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
-      const contactId = notifClient.ghl_contact_id;
-      const deletions = tally.deletions;
-      const total = totalDeleted ?? 0;
-      await runGhlSync({
-        agencyId: session.agency.id,
-        clientId,
-        action: "sync_deletion",
-        payload: {
-          contactId,
-          deletionsThisRound: deletions,
-          totalDeletions: total,
-        },
-        run: () =>
-          syncDeletionAchieved(contactId, deletions, total, {
-            apiKey: ghl_api_key,
-            locationId: ghl_location_id,
-          }),
-      });
-    }
-  }
-
-  if (notifClient) {
-    if (tally.deletions > 0) {
-      await notifyDeletionWin(
-        session.agency,
-        notifClient as NotifiableClient,
-        tally.deletions,
-        totalDeleted ?? 0,
-        deletedItemNames
-      );
-    }
-    await notifyRoundResults(session.agency, notifClient as NotifiableClient, {
-      round_number: round.round_number,
-      total_items_disputed: round.total_items_disputed,
-      total_deletions: tally.deletions,
-      total_verified: tally.verified,
-      total_no_response: tally.no_response,
-    });
-  }
+  // Best-effort GHL deletion sync + both notifications — run concurrently.
+  const { ghl_api_key: resultsGhlApiKey, ghl_location_id: resultsGhlLocationId } = session.agency;
+  await Promise.allSettled([
+    (async () => {
+      if (tally.deletions > 0 && resultsGhlApiKey && resultsGhlLocationId && notifClient?.ghl_contact_id) {
+        const contactId = notifClient.ghl_contact_id;
+        const deletions = tally.deletions;
+        const total = totalDeleted ?? 0;
+        await runGhlSync({
+          agencyId: session.agency.id,
+          clientId,
+          action: "sync_deletion",
+          payload: {
+            contactId,
+            deletionsThisRound: deletions,
+            totalDeletions: total,
+          },
+          run: () =>
+            syncDeletionAchieved(contactId, deletions, total, {
+              apiKey: resultsGhlApiKey,
+              locationId: resultsGhlLocationId,
+            }),
+        });
+      }
+    })(),
+    (async () => {
+      if (notifClient && tally.deletions > 0) {
+        await notifyDeletionWin(
+          session.agency,
+          notifClient as NotifiableClient,
+          tally.deletions,
+          totalDeleted ?? 0,
+          deletedItemNames
+        );
+      }
+    })(),
+    (async () => {
+      if (notifClient) {
+        await notifyRoundResults(session.agency, notifClient as NotifiableClient, {
+          round_number: round.round_number,
+          total_items_disputed: round.total_items_disputed,
+          total_deletions: tally.deletions,
+          total_verified: tally.verified,
+          total_no_response: tally.no_response,
+        });
+      }
+    })(),
+  ]);
 
   await supabase.from("activity_log").insert({
     agency_id: session.agency.id,
@@ -594,24 +611,29 @@ export async function markClientCompleted(
     .single();
 
   const { ghl_api_key, ghl_location_id } = session.agency;
-  if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
-    const contactId = notifClient.ghl_contact_id;
-    await runGhlSync({
-      agencyId: session.agency.id,
-      clientId,
-      action: "sync_completed",
-      payload: { contactId },
-      run: () =>
-        syncClientCompleted(contactId, {
-          apiKey: ghl_api_key,
-          locationId: ghl_location_id,
-        }),
-    });
-  }
-
-  if (notifClient) {
-    await notifyGoalAchieved(session.agency, notifClient as NotifiableClient);
-  }
+  await Promise.allSettled([
+    (async () => {
+      if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
+        const contactId = notifClient.ghl_contact_id;
+        await runGhlSync({
+          agencyId: session.agency.id,
+          clientId,
+          action: "sync_completed",
+          payload: { contactId },
+          run: () =>
+            syncClientCompleted(contactId, {
+              apiKey: ghl_api_key,
+              locationId: ghl_location_id,
+            }),
+        });
+      }
+    })(),
+    (async () => {
+      if (notifClient) {
+        await notifyGoalAchieved(session.agency, notifClient as NotifiableClient);
+      }
+    })(),
+  ]);
 
   await supabase.from("activity_log").insert({
     agency_id: session.agency.id,

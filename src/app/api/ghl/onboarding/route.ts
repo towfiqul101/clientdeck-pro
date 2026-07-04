@@ -207,20 +207,17 @@ export async function POST(req: Request) {
 
     // Heavier work runs after the response is flushed (guaranteed by after()).
     after(async () => {
-      try {
-        await syncOnboardingDocsToDrive(agency, contact);
-      } catch (err) {
-        console.error("[Onboarding] Drive sync error:", err);
-      }
-      try {
-        const fields: Record<string, string> = { clientdeck_client_id: clientId };
-        if (portalLink) fields.clientdeck_portal_link = portalLink;
-        await updateGHLContactFields(contactId, fields, opts);
-      } catch (err) {
-        console.error("[Onboarding] GHL field sync error:", err);
-      }
-      if (isNewClient) {
-        try {
+      await Promise.allSettled([
+        (async () => {
+          await syncOnboardingDocsToDrive(agency, contact);
+        })().catch((err) => console.error("[Onboarding] Drive sync error:", err)),
+        (async () => {
+          const fields: Record<string, string> = { clientdeck_client_id: clientId };
+          if (portalLink) fields.clientdeck_portal_link = portalLink;
+          await updateGHLContactFields(contactId, fields, opts);
+        })().catch((err) => console.error("[Onboarding] GHL field sync error:", err)),
+        (async () => {
+          if (!isNewClient) return;
           const notifClient: NotifiableClient = {
             id: clientId,
             first_name: clientData.first_name,
@@ -240,10 +237,8 @@ export async function POST(req: Request) {
             score_tu_start: clientData.score_tu_start,
           };
           await notifyStaffNewClient(agency, notifClient);
-        } catch (err) {
-          console.error("[Onboarding] Staff notification error:", err);
-        }
-      }
+        })().catch((err) => console.error("[Onboarding] Staff notification error:", err)),
+      ]);
     });
 
     return Response.json({ success: true, clientId });

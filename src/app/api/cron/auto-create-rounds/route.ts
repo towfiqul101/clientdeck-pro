@@ -99,22 +99,22 @@ export async function GET(req: Request) {
       const opts = agency.ghl_api_key && agency.ghl_location_id
         ? { apiKey: agency.ghl_api_key, locationId: agency.ghl_location_id }
         : null;
-      if (opts && client.ghl_contact_id) {
-        try {
-          await addGHLTag(client.ghl_contact_id, ["next-round-ready"], opts);
-          await createGHLTask(
-            client.ghl_contact_id,
-            `Round ${roundNumber} is ready for ${client.first_name} ${client.last_name} — review and generate letters`,
-            new Date().toISOString(),
-            opts
-          );
-        } catch (e) { console.error("auto-create-rounds: GHL sync failed", e); }
-      }
-
       const ownerContactId = (agency as Agency).settings?.owner_ghl_contact_id;
-      if (ownerContactId) {
-        try {
-          const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.clientdeckpro.com";
+      const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.clientdeckpro.com";
+      await Promise.allSettled([
+        (async () => {
+          if (opts && client.ghl_contact_id) {
+            await addGHLTag(client.ghl_contact_id, ["next-round-ready"], opts);
+            await createGHLTask(
+              client.ghl_contact_id,
+              `Round ${roundNumber} is ready for ${client.first_name} ${client.last_name} — review and generate letters`,
+              new Date().toISOString(),
+              opts
+            );
+          }
+        })().catch((e) => console.error("auto-create-rounds: GHL sync failed", e)),
+        (async () => {
+          if (!ownerContactId) return;
           await sendGHLNotification(
             agency as Agency,
             "staff_next_round_ready",
@@ -130,10 +130,8 @@ export async function GET(req: Request) {
             },
             { agencyId: agency.id, clientId: client.id }
           );
-        } catch (e) {
-          console.error("auto-create-rounds: staff notification failed", e);
-        }
-      }
+        })().catch((e) => console.error("auto-create-rounds: staff notification failed", e)),
+      ]);
       created++;
     }
   }

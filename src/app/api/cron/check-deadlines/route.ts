@@ -87,49 +87,44 @@ export async function GET(req: Request) {
     });
     flagged++;
 
-    // Best-effort GHL reminder task for staff (existing channel).
+    // Best-effort GHL reminder task + webhook notification — run concurrently.
     const apiKey = round.agency?.ghl_api_key;
     const locationId = round.agency?.ghl_location_id;
     const contactId = round.client?.ghl_contact_id;
-    if (apiKey && locationId && contactId) {
-      try {
-        await createGHLTask(
-          contactId,
-          `Escalate Round ${round.round_number} — bureau response overdue`,
-          new Date().toISOString(),
-          { apiKey, locationId }
-        );
-      } catch (e) {
-        console.error("check-deadlines: GHL task failed", e);
-      }
-    }
-
-    // Best-effort GHL webhook notification (independent channel).
-    if (round.agency && round.client) {
-      const notifClient: NotifiableClient = {
-        id: round.client.id,
-        first_name: round.client.first_name,
-        last_name: round.client.last_name,
-        email: round.client.email,
-        phone: round.client.phone,
-        ghl_contact_id: round.client.ghl_contact_id,
-        portal_token: null,
-        monthly_fee: 0,
-        total_items_deleted: 0,
-        service_start_date: today,
-        score_eq_current: null,
-        score_exp_current: null,
-        score_tu_current: null,
-        score_eq_start: null,
-        score_exp_start: null,
-        score_tu_start: null,
-      };
-      try {
+    await Promise.allSettled([
+      (async () => {
+        if (apiKey && locationId && contactId) {
+          await createGHLTask(
+            contactId,
+            `Escalate Round ${round.round_number} — bureau response overdue`,
+            new Date().toISOString(),
+            { apiKey, locationId }
+          );
+        }
+      })().catch((e) => console.error("check-deadlines: GHL task failed", e)),
+      (async () => {
+        if (!round.agency || !round.client) return;
+        const notifClient: NotifiableClient = {
+          id: round.client.id,
+          first_name: round.client.first_name,
+          last_name: round.client.last_name,
+          email: round.client.email,
+          phone: round.client.phone,
+          ghl_contact_id: round.client.ghl_contact_id,
+          portal_token: null,
+          monthly_fee: 0,
+          total_items_deleted: 0,
+          service_start_date: today,
+          score_eq_current: null,
+          score_exp_current: null,
+          score_tu_current: null,
+          score_eq_start: null,
+          score_exp_start: null,
+          score_tu_start: null,
+        };
         await notifyStaffRoundOverdue(round.agency, notifClient, round.round_number, daysOver);
-      } catch (e) {
-        console.error("check-deadlines: staff notification failed", e);
-      }
-    }
+      })().catch((e) => console.error("check-deadlines: staff notification failed", e)),
+    ]);
   }
 
   return NextResponse.json({

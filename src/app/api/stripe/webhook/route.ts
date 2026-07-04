@@ -186,6 +186,34 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "invoice.payment_succeeded": {
+        const inv = event.data.object as Stripe.Invoice;
+        const customerId = inv.customer as string | null;
+        if (customerId) {
+          const { data: client } = await admin
+            .from("clients")
+            .select("id, agency_id, payment_status")
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+
+          if (client && client.payment_status === "failed") {
+            await admin
+              .from("clients")
+              .update({ payment_status: "active" })
+              .eq("id", client.id);
+
+            await admin.from("activity_log").insert({
+              agency_id: client.agency_id,
+              client_id: client.id,
+              actor_type: "system",
+              action: "Payment recovered",
+              description: "A client's monthly service payment succeeded after a prior failure — payment status reset to active.",
+            });
+          }
+        }
+        break;
+      }
+
       default:
         break;
     }

@@ -71,7 +71,7 @@ export async function sendGHLNotification(
 
   if (webhookUrl) {
     try {
-      await fetch(webhookUrl, {
+      const res = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,8 +82,13 @@ export async function sendGHLNotification(
           triggered_at: new Date().toISOString(),
           source: "clientdeck_pro",
         }),
+        signal: AbortSignal.timeout(8000),
       });
-      result = { success: true, method: "ghl" };
+      if (res.ok) {
+        result = { success: true, method: "ghl" };
+      } else {
+        console.error(`[GHL Notification] ${type} webhook returned status ${res.status}`);
+      }
     } catch (err) {
       console.error(`[GHL Notification] ${type} webhook failed:`, err);
     }
@@ -165,6 +170,7 @@ async function sendResendFallback(
       subject: template.subject,
       text: template.body,
     }),
+    signal: AbortSignal.timeout(8000),
   });
 }
 
