@@ -4,9 +4,19 @@ import { Button } from "@/components/ui/button";
 import { CopyPortalLink } from "./copy-portal-link";
 import { AssignClient } from "./assign-client";
 import { AIStrategyPanel } from "./ai-strategy-panel";
+import { SendReviewRequestButton } from "./send-review-request-button";
 import { cn, scoreChange } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
-import { ArrowLeft, ArrowRight, Pencil, Plus, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Pencil,
+  Plus,
+  ArrowUp,
+  ArrowDown,
+  AlertTriangle,
+  PartyPopper,
+} from "lucide-react";
 
 function BureauScore({
   label,
@@ -147,6 +157,22 @@ export function ClientHeader({
             </Link>
             .
           </span>
+        </div>
+      )}
+
+      {client.status === "completed" && (
+        <div className="flex flex-col gap-3 rounded-lg border border-green-200 bg-green-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+            <div className="text-sm text-green-900">
+              <p className="font-medium">Case completed — goal reached!</p>
+              <p className="mt-0.5 text-green-800">
+                {client.total_items_deleted} of {totalItems} items resolved.
+                Ask them for a Google review while the win is fresh.
+              </p>
+            </div>
+          </div>
+          <SendReviewRequestButton clientId={client.id} />
         </div>
       )}
 

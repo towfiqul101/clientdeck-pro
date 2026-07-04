@@ -13,6 +13,8 @@ import {
   Phone,
   PartyPopper,
   CheckCircle2,
+  Star,
+  Gift,
 } from "lucide-react";
 
 function ScoreCard({
@@ -252,6 +254,37 @@ export default async function PortalDashboardPage() {
           </div>
         </div>
       </div>
+
+      {client.status === "completed" &&
+        (agency.settings.google_review_link || agency.settings.referral_link) && (
+          <div className="space-y-3">
+            {agency.settings.google_review_link && (
+              <a
+                href={agency.settings.google_review_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700"
+              >
+                <Star className="h-4 w-4 text-amber-500" />
+                Leave a Google Review
+              </a>
+            )}
+            {agency.settings.referral_link && (
+              <a
+                href={agency.settings.referral_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700"
+              >
+                <Gift className="h-4 w-4 text-green-600" />
+                Refer a Friend
+                {agency.settings.referral_bonus
+                  ? ` → Earn ${agency.settings.referral_bonus}`
+                  : ""}
+              </a>
+            )}
+          </div>
+        )}
 
       {/* Quick links */}
       <div className="grid grid-cols-1 gap-3">

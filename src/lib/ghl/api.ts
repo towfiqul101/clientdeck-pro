@@ -285,11 +285,17 @@ export async function syncClientCompleted(
   opts: GHLRequestOptions
 ) {
   await Promise.allSettled([
-    addGHLTag(contactId, ["goal-achieved"], opts),
+    addGHLTag(contactId, ["goal-achieved", "review-requested", "upsell-candidate"], opts),
     removeGHLTag(contactId, ["active-client"], opts),
     addGHLNote(
       contactId,
       `[ClientDeck Pro] Client has achieved their credit goal! Case completed.`,
+      opts
+    ),
+    createGHLTask(
+      contactId,
+      "Follow up about Google review — 3 days",
+      new Date(Date.now() + 3 * 86400000).toISOString(),
       opts
     ),
   ]);
