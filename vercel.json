@@ -2,6 +2,7 @@
   "crons": [
     { "path": "/api/cron/check-deadlines", "schedule": "0 13 * * *" },
     { "path": "/api/cron/retry-ghl-syncs", "schedule": "0 1 * * *" },
-    { "path": "/api/cron/auto-create-rounds", "schedule": "0 14 * * *" }
+    { "path": "/api/cron/auto-create-rounds", "schedule": "0 14 * * *" },
+    { "path": "/api/cron/monthly-progress", "schedule": "0 9 1 * *" }
   ]
 }
