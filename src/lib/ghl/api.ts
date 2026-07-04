@@ -195,7 +195,7 @@ export async function findOrCreateGHLOpportunity(
 ): Promise<string | null> {
   try {
     const searchData = await ghlFetch(
-      `/opportunities/search?location_id=${opts.locationId}&contact_id=${contactId}&pipeline_id=${pipelineId}`,
+      `/opportunities/search?locationId=${opts.locationId}&contactId=${contactId}&pipelineId=${pipelineId}`,
       opts
     );
     const existing = searchData?.opportunities?.[0];
