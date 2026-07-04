@@ -115,6 +115,8 @@ export function getNegativeTypeLabel(type: string): string {
     judgment: "Judgment",
     inquiry: "Hard Inquiry",
     identity_theft: "Identity Theft",
+    personal_info_error: "Personal Info Error",
+    duplicate_account: "Duplicate Account",
     other: "Other",
   };
   return labels[type] || type;

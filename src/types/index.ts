@@ -12,7 +12,7 @@ export type CreditGoal = "buy_home" | "car_loan" | "lower_rates" | "get_approved
 
 export type Bureau = "equifax" | "experian" | "transunion";
 export type AccountType = "credit_card" | "auto_loan" | "mortgage" | "personal_loan" | "student_loan" | "medical" | "collection" | "utility" | "other";
-export type NegativeType = "late_payment" | "collection" | "charge_off" | "repossession" | "bankruptcy" | "foreclosure" | "tax_lien" | "judgment" | "inquiry" | "identity_theft" | "other";
+export type NegativeType = "late_payment" | "collection" | "charge_off" | "repossession" | "bankruptcy" | "foreclosure" | "tax_lien" | "judgment" | "inquiry" | "identity_theft" | "personal_info_error" | "duplicate_account" | "other";
 export type DisputeStatus = "not_disputed" | "in_dispute" | "deleted" | "updated" | "verified" | "pending";
 
 export type RoundStatus = "preparing" | "letters_generated" | "sent" | "awaiting_response" | "complete";
@@ -99,6 +99,12 @@ export interface AgencySettings {
   onboarding_completed?: boolean;
   onboarding_completed_at?: string | null;
   onboarding_steps?: OnboardingSteps;
+  // Automation + completion (Session 5)
+  auto_create_rounds?: boolean;
+  auto_round_delay_days?: number;
+  google_review_link?: string;
+  referral_bonus?: string;
+  referral_link?: string;
 }
 
 export interface TeamMember {
@@ -157,6 +163,8 @@ export interface Client {
   onboarding_form_submitted: boolean;
   onboarding_submitted_at: string | null;
   ghl_drive_folder_id: string | null;
+  assigned_to: string | null;
+  assigned_at: string | null;
   created_at: string;
   updated_at: string;
 }

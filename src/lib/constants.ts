@@ -82,6 +82,8 @@ export const NEGATIVE_TYPES: { value: NegativeType; label: string }[] = [
   { value: "judgment", label: "Judgment" },
   { value: "inquiry", label: "Hard Inquiry" },
   { value: "identity_theft", label: "Identity Theft" },
+  { value: "personal_info_error", label: "Personal Info Error" },
+  { value: "duplicate_account", label: "Duplicate Account" },
   { value: "other", label: "Other" },
 ];
 
