@@ -54,7 +54,7 @@ export async function GET(req: Request) {
         })
       )
     );
-    sent += results.filter((r) => r.status === "fulfilled").length;
+    sent += results.filter((r) => r.status === "fulfilled" && r.value.success).length;
   }
 
   return NextResponse.json({ attempted, sent });
