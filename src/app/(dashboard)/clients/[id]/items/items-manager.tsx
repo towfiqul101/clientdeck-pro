@@ -18,8 +18,9 @@ import {
 import { getNegativeTypeLabel, getBureauLabel } from "@/lib/utils/helpers";
 import { addItems, updateItem, deleteItem, type NewItemInput } from "./actions";
 import { ItemDraftRow, blankDraft } from "./item-draft-row";
+import { CreditReportParser } from "./credit-report-parser";
 import type { Bureau, DisputeStatus, NegativeItem } from "@/types";
-import { Plus, Zap, Pencil, Trash2, ListTree, List, FileWarning } from "lucide-react";
+import { Plus, Zap, Pencil, Trash2, ListTree, List, FileWarning, Bot } from "lucide-react";
 
 interface ItemsManagerProps {
   clientId: string;
@@ -54,6 +55,7 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
   const [quickDrafts, setQuickDrafts] = useState<NewItemInput[]>([blankDraft()]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDrafts, setModalDrafts] = useState<NewItemInput[]>([blankDraft()]);
+  const [parserOpen, setParserOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Edit / delete
@@ -198,6 +200,13 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           >
             <Zap className="h-4 w-4" />
             Quick Add
+          </button>
+          <button
+            onClick={() => setParserOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            <Bot className="h-4 w-4" />
+            Parse Credit Report with AI
           </button>
           <Button onClick={() => setModalOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -496,6 +505,12 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           ({deleting && getBureauLabel(deleting.bureau)}). This cannot be undone.
         </p>
       </Modal>
+
+      <CreditReportParser
+        clientId={clientId}
+        open={parserOpen}
+        onClose={() => setParserOpen(false)}
+      />
     </div>
   );
 }
