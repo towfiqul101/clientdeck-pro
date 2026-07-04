@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react";
+import type { GHLNotificationType } from "@/lib/ghl/notifications";
 
-const WIRED_TYPES = [
+const WIRED_TYPES: readonly GHLNotificationType[] = [
   "round_sent",
   "deletion_win",
   "round_results_in",
@@ -10,12 +11,12 @@ const WIRED_TYPES = [
   "staff_new_client",
   "staff_round_overdue",
   "staff_next_round_ready",
-] as const;
+];
 
 export function ResendFallbackBanner({
   triggers,
 }: {
-  triggers: Partial<Record<string, string>>;
+  triggers: Partial<Record<GHLNotificationType, string>>;
 }) {
   const hasResend = Boolean(process.env.RESEND_API_KEY);
   if (!hasResend) return null;
