@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getGHLContact, updateGHLContactFields } from "@/lib/ghl/api";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
+import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
 import type { Agency, GHLContact, GHLContactCustomField } from "@/types";
 
 // Hobby plan caps at 60s. Client creation runs inline; Drive/GHL sync run via
@@ -161,6 +162,7 @@ export async function POST(req: Request) {
       .maybeSingle();
 
     let clientId: string;
+    const isNewClient = !existing;
     if (existing) {
       await supabase
         .from("clients")
@@ -216,6 +218,31 @@ export async function POST(req: Request) {
         await updateGHLContactFields(contactId, fields, opts);
       } catch (err) {
         console.error("[Onboarding] GHL field sync error:", err);
+      }
+      if (isNewClient) {
+        try {
+          const notifClient: NotifiableClient = {
+            id: clientId,
+            first_name: clientData.first_name,
+            last_name: clientData.last_name,
+            email: clientData.email,
+            phone: clientData.phone,
+            ghl_contact_id: contactId,
+            portal_token: portalLink ? new URL(portalLink).searchParams.get("token") : null,
+            monthly_fee: 0,
+            total_items_deleted: 0,
+            service_start_date: new Date().toISOString().split("T")[0],
+            score_eq_current: clientData.score_eq_current,
+            score_exp_current: clientData.score_exp_current,
+            score_tu_current: clientData.score_tu_current,
+            score_eq_start: clientData.score_eq_start,
+            score_exp_start: clientData.score_exp_start,
+            score_tu_start: clientData.score_tu_start,
+          };
+          await notifyStaffNewClient(agency, notifClient);
+        } catch (err) {
+          console.error("[Onboarding] Staff notification error:", err);
+        }
       }
     });
 
