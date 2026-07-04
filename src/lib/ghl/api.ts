@@ -182,6 +182,42 @@ export async function moveGHLPipelineStage(
   );
 }
 
+/**
+ * Finds an existing GHL opportunity for this contact in the given pipeline,
+ * or creates one in the pipeline's first stage if none exists. Best-effort —
+ * returns null on any failure rather than throwing (mirrors the existing
+ * `createGHLPipeline` best-effort pattern in this file).
+ */
+export async function findOrCreateGHLOpportunity(
+  contactId: string,
+  pipelineId: string,
+  opts: GHLRequestOptions
+): Promise<string | null> {
+  try {
+    const searchData = await ghlFetch(
+      `/opportunities/search?location_id=${opts.locationId}&contact_id=${contactId}&pipeline_id=${pipelineId}`,
+      opts
+    );
+    const existing = searchData?.opportunities?.[0];
+    if (existing?.id) return existing.id as string;
+
+    const created = await ghlFetch(`/opportunities/`, opts, {
+      method: "POST",
+      body: JSON.stringify({
+        pipelineId,
+        locationId: opts.locationId,
+        contactId,
+        name: "ClientDeck Pro Client",
+        status: "open",
+      }),
+    });
+    return created?.opportunity?.id ?? null;
+  } catch (err) {
+    console.error("findOrCreateGHLOpportunity failed:", err);
+    return null;
+  }
+}
+
 // ============================================
 // TASKS
 // ============================================
