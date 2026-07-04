@@ -3,6 +3,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCron } from "@/lib/cron/auth";
 import { createGHLTask } from "@/lib/ghl/api";
 import { daysRemaining } from "@/lib/utils/helpers";
+import { notifyStaffRoundOverdue, type NotifiableClient } from "@/lib/ghl/notifications";
+import type { Agency } from "@/types";
 
 export const maxDuration = 120;
 
@@ -13,14 +15,14 @@ interface OverdueRoundRow {
   client_id: string;
   response_deadline: string;
   client: {
+    id: string;
     first_name: string;
     last_name: string;
+    email: string | null;
+    phone: string | null;
     ghl_contact_id: string | null;
   } | null;
-  agency: {
-    ghl_api_key: string | null;
-    ghl_location_id: string | null;
-  } | null;
+  agency: Agency | null;
 }
 
 /**
@@ -39,7 +41,7 @@ export async function GET(req: Request) {
   const { data, error } = await admin
     .from("dispute_rounds")
     .select(
-      "id, round_number, agency_id, client_id, response_deadline, client:clients(first_name, last_name, ghl_contact_id), agency:agencies(ghl_api_key, ghl_location_id)"
+      "id, round_number, agency_id, client_id, response_deadline, client:clients(id, first_name, last_name, email, phone, ghl_contact_id), agency:agencies(*)"
     )
     .eq("status", "awaiting_response")
     .lt("response_deadline", today);
@@ -85,7 +87,7 @@ export async function GET(req: Request) {
     });
     flagged++;
 
-    // Best-effort GHL reminder task for staff.
+    // Best-effort GHL reminder task for staff (existing channel).
     const apiKey = round.agency?.ghl_api_key;
     const locationId = round.agency?.ghl_location_id;
     const contactId = round.client?.ghl_contact_id;
@@ -99,6 +101,33 @@ export async function GET(req: Request) {
         );
       } catch (e) {
         console.error("check-deadlines: GHL task failed", e);
+      }
+    }
+
+    // Best-effort GHL webhook notification (independent channel).
+    if (round.agency && round.client) {
+      const notifClient: NotifiableClient = {
+        id: round.client.id,
+        first_name: round.client.first_name,
+        last_name: round.client.last_name,
+        email: round.client.email,
+        phone: round.client.phone,
+        ghl_contact_id: round.client.ghl_contact_id,
+        portal_token: null,
+        monthly_fee: 0,
+        total_items_deleted: 0,
+        service_start_date: today,
+        score_eq_current: null,
+        score_exp_current: null,
+        score_tu_current: null,
+        score_eq_start: null,
+        score_exp_start: null,
+        score_tu_start: null,
+      };
+      try {
+        await notifyStaffRoundOverdue(round.agency, notifClient, round.round_number, daysOver);
+      } catch (e) {
+        console.error("check-deadlines: staff notification failed", e);
       }
     }
   }
