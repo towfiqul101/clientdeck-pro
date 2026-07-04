@@ -7,6 +7,7 @@ import { verifyGHLConnection, getGHLCustomFields } from "@/lib/ghl/api";
 import { detectFieldKeys } from "@/lib/ghl/field-detect";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
 import type { AgencySettings, GhlFieldKeys } from "@/types";
+import type { GHLNotificationType } from "@/lib/ghl/notifications";
 
 export interface ActionResult {
   success: boolean;
@@ -165,6 +166,37 @@ export async function saveGhlFieldKeys(
   const { error } = await supabase
     .from("agencies")
     .update({ ghl_field_keys: clean })
+    .eq("id", session.agency.id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/ghl");
+  return { success: true };
+}
+
+/** Saves the agency's GHL notification webhook URLs + owner contact id (agencies.settings). */
+export async function updateNotificationWebhooks(input: {
+  ghlWebhookTriggers: Partial<Record<GHLNotificationType, string>>;
+  ownerGhlContactId: string;
+}): Promise<ActionResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const cleanTriggers: Partial<Record<GHLNotificationType, string>> = {};
+  for (const [key, value] of Object.entries(input.ghlWebhookTriggers)) {
+    const url = safeHttpUrl(value ?? "");
+    if (url) cleanTriggers[key as GHLNotificationType] = url;
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const nextSettings: AgencySettings = {
+    ...session.agency.settings,
+    ghl_webhook_triggers: cleanTriggers,
+    owner_ghl_contact_id: input.ownerGhlContactId.trim() || undefined,
+  };
+
+  const { error } = await supabase
+    .from("agencies")
+    .update({ settings: nextSettings })
     .eq("id", session.agency.id);
   if (error) return { success: false, error: error.message };
 
