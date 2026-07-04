@@ -4,6 +4,8 @@ import { stripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { planFromPriceId, maxClientsForPlan } from "@/lib/billing/plans";
 import type { Plan, PlanStatus } from "@/types";
+import { notifyPaymentFailed, NOTIFIABLE_CLIENT_COLUMNS, type NotifiableClient } from "@/lib/ghl/notifications";
+import type { Agency } from "@/types";
 
 // Stripe requires the raw, unparsed body for signature verification.
 export const dynamic = "force-dynamic";
@@ -129,8 +131,11 @@ export async function POST(req: NextRequest) {
 
       case "invoice.payment_failed": {
         const inv = event.data.object as Stripe.Invoice;
-        const agencyId = await findAgencyId(inv.customer as string);
+        const customerId = inv.customer as string | null;
+        const agencyId = await findAgencyId(customerId);
+
         if (agencyId) {
+          // The agency's own SaaS subscription to ClientDeck Pro failed.
           await admin
             .from("agencies")
             .update({ plan_status: "past_due" })
@@ -141,6 +146,42 @@ export async function POST(req: NextRequest) {
             action: "Payment failed",
             description: "A subscription invoice payment failed (past_due).",
           });
+          break;
+        }
+
+        // Not the agency's own subscription — check whether it's a client's
+        // own Stripe customer (clients manage their monthly fee separately).
+        if (customerId) {
+          const { data: client } = await admin
+            .from("clients")
+            .select(`${NOTIFIABLE_CLIENT_COLUMNS}, agency_id`)
+            .eq("stripe_customer_id", customerId)
+            .maybeSingle();
+
+          if (client) {
+            await admin
+              .from("clients")
+              .update({ payment_status: "failed" })
+              .eq("id", client.id);
+
+            const { data: clientAgency } = await admin
+              .from("agencies")
+              .select("*")
+              .eq("id", client.agency_id)
+              .single();
+
+            if (clientAgency) {
+              await notifyPaymentFailed(clientAgency as Agency, client as NotifiableClient);
+            }
+
+            await admin.from("activity_log").insert({
+              agency_id: client.agency_id,
+              client_id: client.id,
+              actor_type: "system",
+              action: "Payment failed",
+              description: "A client's monthly service payment failed.",
+            });
+          }
         }
         break;
       }
