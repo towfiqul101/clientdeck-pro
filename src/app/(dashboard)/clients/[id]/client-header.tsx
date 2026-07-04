@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CopyPortalLink } from "./copy-portal-link";
+import { AssignClient } from "./assign-client";
 import { cn, scoreChange } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
 import { ArrowLeft, ArrowRight, Pencil, Plus, ArrowUp, ArrowDown } from "lucide-react";
@@ -49,7 +50,13 @@ function BureauScore({
   );
 }
 
-export function ClientHeader({ client }: { client: Client }) {
+export function ClientHeader({
+  client,
+  members,
+}: {
+  client: Client;
+  members: { id: string; name: string }[];
+}) {
   // total_items_current tracks all items on file; total_items_deleted is the
   // subset resolved by deletion.
   const totalItems = Math.max(
@@ -84,6 +91,14 @@ export function ClientHeader({ client }: { client: Client }) {
               {[client.email, client.phone].filter(Boolean).join(" · ")}
             </p>
           )}
+          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+            <span>Assigned to:</span>
+            <AssignClient
+              clientId={client.id}
+              assignedTo={client.assigned_to}
+              members={members}
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { checkClientLimit } from "@/lib/utils/license";
-import { createGHLContact } from "@/lib/ghl/api";
+import { createGHLContact, getGHLContact } from "@/lib/ghl/api";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
-import type { CreditGoal } from "@/types";
+import type { CreditGoal, GHLContactCustomField } from "@/types";
 
 export interface ClientFormValues {
   first_name: string;
@@ -52,6 +52,35 @@ function validate(values: ClientFormValues): string | null {
       return "Credit scores must be between 300 and 850.";
   }
   return null;
+}
+
+/**
+ * Reads the GHL contact's `assigned_preparer` custom field (if any GHL
+ * automation set one on creation) and matches it by name against the
+ * agency's active team members. Best-effort — swallows all errors.
+ */
+async function findAssignedPreparerMatch(
+  ghlContactId: string,
+  activeMembers: { id: string; name: string }[],
+  opts: { apiKey: string; locationId: string }
+): Promise<string | null> {
+  try {
+    const data = await getGHLContact(ghlContactId, opts);
+    const fields: GHLContactCustomField[] = data?.contact?.customFields ?? [];
+    const match = fields.find((f) =>
+      f.fieldKey?.toLowerCase().endsWith("assigned_preparer")
+    );
+    const preparerName = match?.value ? String(match.value).trim().toLowerCase() : null;
+    if (!preparerName) return null;
+
+    const member = activeMembers.find(
+      (m) => m.name.trim().toLowerCase() === preparerName
+    );
+    return member?.id ?? null;
+  } catch (e) {
+    console.error("findAssignedPreparerMatch: GHL lookup failed", e);
+    return null;
+  }
 }
 
 export async function createClient(
@@ -101,6 +130,28 @@ export async function createClient(
     );
   }
 
+  // Auto-assign: sole active member gets everything; otherwise fall back to
+  // a GHL "assigned_preparer" custom-field match by name. Otherwise unassigned.
+  let autoAssignedTo: string | null = null;
+  const { data: activeMembersData } = await supabase
+    .from("team_members")
+    .select("id, name")
+    .eq("is_active", true);
+  const activeMembers = activeMembersData ?? [];
+  if (activeMembers.length === 1) {
+    autoAssignedTo = activeMembers[0].id;
+  } else if (
+    activeMembers.length > 1 &&
+    ghlContactId &&
+    session.agency.ghl_api_key &&
+    session.agency.ghl_location_id
+  ) {
+    autoAssignedTo = await findAssignedPreparerMatch(ghlContactId, activeMembers, {
+      apiKey: session.agency.ghl_api_key,
+      locationId: session.agency.ghl_location_id,
+    });
+  }
+
   const { data, error } = await supabase
     .from("clients")
     .insert({
@@ -133,6 +184,8 @@ export async function createClient(
       total_items_start: 0,
       total_items_current: 0,
       total_items_deleted: 0,
+      assigned_to: autoAssignedTo,
+      assigned_at: autoAssignedTo ? new Date().toISOString() : null,
     })
     .select("id")
     .single();

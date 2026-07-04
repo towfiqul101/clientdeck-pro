@@ -56,10 +56,20 @@ export default async function ClientsPage({
   const q = param(sp, "q").replace(/[,()%]/g, "");
   const status = param(sp, "status");
   const payment = param(sp, "payment");
+  const assigned = param(sp, "assigned");
   const sort = param(sp, "sort") || "name";
   const page = Math.max(1, parseInt(param(sp, "page") || "1", 10) || 1);
 
   const supabase = await createServerSupabaseClient();
+
+  const { data: teamMembers } = await supabase
+    .from("team_members")
+    .select("id, name")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+  const members = teamMembers ?? [];
+  const memberNames = new Map(members.map((m) => [m.id, m.name]));
+
   let query = supabase.from("clients").select("*", { count: "exact" });
 
   if (q) {
@@ -69,6 +79,8 @@ export default async function ClientsPage({
   }
   if (status) query = query.eq("status", status);
   if (payment) query = query.eq("payment_status", payment);
+  if (assigned === "unassigned") query = query.is("assigned_to", null);
+  else if (assigned) query = query.eq("assigned_to", assigned);
 
   switch (sort) {
     case "newest":
@@ -105,12 +117,13 @@ export default async function ClientsPage({
     if (q) params.set("q", q);
     if (status) params.set("status", status);
     if (payment) params.set("payment", payment);
+    if (assigned) params.set("assigned", assigned);
     if (sort) params.set("sort", sort);
     params.set("page", String(p));
     return `/clients?${params.toString()}`;
   };
 
-  const hasFilters = Boolean(q || status || payment);
+  const hasFilters = Boolean(q || status || payment || assigned);
 
   return (
     <div className="space-y-5">
@@ -131,7 +144,7 @@ export default async function ClientsPage({
         </Link>
       </div>
 
-      <ClientsFilters />
+      <ClientsFilters members={members} />
 
       {/* Table */}
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -167,6 +180,7 @@ export default async function ClientsPage({
                   <th className="px-4 py-3">Round</th>
                   <th className="px-4 py-3">Items</th>
                   <th className="px-4 py-3">Payment</th>
+                  <th className="px-4 py-3">Assigned To</th>
                   <th className="px-4 py-3">Created</th>
                 </tr>
               </thead>
@@ -223,6 +237,20 @@ export default async function ClientsPage({
                     <td className="px-4 py-3">
                       <Link href={`/clients/${c.id}`} className="block">
                         <Badge status={c.payment_status} />
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/clients/${c.id}`} className="block">
+                        <span
+                          className={cn(
+                            "text-sm",
+                            c.assigned_to ? "text-gray-700" : "text-gray-400"
+                          )}
+                        >
+                          {c.assigned_to
+                            ? (memberNames.get(c.assigned_to) ?? "Unknown")
+                            : "Unassigned"}
+                        </span>
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-gray-500">

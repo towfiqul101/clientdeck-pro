@@ -15,7 +15,11 @@ const SORT_OPTIONS = [
 const selectClass =
   "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
-export function ClientsFilters() {
+export function ClientsFilters({
+  members = [],
+}: {
+  members?: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -86,6 +90,20 @@ export function ClientsFilters() {
         ).map((p) => (
           <option key={p.value} value={p.value}>
             {p.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={searchParams.get("assigned") ?? ""}
+        onChange={(e) => pushParams({ assigned: e.target.value })}
+        className={selectClass}
+      >
+        <option value="">All assignees</option>
+        <option value="unassigned">Unassigned</option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
           </option>
         ))}
       </select>
