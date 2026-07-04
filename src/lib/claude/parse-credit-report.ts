@@ -61,8 +61,12 @@ function coerce(raw: unknown): ParsedItem | null {
   const last4 =
     last4Raw == null ? null : String(last4Raw).replace(/\D/g, "").slice(-4) || null;
 
-  const balNum = typeof o.balance === "number" ? o.balance : Number(o.balance);
-  const balance = Number.isFinite(balNum) ? balNum : null;
+  const balance: number | null =
+    typeof o.balance === "number"
+      ? (Number.isFinite(o.balance) ? o.balance : null)
+      : typeof o.balance === "string" && o.balance.trim() !== "" && Number.isFinite(Number(o.balance))
+        ? Number(o.balance)
+        : null;
 
   const iso = (v: unknown): string | null => {
     if (typeof v !== "string") return null;
@@ -86,11 +90,13 @@ function coerce(raw: unknown): ParsedItem | null {
  */
 export async function parseCreditReport(
   base64Pdf: string,
-  _bureau: Bureau
+  bureau: Bureau
 ): Promise<{ items: ParsedItem[]; note?: string }> {
   if (!process.env.ANTHROPIC_API_KEY) {
     return { items: [], note: "AI parsing unavailable — ANTHROPIC_API_KEY is not set." };
   }
+
+  const promptText = `This is a ${bureau} credit report.\n\n${PARSE_PROMPT}`;
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -110,7 +116,7 @@ export async function parseCreditReport(
               type: "document",
               source: { type: "base64", media_type: "application/pdf", data: base64Pdf },
             },
-            { type: "text", text: PARSE_PROMPT },
+            { type: "text", text: promptText },
           ],
         },
       ],
