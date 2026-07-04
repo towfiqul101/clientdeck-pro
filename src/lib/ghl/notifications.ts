@@ -10,11 +10,12 @@ export type GHLNotificationType =
   | "portal_link"
   | "staff_new_client"
   | "staff_round_overdue"
-  | "staff_next_round_ready";
+  | "staff_next_round_ready"
+  | "monthly_progress";
 
 /** Columns every notify* helper needs off a `clients` row. Select this whenever a call site needs to notify. */
 export const NOTIFIABLE_CLIENT_COLUMNS =
-  "id, first_name, last_name, email, phone, ghl_contact_id, portal_token, monthly_fee, total_items_deleted, service_start_date, score_eq_current, score_exp_current, score_tu_current, score_eq_start, score_exp_start, score_tu_start";
+  "id, first_name, last_name, email, phone, ghl_contact_id, ghl_opportunity_id, portal_token, monthly_fee, total_items_deleted, total_items_start, service_start_date, score_eq_current, score_exp_current, score_tu_current, score_eq_start, score_exp_start, score_tu_start";
 
 export type NotifiableClient = Pick<
   Client,
@@ -24,9 +25,11 @@ export type NotifiableClient = Pick<
   | "email"
   | "phone"
   | "ghl_contact_id"
+  | "ghl_opportunity_id"
   | "portal_token"
   | "monthly_fee"
   | "total_items_deleted"
+  | "total_items_start"
   | "service_start_date"
   | "score_eq_current"
   | "score_exp_current"

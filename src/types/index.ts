@@ -109,10 +109,16 @@ export interface AgencySettings {
   ghl_webhook_triggers?: Partial<Record<
     "round_sent" | "deletion_win" | "round_results_in" | "payment_failed" |
     "goal_achieved" | "portal_link" | "staff_new_client" | "staff_round_overdue" |
-    "staff_next_round_ready",
+    "staff_next_round_ready" | "monthly_progress",
     string
   >>;
   owner_ghl_contact_id?: string;
+  // Pipeline sync (Session 6, Phase B)
+  ghl_pipeline_id?: string;
+  ghl_pipeline_stages?: Partial<Record<
+    "round_1_sent" | "round_2_plus" | "goal_achieved",
+    string
+  >>;
 }
 
 export interface TeamMember {
@@ -131,6 +137,7 @@ export interface Client {
   id: string;
   agency_id: string;
   ghl_contact_id: string | null;
+  ghl_opportunity_id: string | null;
   first_name: string;
   last_name: string;
   email: string | null;

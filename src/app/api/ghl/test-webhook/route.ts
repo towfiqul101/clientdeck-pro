@@ -63,6 +63,16 @@ const TEST_PAYLOADS: Record<GHLNotificationType, Record<string, unknown>> = {
     round_number: 3,
     dashboard_link: "https://app.clientdeckpro.com/clients/test",
   },
+  monthly_progress: {
+    score_eq: 650,
+    score_exp: 645,
+    score_tu: 648,
+    total_deletions: 3,
+    total_items: 8,
+    current_round: 2,
+    months_in_program: 4,
+    portal_link: "https://app.clientdeckpro.com/portal?token=test",
+  },
 };
 
 export async function POST(req: Request) {
