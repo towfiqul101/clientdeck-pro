@@ -69,6 +69,7 @@ export function AIStrategyPanel({ clientId }: { clientId: string }) {
         open={open}
         onClose={() => {
           ++requestIdRef.current;
+          setLoading(false);
           setOpen(false);
         }}
         title="🤖 AI Dispute Advisor"
