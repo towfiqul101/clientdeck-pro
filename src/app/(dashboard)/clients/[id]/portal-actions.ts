@@ -5,6 +5,11 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { updateGHLContactFields } from "@/lib/ghl/api";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
+import {
+  notifyPortalLink,
+  NOTIFIABLE_CLIENT_COLUMNS,
+  type NotifiableClient,
+} from "@/lib/ghl/notifications";
 
 /**
  * Rotates the client's portal token, returns a fresh magic-link URL, and
@@ -21,7 +26,7 @@ export async function generateAndSyncPortalLink(
   const supabase = await createServerSupabaseClient();
   const { data: client } = await supabase
     .from("clients")
-    .select("id, ghl_contact_id")
+    .select(NOTIFIABLE_CLIENT_COLUMNS)
     .eq("id", clientId)
     .single();
   if (!client) return { success: false, error: "Client not found." };
@@ -49,6 +54,15 @@ export async function generateAndSyncPortalLink(
       console.error("Failed to sync portal link to GHL:", e);
     }
   }
+
+  // Best-effort GHL webhook notification. `client.portal_token` was just
+  // rotated by generatePortalLink() above but the in-memory row still has the
+  // old value, so build the payload from the fresh `url` instead of relying
+  // on notifyPortalLink()'s own portal_token lookup.
+  await notifyPortalLink(session.agency, {
+    ...(client as NotifiableClient),
+    portal_token: new URL(url).searchParams.get("token"),
+  });
 
   await supabase.from("activity_log").insert({
     agency_id: session.agency.id,
