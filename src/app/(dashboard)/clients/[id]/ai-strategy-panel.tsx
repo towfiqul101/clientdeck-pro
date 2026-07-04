@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
@@ -18,19 +18,26 @@ export function AIStrategyPanel({ clientId }: { clientId: string }) {
   const [loading, setLoading] = useState(false);
   const [strategy, setStrategy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   async function handleOpen() {
     setOpen(true);
     setError(null);
     setStrategy(null);
     setLoading(true);
+    const requestId = ++requestIdRef.current;
+
     try {
       const res = await fetch("/api/ai/strategy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clientId }),
       });
+      if (requestId !== requestIdRef.current) return;
+
       const data = await res.json();
+      if (requestId !== requestIdRef.current) return;
+
       if (data.ok) {
         setStrategy(data.strategy as string);
       } else {
@@ -39,24 +46,31 @@ export function AIStrategyPanel({ clientId }: { clientId: string }) {
         toast(message, "error");
       }
     } catch {
+      if (requestId !== requestIdRef.current) return;
+
       const message = "Could not reach the server. Try again.";
       setError(message);
       toast(message, "error");
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }
 
   return (
     <>
-      <Button variant="secondary" onClick={handleOpen}>
+      <Button variant="secondary" onClick={handleOpen} disabled={loading}>
         <Bot className="h-4 w-4" />
         AI Strategy
       </Button>
 
       <Modal
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          ++requestIdRef.current;
+          setOpen(false);
+        }}
         title="🤖 AI Dispute Advisor"
         size="lg"
       >
