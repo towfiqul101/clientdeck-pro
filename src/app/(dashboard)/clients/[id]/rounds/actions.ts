@@ -13,6 +13,13 @@ import {
 } from "@/lib/ghl/api";
 import { runGhlSync } from "@/lib/ghl/sync";
 import { syncRoundLettersToDrive } from "@/lib/google-drive/letter-sync";
+import {
+  notifyRoundSent,
+  notifyDeletionWin,
+  notifyRoundResults,
+  NOTIFIABLE_CLIENT_COLUMNS,
+  type NotifiableClient,
+} from "@/lib/ghl/notifications";
 import type {
   Bureau,
   DisputeResult,
@@ -260,34 +267,42 @@ export async function markRoundSent(
     .update({ current_round: round.round_number, status: "active" })
     .eq("id", clientId);
 
-  // Best-effort GHL sync (logged to ghl_sync_log for visibility + retry).
+  const { data: notifClient } = await supabase
+    .from("clients")
+    .select(NOTIFIABLE_CLIENT_COLUMNS)
+    .eq("id", clientId)
+    .single();
+
+  // Best-effort GHL field/tag sync (existing channel, logged to ghl_sync_log).
   const { ghl_api_key, ghl_location_id } = session.agency;
-  if (ghl_api_key && ghl_location_id) {
-    const { data: client } = await supabase
-      .from("clients")
-      .select("ghl_contact_id")
-      .eq("id", clientId)
-      .single();
-    if (client?.ghl_contact_id) {
-      const contactId = client.ghl_contact_id;
-      await runGhlSync({
-        agencyId: session.agency.id,
-        clientId,
-        action: "sync_round_sent",
-        payload: {
+  if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
+    const contactId = notifClient.ghl_contact_id;
+    await runGhlSync({
+      agencyId: session.agency.id,
+      clientId,
+      action: "sync_round_sent",
+      payload: {
+        contactId,
+        roundNumber: round.round_number,
+        itemsDisputed: round.total_items_disputed,
+      },
+      run: () =>
+        syncRoundSent(
           contactId,
-          roundNumber: round.round_number,
-          itemsDisputed: round.total_items_disputed,
-        },
-        run: () =>
-          syncRoundSent(
-            contactId,
-            round.round_number,
-            round.total_items_disputed,
-            { apiKey: ghl_api_key, locationId: ghl_location_id }
-          ),
-      });
-    }
+          round.round_number,
+          round.total_items_disputed,
+          { apiKey: ghl_api_key, locationId: ghl_location_id }
+        ),
+    });
+  }
+
+  // Best-effort GHL webhook notification (independent channel — SMS/email content).
+  if (notifClient) {
+    await notifyRoundSent(session.agency, notifClient as NotifiableClient, {
+      round_number: round.round_number,
+      total_items_disputed: round.total_items_disputed,
+      response_deadline: deadline,
+    });
   }
 
   await supabase.from("activity_log").insert({
@@ -358,7 +373,7 @@ export async function logResults(
 
   const { data: round } = await supabase
     .from("dispute_rounds")
-    .select("round_number")
+    .select("round_number, total_items_disputed")
     .eq("id", roundId)
     .single();
   if (!round) return { success: false, error: "Round not found." };
@@ -399,6 +414,18 @@ export async function logResults(
     else if (entry.result === "no_response") tally.no_response++;
   }
 
+  const deletedItemIds = entries
+    .filter((e) => e.result === "deleted")
+    .map((e) => e.negativeItemId);
+  let deletedItemNames: string[] = [];
+  if (deletedItemIds.length > 0) {
+    const { data: deletedRows } = await supabase
+      .from("negative_items")
+      .select("creditor_name")
+      .in("id", deletedItemIds);
+    deletedItemNames = (deletedRows ?? []).map((r) => r.creditor_name);
+  }
+
   await supabase
     .from("dispute_rounds")
     .update({
@@ -412,6 +439,12 @@ export async function logResults(
     .eq("id", roundId);
 
   await recomputeClientItemTotals(supabase, clientId);
+
+  const { data: notifClient } = await supabase
+    .from("clients")
+    .select(NOTIFIABLE_CLIENT_COLUMNS)
+    .eq("id", clientId)
+    .single();
 
   // Optional: record updated bureau scores for this round. Updates the client's
   // current scores and snapshots them to score_history for the portal chart.
@@ -481,33 +514,45 @@ export async function logResults(
 
   if (tally.deletions > 0) {
     const { ghl_api_key, ghl_location_id } = session.agency;
-    if (ghl_api_key && ghl_location_id) {
-      const { data: client } = await supabase
-        .from("clients")
-        .select("ghl_contact_id")
-        .eq("id", clientId)
-        .single();
-      if (client?.ghl_contact_id) {
-        const contactId = client.ghl_contact_id;
-        const deletions = tally.deletions;
-        const total = totalDeleted ?? 0;
-        await runGhlSync({
-          agencyId: session.agency.id,
-          clientId,
-          action: "sync_deletion",
-          payload: {
-            contactId,
-            deletionsThisRound: deletions,
-            totalDeletions: total,
-          },
-          run: () =>
-            syncDeletionAchieved(contactId, deletions, total, {
-              apiKey: ghl_api_key,
-              locationId: ghl_location_id,
-            }),
-        });
-      }
+    if (ghl_api_key && ghl_location_id && notifClient?.ghl_contact_id) {
+      const contactId = notifClient.ghl_contact_id;
+      const deletions = tally.deletions;
+      const total = totalDeleted ?? 0;
+      await runGhlSync({
+        agencyId: session.agency.id,
+        clientId,
+        action: "sync_deletion",
+        payload: {
+          contactId,
+          deletionsThisRound: deletions,
+          totalDeletions: total,
+        },
+        run: () =>
+          syncDeletionAchieved(contactId, deletions, total, {
+            apiKey: ghl_api_key,
+            locationId: ghl_location_id,
+          }),
+      });
     }
+  }
+
+  if (notifClient) {
+    if (tally.deletions > 0) {
+      await notifyDeletionWin(
+        session.agency,
+        notifClient as NotifiableClient,
+        tally.deletions,
+        totalDeleted ?? 0,
+        deletedItemNames
+      );
+    }
+    await notifyRoundResults(session.agency, notifClient as NotifiableClient, {
+      round_number: round.round_number,
+      total_items_disputed: round.total_items_disputed,
+      total_deletions: tally.deletions,
+      total_verified: tally.verified,
+      total_no_response: tally.no_response,
+    });
   }
 
   await supabase.from("activity_log").insert({
