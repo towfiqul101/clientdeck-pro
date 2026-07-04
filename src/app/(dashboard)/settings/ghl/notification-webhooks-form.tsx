@@ -51,6 +51,31 @@ export function NotificationWebhooksForm({ initial }: NotificationWebhooksFormPr
     else toast(result.error ?? "Could not save.", "error");
   }
 
+  const [testing, setTesting] = useState<GHLNotificationType | null>(null);
+
+  async function handleTest(key: GHLNotificationType) {
+    const url = triggers[key];
+    if (!url) {
+      toast("Enter a webhook URL first.", "error");
+      return;
+    }
+    setTesting(key);
+    try {
+      const res = await fetch("/api/ghl/test-webhook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ webhookUrl: url, notificationType: key }),
+      });
+      const data = await res.json();
+      if (data.success) toast("GHL received the test payload.", "success");
+      else toast(data.error ?? "GHL did not respond successfully.", "error");
+    } catch {
+      toast("Could not reach the webhook URL.", "error");
+    } finally {
+      setTesting(null);
+    }
+  }
+
   return (
     <Card>
       <CardHeader
@@ -65,13 +90,24 @@ export function NotificationWebhooksForm({ initial }: NotificationWebhooksFormPr
           <div className="space-y-4">
             {CLIENT_TYPES.map(({ key, label }) => (
               <Field key={key} label={label} htmlFor={key}>
-                <Input
-                  id={key}
-                  value={triggers[key] ?? ""}
-                  onChange={(e) => setTrigger(key, e.target.value)}
-                  placeholder="https://hooks.gohighlevel.com/hooks/..."
-                  className="font-mono text-xs"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id={key}
+                    value={triggers[key] ?? ""}
+                    onChange={(e) => setTrigger(key, e.target.value)}
+                    placeholder="https://hooks.gohighlevel.com/hooks/..."
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="shrink-0"
+                    loading={testing === key}
+                    onClick={() => handleTest(key)}
+                  >
+                    Test
+                  </Button>
+                </div>
               </Field>
             ))}
           </div>
@@ -84,13 +120,24 @@ export function NotificationWebhooksForm({ initial }: NotificationWebhooksFormPr
           <div className="space-y-4">
             {STAFF_TYPES.map(({ key, label }) => (
               <Field key={key} label={label} htmlFor={key}>
-                <Input
-                  id={key}
-                  value={triggers[key] ?? ""}
-                  onChange={(e) => setTrigger(key, e.target.value)}
-                  placeholder="https://hooks.gohighlevel.com/hooks/..."
-                  className="font-mono text-xs"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id={key}
+                    value={triggers[key] ?? ""}
+                    onChange={(e) => setTrigger(key, e.target.value)}
+                    placeholder="https://hooks.gohighlevel.com/hooks/..."
+                    className="font-mono text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="shrink-0"
+                    loading={testing === key}
+                    onClick={() => handleTest(key)}
+                  >
+                    Test
+                  </Button>
+                </div>
               </Field>
             ))}
           </div>
