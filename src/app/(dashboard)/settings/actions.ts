@@ -13,6 +13,18 @@ export interface ActionResult {
   error?: string;
 }
 
+/** Validates that a trimmed string is either empty or an absolute http(s) URL. */
+function safeHttpUrl(raw: string): string {
+  const v = raw.trim();
+  if (!v) return "";
+  try {
+    const u = new URL(v);
+    return u.protocol === "http:" || u.protocol === "https:" ? v : "";
+  } catch {
+    return "";
+  }
+}
+
 /** Updates general agency profile: name, phone, website, and timezone (in settings JSONB). */
 export async function updateGeneralSettings(input: {
   name: string;
@@ -68,9 +80,9 @@ export async function updateAutomationSettings(input: {
     ...session.agency.settings,
     auto_create_rounds: input.autoCreateRounds,
     auto_round_delay_days: input.autoRoundDelayDays,
-    google_review_link: input.googleReviewLink.trim() || undefined,
+    google_review_link: safeHttpUrl(input.googleReviewLink) || undefined,
     referral_bonus: input.referralBonus.trim() || undefined,
-    referral_link: input.referralLink.trim() || undefined,
+    referral_link: safeHttpUrl(input.referralLink) || undefined,
   };
 
   const { error } = await supabase
