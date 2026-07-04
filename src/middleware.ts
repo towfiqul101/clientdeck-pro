@@ -48,6 +48,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // 2a. Admin panel — completely separate auth. It self-guards via the
+  //     cdp_admin_session cookie (see @/lib/admin/session) and has NO dependency
+  //     on Supabase Auth, so let every /admin route (including /admin/login)
+  //     through untouched.
+  if (pathname.startsWith("/admin")) {
+    return NextResponse.next();
+  }
+
   // 2b. If Supabase isn't configured yet (e.g. env vars not set on a fresh
   //     deploy), don't crash every route with MIDDLEWARE_INVOCATION_FAILED.
   //     Let requests through — pages self-protect via getSessionContext().
@@ -90,18 +98,6 @@ export async function middleware(request: NextRequest) {
 
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-
-  // Super-admin area: must be signed in AND match ADMIN_EMAIL exactly.
-  if (pathname.startsWith("/admin")) {
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
-    if (!user || !adminEmail || user.email?.toLowerCase() !== adminEmail) {
-      const url = request.nextUrl.clone();
-      url.pathname = user ? "/dashboard" : "/login";
-      url.search = "";
-      return redirectWithCookies(url, response);
-    }
-    return response;
-  }
 
   // Signed-out user hitting a protected route → login (carry refreshed cookies).
   if (!user && !isAuthRoute && !isPublicRoute) {

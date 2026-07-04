@@ -4,8 +4,9 @@ export interface PlanConfig {
   id: Plan;
   name: string;
   priceMonthly: number;
-  priceLabel: string; // "$79"
+  priceLabel: string; // "$49"
   maxClients: number;
+  maxTeamMembers: number;
   clientsLabel: string;
   features: string[];
   /** Name of the env var holding this plan's Stripe price id. */
@@ -13,19 +14,27 @@ export interface PlanConfig {
   highlight?: boolean;
 }
 
-/** Purchasable plans, in display order. `enterprise` is provisioned manually. */
+/**
+ * Purchasable plans, in display order. `enterprise` is provisioned manually.
+ *
+ * NOTE: the internal `id` for the entry-level tier stays `"solo"` (matching the
+ * DB CHECK constraint and existing rows) even though it is presented to
+ * customers as "Starter". Renaming the id would require a DB enum migration.
+ */
 export const PLANS: PlanConfig[] = [
   {
     id: "solo",
-    name: "Solo",
-    priceMonthly: 79,
-    priceLabel: "$79",
-    maxClients: 15,
-    clientsLabel: "Up to 15 active clients",
+    name: "Starter",
+    priceMonthly: 49,
+    priceLabel: "$49",
+    maxClients: 100,
+    maxTeamMembers: 2,
+    clientsLabel: "Up to 100 active clients",
     features: [
-      "Up to 15 active clients",
-      "AI dispute-letter generation",
-      "Branded client portal",
+      "Up to 100 active clients",
+      "2 team members",
+      "AI letter generation",
+      "Client portal",
       "GoHighLevel sync",
     ],
     priceEnv: "STRIPE_PRICE_SOLO",
@@ -33,15 +42,17 @@ export const PLANS: PlanConfig[] = [
   {
     id: "pro",
     name: "Pro",
-    priceMonthly: 149,
-    priceLabel: "$149",
-    maxClients: 75,
-    clientsLabel: "Up to 75 clients + white-label portal",
+    priceMonthly: 129,
+    priceLabel: "$129",
+    maxClients: 700,
+    maxTeamMembers: 5,
+    clientsLabel: "Up to 700 clients + white-label portal",
     features: [
-      "Up to 75 active clients",
-      "White-label client portal",
-      "Team members",
+      "Up to 700 active clients",
+      "5 team members",
+      "White-label portal",
       "Priority letter generation",
+      "Advanced reporting",
     ],
     priceEnv: "STRIPE_PRICE_PRO",
     highlight: true,
@@ -52,11 +63,14 @@ export const PLANS: PlanConfig[] = [
     priceMonthly: 249,
     priceLabel: "$249",
     maxClients: 9999,
+    maxTeamMembers: 9999,
     clientsLabel: "Unlimited clients + custom domain + API",
     features: [
-      "Unlimited active clients",
-      "Custom portal domain",
+      "Unlimited clients",
+      "Unlimited team members",
       "API access",
+      "Custom portal domain",
+      "Credit monitoring API keys",
       'Removes "Powered by ClientDeck Pro"',
     ],
     priceEnv: "STRIPE_PRICE_AGENCY",
@@ -71,14 +85,25 @@ export const PLAN_BY_ID: Record<Plan, PlanConfig | undefined> = {
 };
 
 const PLAN_MAX_CLIENTS: Record<Plan, number> = {
-  solo: 15,
-  pro: 75,
+  solo: 100,
+  pro: 700,
+  agency: 9999,
+  enterprise: 9999,
+};
+
+const PLAN_MAX_TEAM_MEMBERS: Record<Plan, number> = {
+  solo: 2,
+  pro: 5,
   agency: 9999,
   enterprise: 9999,
 };
 
 export function maxClientsForPlan(plan: Plan): number {
-  return PLAN_MAX_CLIENTS[plan] ?? 15;
+  return PLAN_MAX_CLIENTS[plan] ?? 100;
+}
+
+export function maxTeamMembersForPlan(plan: Plan): number {
+  return PLAN_MAX_TEAM_MEMBERS[plan] ?? 2;
 }
 
 export function stripePriceIdForPlan(plan: Plan): string | undefined {

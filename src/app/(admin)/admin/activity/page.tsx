@@ -1,7 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils/helpers";
+import { AlertTriangle } from "lucide-react";
 import type { ActivityLog, ActorType } from "@/types";
+
+export const dynamic = "force-dynamic";
 
 const ACTORS: ActorType[] = ["system", "staff", "client", "ghl", "stripe"];
 
@@ -15,6 +18,30 @@ const ACTOR_COLOR: Record<string, string> = {
   ghl: "bg-purple-100 text-purple-700",
   stripe: "bg-indigo-100 text-indigo-700",
 };
+
+function HealthDot({
+  label,
+  ok,
+  okText,
+  badText,
+  neutral = false,
+}: {
+  label: string;
+  ok: boolean;
+  okText: string;
+  badText: string;
+  neutral?: boolean;
+}) {
+  const dot = neutral ? "bg-gray-400" : ok ? "bg-green-500" : "bg-amber-500";
+  return (
+    <div className="flex items-center gap-2">
+      <span className={cn("h-2.5 w-2.5 rounded-full", dot)} />
+      <span className="text-sm text-gray-600">
+        <span className="font-medium text-gray-900">{label}:</span> {ok ? okText : badText}
+      </span>
+    </div>
+  );
+}
 
 export default async function AdminActivityPage({
   searchParams,
@@ -33,6 +60,37 @@ export default async function AdminActivityPage({
     .select("id, name")
     .order("name");
   const agencyName = new Map((agencyRows ?? []).map((a) => [a.id, a.name]));
+
+  // ── System health ──────────────────────────────────────────────────────────
+  const supabaseOk = agencyRows !== null;
+  const deployed = Boolean(process.env.VERCEL);
+  const since24h = new Date(
+    new Date().getTime() - 24 * 60 * 60 * 1000
+  ).toISOString();
+
+  const { count: ghlFailCount } = await admin
+    .from("ghl_sync_log")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "failed")
+    .gte("attempted_at", since24h);
+  const ghlFailures = ghlFailCount ?? 0;
+
+  let failedSyncs: {
+    agency_id: string;
+    sync_action: string;
+    error_message: string | null;
+    attempted_at: string;
+  }[] = [];
+  if (ghlFailures > 0) {
+    const { data: fails } = await admin
+      .from("ghl_sync_log")
+      .select("agency_id, sync_action, error_message, attempted_at")
+      .eq("status", "failed")
+      .gte("attempted_at", since24h)
+      .order("attempted_at", { ascending: false })
+      .limit(10);
+    failedSyncs = fails ?? [];
+  }
 
   let builder = admin
     .from("activity_log")
@@ -60,6 +118,45 @@ export default async function AdminActivityPage({
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader title="System Health" description="Live status across services." />
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4">
+          <HealthDot label="Supabase" ok={supabaseOk} okText="Connected" badText="Unreachable" />
+          <HealthDot label="Vercel" ok={deployed} okText="Deployed" badText="Local dev" neutral={!deployed} />
+          <HealthDot
+            label="GHL Sync"
+            ok={ghlFailures === 0}
+            okText="Healthy"
+            badText={`${ghlFailures} failure${ghlFailures === 1 ? "" : "s"} in last 24h`}
+          />
+        </div>
+        {ghlFailures > 0 && (
+          <div className="border-t border-amber-100 bg-amber-50/60 px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+              <AlertTriangle className="h-4 w-4" />
+              {ghlFailures} GHL sync failure{ghlFailures === 1 ? "" : "s"} in the last 24 hours
+            </div>
+            <ul className="mt-2 space-y-1 text-xs text-amber-700">
+              {failedSyncs.map((f, i) => (
+                <li key={i} className="flex flex-wrap gap-x-2">
+                  <span className="font-medium">{agencyName.get(f.agency_id) ?? "Unknown agency"}</span>
+                  <span className="text-amber-600">{f.sync_action}</span>
+                  {f.error_message && <span className="text-amber-500">— {f.error_message}</span>}
+                  <span className="ml-auto text-amber-400">
+                    {new Date(f.attempted_at).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Card>
+
       <Card>
         <CardHeader
           title="System Activity"

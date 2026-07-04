@@ -1,32 +1,32 @@
 import { redirect } from "next/navigation";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  validateAdminSession,
+  ADMIN_ACTOR,
+} from "@/lib/admin/session";
 
 /**
- * Super-admin access is granted purely on the authenticated Supabase user's
- * email matching ADMIN_EMAIL — independent of whether the user also owns an
- * agency. Used by the /admin route group (layout, pages, and server actions).
+ * Super-admin access is granted by the standalone password/cookie session
+ * (see @/lib/admin/session) — NOT by Supabase Auth. These thin wrappers keep
+ * the historical call sites (admin layout, server actions) working while the
+ * actual check lives in one place.
  */
-export async function getAdminEmail(): Promise<string | null> {
-  const configured = process.env.ADMIN_EMAIL?.toLowerCase();
-  if (!configured) return null;
-
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const email = user?.email?.toLowerCase() ?? null;
-  return email && email === configured ? email : null;
-}
-
-/** For pages/layouts: redirect non-admins to /login. Returns the admin email. */
-export async function requireAdmin(): Promise<string> {
-  const email = await getAdminEmail();
-  if (!email) redirect("/login");
-  return email;
-}
 
 /** For server actions: boolean guard (no redirect). */
 export async function isAdmin(): Promise<boolean> {
-  return (await getAdminEmail()) !== null;
+  return validateAdminSession();
+}
+
+/** For pages/layouts: redirect non-admins to the admin login. Returns a label. */
+export async function requireAdmin(): Promise<string> {
+  if (!(await isAdmin())) redirect("/admin/login");
+  return process.env.ADMIN_EMAIL || ADMIN_ACTOR;
+}
+
+/**
+ * Actor label recorded on admin-initiated writes (activity_log.actor_id,
+ * manual_payments.recorded_by). Uses ADMIN_EMAIL when configured for a nicer
+ * audit trail, otherwise the generic "super-admin".
+ */
+export async function getAdminEmail(): Promise<string> {
+  return process.env.ADMIN_EMAIL || ADMIN_ACTOR;
 }

@@ -43,7 +43,7 @@ const COMPARISON: { feature: string; cd: Cell; cdm: Cell; fox: Cell; bee: Cell }
   { feature: "Branded Client Portal", cd: "yes", cdm: "yes", fox: "yes", bee: "partial" },
   { feature: "Two-way CRM Sync", cd: "yes", cdm: "no", fox: "no", bee: "no" },
   { feature: "Auto Pipeline Updates", cd: "yes", cdm: "no", fox: "no", bee: "no" },
-  { feature: "Starting Price", cd: "$79", cdm: "$97", fox: "$108", bee: "$49" },
+  { feature: "Starting Price", cd: "$49", cdm: "$97", fox: "$108", bee: "$49" },
 ];
 
 function Mark({ v }: { v: Cell }) {

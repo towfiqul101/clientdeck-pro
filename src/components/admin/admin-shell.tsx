@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/helpers";
 import {
   LayoutDashboard,
@@ -16,6 +15,7 @@ import {
   Menu,
   X,
   ShieldAlert,
+  Hourglass,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -41,12 +41,12 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const nav: NavItem[] = [
     { label: "Overview", href: "/admin", icon: LayoutDashboard },
     { label: "Agencies", href: "/admin/agencies", icon: Building2 },
+    { label: "Pending Setup", href: "/admin/pending", icon: Hourglass },
     { label: "Clients", href: "/admin/clients", icon: Users },
     {
       label: "Snapshot Requests",
@@ -57,13 +57,6 @@ export function AdminShell({
     { label: "Payments", href: "/admin/payments", icon: CreditCard },
     { label: "Activity", href: "/admin/activity", icon: Activity },
   ];
-
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
-  }
 
   const sidebar = (
     <div className="flex h-full flex-col bg-gray-950">
@@ -128,13 +121,13 @@ export function AdminShell({
           <LayoutDashboard className="h-5 w-5" />
           Back to app
         </Link>
-        <button
-          onClick={handleLogout}
+        <a
+          href="/api/admin/logout"
           className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
         >
           <LogOut className="h-5 w-5" />
           Log out
-        </button>
+        </a>
       </div>
     </div>
   );

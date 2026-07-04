@@ -294,3 +294,100 @@ export async function syncClientCompleted(
     ),
   ]);
 }
+
+// ============================================
+// LOCATION SETUP TOOLS (admin-triggered)
+// Custom fields + pipelines. Used by /api/admin/tools/*.
+// ============================================
+
+export type GHLFieldDataType = "TEXT" | "NUMERICAL" | "DATE";
+
+export interface GHLCustomFieldSpec {
+  name: string;
+  fieldKey: string;
+  dataType: GHLFieldDataType;
+}
+
+interface GHLExistingField {
+  id: string;
+  name: string;
+  fieldKey?: string;
+}
+
+/** Lists existing contact custom fields so setup can skip ones already present. */
+export async function getGHLCustomFields(
+  opts: GHLRequestOptions
+): Promise<GHLExistingField[]> {
+  const data = await ghlFetch(
+    `/locations/${opts.locationId}/customFields?model=contact`,
+    opts
+  );
+  return (data?.customFields ?? []) as GHLExistingField[];
+}
+
+/**
+ * Creates a single contact custom field. GHL assigns the actual `fieldKey`
+ * (prefixed `contact.`), so we match/dedupe on the field NAME.
+ */
+export async function createGHLCustomField(
+  spec: GHLCustomFieldSpec,
+  opts: GHLRequestOptions
+): Promise<{ created: boolean; error?: string }> {
+  try {
+    await ghlFetch(`/locations/${opts.locationId}/customFields`, opts, {
+      method: "POST",
+      body: JSON.stringify({
+        name: spec.name,
+        dataType: spec.dataType,
+        model: "contact",
+      }),
+    });
+    return { created: true };
+  } catch (e) {
+    return { created: false, error: e instanceof Error ? e.message : "failed" };
+  }
+}
+
+export interface GHLPipelineSpec {
+  name: string;
+  stages: string[];
+}
+
+/** Lists existing pipelines so setup can skip ones already present. */
+export async function getGHLPipelines(
+  opts: GHLRequestOptions
+): Promise<{ id: string; name: string }[]> {
+  try {
+    const data = await ghlFetch(
+      `/opportunities/pipelines?locationId=${opts.locationId}`,
+      opts
+    );
+    return (data?.pipelines ?? []) as { id: string; name: string }[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Best-effort pipeline creation. GHL's public v2 API does not reliably expose
+ * pipeline creation on every plan, so this is wrapped to fail softly — callers
+ * surface the message and fall back to the GHL snapshot when unavailable.
+ */
+export async function createGHLPipeline(
+  spec: GHLPipelineSpec,
+  opts: GHLRequestOptions
+): Promise<{ created: boolean; error?: string }> {
+  try {
+    await ghlFetch(`/opportunities/pipelines`, opts, {
+      method: "POST",
+      body: JSON.stringify({
+        locationId: opts.locationId,
+        name: spec.name,
+        stages: spec.stages.map((name, i) => ({ name, position: i })),
+      }),
+    });
+    return { created: true };
+  } catch (e) {
+    return { created: false, error: e instanceof Error ? e.message : "failed" };
+  }
+}

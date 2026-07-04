@@ -3,6 +3,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { getInitials } from "@/lib/utils/helpers";
+import { maxTeamMembersForPlan, PLAN_BY_ID } from "@/lib/billing/plans";
+import { TeamInvite } from "./team-invite";
 import { Users } from "lucide-react";
 import type { TeamMember } from "@/types";
 
@@ -24,6 +26,12 @@ export default async function TeamPage() {
     .order("created_at", { ascending: true });
   const members = (data ?? []) as TeamMember[];
 
+  const activeCount = members.filter((m) => m.is_active).length;
+  const maxMembers = maxTeamMembersForPlan(session.agency.plan);
+  const planName = PLAN_BY_ID[session.agency.plan]?.name ?? session.agency.plan;
+  const canInvite =
+    session.teamMember.role === "owner" || session.teamMember.role === "admin";
+
   return (
     <div className="space-y-6">
       <Card>
@@ -31,6 +39,14 @@ export default async function TeamPage() {
           title="Team"
           description="Staff who can access this agency's workspace."
         />
+        <div className="border-b border-gray-100 px-5 py-4">
+          <TeamInvite
+            current={activeCount}
+            max={maxMembers}
+            planName={planName}
+            canInvite={canInvite}
+          />
+        </div>
         {members.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
             <Users className="h-8 w-8 text-gray-300" />

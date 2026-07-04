@@ -1,13 +1,14 @@
 import type { Plan } from "@/types";
+import { PLAN_BY_ID } from "@/lib/billing/plans";
 
-/** Monthly value per plan, used for MRR estimates in the admin dashboard. */
-export const PLAN_MONTHLY: Record<Plan, number> = {
-  solo: 79,
-  pro: 149,
-  agency: 249,
-  enterprise: 399,
-};
+/**
+ * Monthly value per plan, used for MRR estimates in the admin dashboard.
+ * Derived from the single pricing source of truth in @/lib/billing/plans so
+ * the two can never drift. `enterprise` is provisioned/priced manually.
+ */
+const ENTERPRISE_MONTHLY = 399;
 
 export function planMonthly(plan: Plan): number {
-  return PLAN_MONTHLY[plan] ?? 0;
+  if (plan === "enterprise") return ENTERPRISE_MONTHLY;
+  return PLAN_BY_ID[plan]?.priceMonthly ?? 0;
 }
