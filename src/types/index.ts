@@ -105,6 +105,14 @@ export interface AgencySettings {
   google_review_link?: string;
   referral_bonus?: string;
   referral_link?: string;
+  // GHL notification webhooks (Session 6)
+  ghl_webhook_triggers?: Partial<Record<
+    "round_sent" | "deletion_win" | "round_results_in" | "payment_failed" |
+    "goal_achieved" | "portal_link" | "staff_new_client" | "staff_round_overdue" |
+    "staff_next_round_ready",
+    string
+  >>;
+  owner_ghl_contact_id?: string;
 }
 
 export interface TeamMember {
