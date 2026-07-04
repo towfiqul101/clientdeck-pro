@@ -5,6 +5,7 @@ import { GHLSyncActivity } from "./sync-activity";
 import { GhlFieldMapping } from "./ghl-field-mapping";
 import { OnboardingWebhookCard } from "./onboarding-webhook-card";
 import { NotificationWebhooksForm } from "./notification-webhooks-form";
+import { ResendFallbackBanner } from "./resend-fallback-banner";
 
 export default async function GHLSettingsPage() {
   const session = await getSessionContext();
@@ -28,6 +29,7 @@ export default async function GHLSettingsPage() {
       />
       <GhlFieldMapping initial={agency.ghl_field_keys ?? {}} />
       <OnboardingWebhookCard webhookUrl={onboardingWebhookUrl} />
+      <ResendFallbackBanner triggers={agency.settings?.ghl_webhook_triggers ?? {}} />
       <NotificationWebhooksForm
         initial={{
           triggers: agency.settings?.ghl_webhook_triggers ?? {},
