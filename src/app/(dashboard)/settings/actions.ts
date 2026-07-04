@@ -51,6 +51,39 @@ export async function updateGeneralSettings(input: {
   return { success: true };
 }
 
+/** Updates auto-round automation + client-wins (review/referral) settings, merged into settings JSONB. */
+export async function updateAutomationSettings(input: {
+  autoCreateRounds: boolean;
+  autoRoundDelayDays: number;
+  googleReviewLink: string;
+  referralBonus: string;
+  referralLink: string;
+}): Promise<ActionResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const supabase = await createServerSupabaseClient();
+
+  const nextSettings: AgencySettings = {
+    ...session.agency.settings,
+    auto_create_rounds: input.autoCreateRounds,
+    auto_round_delay_days: input.autoRoundDelayDays,
+    google_review_link: input.googleReviewLink.trim() || undefined,
+    referral_bonus: input.referralBonus.trim() || undefined,
+    referral_link: input.referralLink.trim() || undefined,
+  };
+
+  const { error } = await supabase
+    .from("agencies")
+    .update({ settings: nextSettings })
+    .eq("id", session.agency.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
 /** Saves GHL Location ID + API key. */
 export async function updateGHLSettings(input: {
   locationId: string;

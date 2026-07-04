@@ -5,7 +5,7 @@ import { CopyPortalLink } from "./copy-portal-link";
 import { AssignClient } from "./assign-client";
 import { cn, scoreChange } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
-import { ArrowLeft, ArrowRight, Pencil, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, ArrowRight, Pencil, Plus, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
 
 function BureauScore({
   label,
@@ -117,6 +117,36 @@ export function ClientHeader({
           <CopyPortalLink clientId={client.id} />
         </div>
       </div>
+
+      {(client.payment_status === "failed" || client.payment_status === "paused") && (
+        <div
+          className={cn(
+            "flex items-start gap-3 rounded-lg border p-4 text-sm",
+            client.payment_status === "failed"
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-amber-200 bg-amber-50 text-amber-800"
+          )}
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            <span className="font-medium">
+              Payment {client.payment_status} — new rounds cannot be created
+              until resolved.
+            </span>{" "}
+            <Link
+              href={`/clients/${client.id}/edit`}
+              className="underline hover:no-underline"
+            >
+              Update payment status
+            </Link>{" "}
+            or check{" "}
+            <Link href="/settings" className="underline hover:no-underline">
+              billing settings
+            </Link>
+            .
+          </span>
+        </div>
+      )}
 
       {/* Scores */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

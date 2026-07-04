@@ -76,6 +76,18 @@ export async function createRound(
 
   const supabase = await createServerSupabaseClient();
 
+  const { data: gateClient } = await supabase
+    .from("clients")
+    .select("payment_status")
+    .eq("id", clientId)
+    .single();
+  if (gateClient?.payment_status === "failed" || gateClient?.payment_status === "paused") {
+    return {
+      success: false,
+      error: "Cannot create a new round — client payment is not active. Update payment status in client settings.",
+    };
+  }
+
   // Next round number = current max + 1.
   const { data: last } = await supabase
     .from("dispute_rounds")
