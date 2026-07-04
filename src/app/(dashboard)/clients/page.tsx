@@ -20,6 +20,20 @@ function param(sp: SearchParams, key: string): string {
   return Array.isArray(v) ? (v[0] ?? "") : (v ?? "");
 }
 
+function SignatureDot({ status }: { status: Client["signature_status"] }) {
+  if (status === "not_required") return null;
+  const signed = status === "signed";
+  return (
+    <span
+      title={signed ? "Agreement signed" : "Signature pending"}
+      className={cn(
+        "inline-block h-2 w-2 shrink-0 rounded-full",
+        signed ? "bg-green-500" : "bg-amber-500"
+      )}
+    />
+  );
+}
+
 function ScoreCell({ value }: { value: number | null }) {
   return (
     <span
@@ -168,8 +182,9 @@ export default async function ClientsPage({
                         className="block"
                         // Stretch the link across the row visually.
                       >
-                        <p className="font-medium text-gray-900 group-hover:text-blue-600">
+                        <p className="flex items-center gap-1.5 font-medium text-gray-900 group-hover:text-blue-600">
                           {c.first_name} {c.last_name}
+                          <SignatureDot status={c.signature_status} />
                         </p>
                         <p className="text-xs text-gray-500">
                           {c.email || "No email"}

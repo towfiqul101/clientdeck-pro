@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
@@ -11,6 +12,7 @@ import {
   syncClientCompleted,
 } from "@/lib/ghl/api";
 import { runGhlSync } from "@/lib/ghl/sync";
+import { syncRoundLettersToDrive } from "@/lib/google-drive/letter-sync";
 import type {
   Bureau,
   DisputeResult,
@@ -285,6 +287,16 @@ export async function markRoundSent(
     description: `Round ${round.round_number} sent — ${round.total_items_disputed} item${
       round.total_items_disputed === 1 ? "" : "s"
     } disputed.`,
+  });
+
+  // Non-blocking: back up the finalized letter PDFs to the agency's Drive.
+  const agency = session.agency;
+  after(async () => {
+    try {
+      await syncRoundLettersToDrive(agency, roundId, round.round_number);
+    } catch (err) {
+      console.error("[Drive] Round letter sync failed:", err);
+    }
   });
 
   revalidatePath(`/clients/${clientId}/rounds/${roundId}`);

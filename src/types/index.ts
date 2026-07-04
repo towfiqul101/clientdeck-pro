@@ -22,6 +22,29 @@ export type DisputeResult = "pending" | "deleted" | "updated" | "verified" | "no
 export type DocumentCategory = "id_document" | "proof_of_address" | "credit_report" | "dispute_letter" | "bureau_response" | "agreement" | "other";
 export type ActorType = "system" | "staff" | "client" | "ghl" | "stripe";
 
+export type SignatureStatus = "pending" | "signed" | "not_required";
+export type SignatureType = "drawn" | "typed" | "electronic";
+
+/**
+ * Per-agency map of GHL custom-field keys → CDP data. Values are the GHL
+ * custom-field id/fieldKey for that location (which is unique per location).
+ */
+export interface GhlFieldKeys {
+  ssn_last4?: string;
+  dob?: string;
+  score_eq?: string;
+  score_exp?: string;
+  score_tu?: string;
+  signature_status?: string;
+  signed_at?: string;
+  credit_report_eq?: string;
+  credit_report_exp?: string;
+  credit_report_tu?: string;
+  id_document?: string;
+  proof_of_address?: string;
+  [key: string]: string | undefined;
+}
+
 // ============================================
 // Database Row Types
 // ============================================
@@ -48,6 +71,15 @@ export interface Agency {
   max_clients: number;
   trial_ends_at: string | null;
   settings: AgencySettings;
+  // GHL custom-field key mapping (migration 011)
+  ghl_field_keys: GhlFieldKeys;
+  // Google Drive integration (migration 012)
+  google_drive_enabled: boolean;
+  google_drive_access_token: string | null;
+  google_drive_refresh_token: string | null;
+  google_drive_root_folder_id: string | null;
+  google_drive_connected_at: string | null;
+  google_drive_email: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -117,6 +149,14 @@ export interface Client {
   portal_token_expires_at: string | null;
   referral_source: string | null;
   notes: string | null;
+  // Signature + onboarding (migration 011)
+  signature_status: SignatureStatus;
+  signed_at: string | null;
+  signature_type: SignatureType | null;
+  service_agreement_version: string;
+  onboarding_form_submitted: boolean;
+  onboarding_submitted_at: string | null;
+  ghl_drive_folder_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -262,6 +302,27 @@ export interface GhlSyncLog {
   error_message: string | null;
   payload: Record<string, unknown> | null;
   attempted_at: string;
+}
+
+/** A GHL contact custom-field entry as returned by the v2 contacts API. */
+export interface GHLContactCustomField {
+  id?: string;
+  fieldKey?: string;
+  value?: string | number | null;
+}
+
+/** Shape of a GHL contact (v2 API) used by the onboarding webhook. */
+export interface GHLContact {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string | null;
+  phone?: string | null;
+  address1?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  customFields?: GHLContactCustomField[];
 }
 
 // ============================================

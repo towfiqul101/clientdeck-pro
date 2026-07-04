@@ -2,6 +2,7 @@ import { getClientOr404 } from "@/lib/clients/queries";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { NotesEditor } from "./notes-editor";
+import { SignatureCard } from "./signature-card";
 import {
   formatCurrency,
   formatDate,
@@ -120,6 +121,15 @@ export default async function ClientOverviewPage({
             <Row label="Referral" value={client.referral_source} />
           </div>
         </Card>
+
+        <SignatureCard
+          clientId={client.id}
+          status={client.signature_status}
+          signedAt={client.signed_at}
+          signatureType={client.signature_type}
+          version={client.service_agreement_version}
+          driveFolderId={client.ghl_drive_folder_id}
+        />
       </div>
     </div>
   );

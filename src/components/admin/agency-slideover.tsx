@@ -188,7 +188,16 @@ export function AgencySlideover({
               {tab === "GHL Config" && (
                 <GhlTab key={agency.id} data={current!} pending={pending} run={run} toast={toast} />
               )}
-              {tab === "Tools" && <ToolsTab key={agency.id} agencyId={agency.id} configured={current!.ghl.configured} />}
+              {tab === "Tools" && (
+                <ToolsTab
+                  key={agency.id}
+                  agencyId={agency.id}
+                  configured={current!.ghl.configured}
+                  driveEnabled={Boolean(current!.agency.google_drive_enabled)}
+                  driveEmail={current!.agency.google_drive_email}
+                  driveFolderId={current!.agency.google_drive_root_folder_id}
+                />
+              )}
               {tab === "Branding" && <BrandingTab key={agency.id} data={current!} pending={pending} run={run} />}
               {tab === "Payments" && <PaymentsTab key={agency.id} data={current!} pending={pending} run={run} />}
             </div>
@@ -409,7 +418,19 @@ function GhlTab({
 
 // ── Tools ────────────────────────────────────────────────────────────────────
 
-function ToolsTab({ agencyId, configured }: { agencyId: string; configured: boolean }) {
+function ToolsTab({
+  agencyId,
+  configured,
+  driveEnabled,
+  driveEmail,
+  driveFolderId,
+}: {
+  agencyId: string;
+  configured: boolean;
+  driveEnabled: boolean;
+  driveEmail: string | null;
+  driveFolderId: string | null;
+}) {
   const { toast } = useToast();
   const [busy, setBusy] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
@@ -468,6 +489,34 @@ function ToolsTab({ agencyId, configured }: { agencyId: string; configured: bool
 
   return (
     <div className="space-y-3">
+      {/* Google Drive status (display only) */}
+      <div className="rounded-lg border border-gray-200 p-4">
+        <h4 className="text-sm font-semibold text-gray-900">Google Drive</h4>
+        <div className="mt-2 flex items-center gap-2 text-sm">
+          <span
+            className={cn(
+              "h-2 w-2 rounded-full",
+              driveEnabled ? "bg-green-500" : "bg-gray-300"
+            )}
+          />
+          <span className="text-gray-600">
+            {driveEnabled
+              ? `Connected${driveEmail ? ` (${driveEmail})` : ""}`
+              : "Not connected"}
+          </span>
+        </div>
+        {driveEnabled && driveFolderId && (
+          <a
+            href={`https://drive.google.com/drive/folders/${driveFolderId}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-block text-xs font-medium text-blue-600 hover:text-blue-700"
+          >
+            View their Drive folder ↗
+          </a>
+        )}
+      </div>
+
       <p className="text-sm text-gray-500">
         These tools configure the agency&apos;s GHL account. Most require the GHL API
         key to be set on the GHL Config tab.

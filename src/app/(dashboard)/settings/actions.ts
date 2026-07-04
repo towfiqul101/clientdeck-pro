@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
-import { verifyGHLConnection } from "@/lib/ghl/api";
+import { verifyGHLConnection, getGHLCustomFields } from "@/lib/ghl/api";
+import { detectFieldKeys } from "@/lib/ghl/field-detect";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
-import type { AgencySettings } from "@/types";
+import type { AgencySettings, GhlFieldKeys } from "@/types";
 
 export interface ActionResult {
   success: boolean;
@@ -101,6 +102,78 @@ export async function testGHLConnection(input: {
     };
   }
   return { ok: false, message: result.error };
+}
+
+/** Saves the manual GHL custom-field key mapping (agencies.ghl_field_keys). */
+export async function saveGhlFieldKeys(
+  keys: GhlFieldKeys
+): Promise<ActionResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const clean: GhlFieldKeys = {};
+  for (const [k, v] of Object.entries(keys)) {
+    if (typeof v === "string" && v.trim()) clean[k] = v.trim();
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("agencies")
+    .update({ ghl_field_keys: clean })
+    .eq("id", session.agency.id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/ghl");
+  return { success: true };
+}
+
+/**
+ * Reads the agency's GHL custom fields and heuristically maps them onto CDP
+ * data keys by name, merging into the saved mapping. Returns the merged keys
+ * so the form can update in place.
+ */
+export async function autoDetectGhlFields(): Promise<{
+  ok: boolean;
+  message: string;
+  keys?: GhlFieldKeys;
+}> {
+  const session = await getSessionContext();
+  if (!session) return { ok: false, message: "Not authenticated." };
+
+  const { ghl_api_key, ghl_location_id } = session.agency;
+  if (!ghl_api_key || !ghl_location_id) {
+    return { ok: false, message: "Connect GHL (Location ID + API key) first." };
+  }
+
+  let fields;
+  try {
+    fields = await getGHLCustomFields({
+      apiKey: ghl_api_key,
+      locationId: ghl_location_id,
+    });
+  } catch {
+    return { ok: false, message: "Could not read GHL custom fields. Check the API key." };
+  }
+
+  const detected = detectFieldKeys(fields);
+  const merged: GhlFieldKeys = { ...(session.agency.ghl_field_keys ?? {}), ...detected };
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("agencies")
+    .update({ ghl_field_keys: merged })
+    .eq("id", session.agency.id);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/settings/ghl");
+  const count = Object.keys(detected).length;
+  return {
+    ok: true,
+    message: count
+      ? `Auto-detected ${count} field${count === 1 ? "" : "s"} by name. Review and save.`
+      : "No matching fields found — enter the keys manually.",
+    keys: merged,
+  };
 }
 
 /** Saves branding: logo URL (already uploaded to Storage) + brand color. */

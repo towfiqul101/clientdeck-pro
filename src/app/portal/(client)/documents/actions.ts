@@ -1,8 +1,10 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getPortalSession } from "@/lib/portal/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import type { DocumentCategory } from "@/types";
 
 const BUCKET = "documents";
@@ -67,6 +69,22 @@ export async function portalUploadDocument(
     actor_type: "client",
     action: "Document uploaded",
     description: `Client uploaded ${file.name}`,
+  });
+
+  // Non-blocking: mirror the upload into the agency's Google Drive.
+  const clientName = `${client.first_name} ${client.last_name}`;
+  after(async () => {
+    try {
+      await syncDocumentToDrive(agency, {
+        clientName,
+        subFolder: "Client_Uploads",
+        fileName: file.name,
+        fileBuffer: buffer,
+        mimeType: file.type || "application/octet-stream",
+      });
+    } catch (err) {
+      console.error("[Drive] Portal upload sync failed:", err);
+    }
   });
 
   revalidatePath("/portal/documents");
