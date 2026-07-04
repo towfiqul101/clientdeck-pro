@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CopyPortalLink } from "./copy-portal-link";
 import { AssignClient } from "./assign-client";
+import { AIStrategyPanel } from "./ai-strategy-panel";
 import { cn, scoreChange } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
 import { ArrowLeft, ArrowRight, Pencil, Plus, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react";
@@ -102,6 +103,7 @@ export function ClientHeader({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <AIStrategyPanel clientId={client.id} />
           <Link href={`/clients/${client.id}/edit`}>
             <Button variant="secondary">
               <Pencil className="h-4 w-4" />
