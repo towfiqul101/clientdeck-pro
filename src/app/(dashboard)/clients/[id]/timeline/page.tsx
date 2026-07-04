@@ -33,6 +33,24 @@ function formatTimestamp(iso: string): string {
   }).format(new Date(iso));
 }
 
+function NotificationMethodBadge({ method }: { method?: string }) {
+  if (method === "ghl") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+        ✓ GHL
+      </span>
+    );
+  }
+  if (method === "resend") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+        ⚠ Email fallback
+      </span>
+    );
+  }
+  return null;
+}
+
 export default async function ClientTimelinePage({
   params,
 }: {
@@ -91,9 +109,16 @@ export default async function ClientTimelinePage({
                   {entry.description}
                 </p>
               )}
-              <span className="mt-1 inline-block text-xs text-gray-400">
-                {meta.label}
-              </span>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="inline-block text-xs text-gray-400">
+                  {meta.label}
+                </span>
+                {entry.action === "notification_sent" && (
+                  <NotificationMethodBadge
+                    method={(entry.metadata as { method?: string } | null)?.method}
+                  />
+                )}
+              </div>
             </li>
           );
         })}
