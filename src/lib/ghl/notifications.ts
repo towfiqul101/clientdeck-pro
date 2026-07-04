@@ -103,19 +103,23 @@ export async function sendGHLNotification(
     return result;
   }
 
-  const admin = createAdminClient();
-  await admin.from("activity_log").insert({
-    agency_id: logging.agencyId,
-    client_id: logging.clientId,
-    actor_type: "system",
-    action: "notification_sent",
-    description: `${type} notification sent via ${result.method}`,
-    metadata: {
-      notification_type: type,
-      method: result.method,
-      contact_id: payload.contactId,
-    },
-  });
+  try {
+    const admin = createAdminClient();
+    await admin.from("activity_log").insert({
+      agency_id: logging.agencyId,
+      client_id: logging.clientId,
+      actor_type: "system",
+      action: "notification_sent",
+      description: `${type} notification sent via ${result.method}`,
+      metadata: {
+        notification_type: type,
+        method: result.method,
+        contact_id: payload.contactId,
+      },
+    });
+  } catch (err) {
+    console.error(`[Notification] Failed to log ${type} to activity_log:`, err);
+  }
 
   return result;
 }
