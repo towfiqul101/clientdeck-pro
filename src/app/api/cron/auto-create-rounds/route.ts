@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCron } from "@/lib/cron/auth";
 import { addGHLTag, createGHLTask } from "@/lib/ghl/api";
+import { sendGHLNotification } from "@/lib/ghl/notifications";
 import { suggestLetterType } from "@/lib/utils/helpers";
-import type { DisputeStatus, LetterType } from "@/types";
+import type { Agency, DisputeStatus, LetterType } from "@/types";
 
 export const maxDuration = 60;
 
@@ -16,9 +17,7 @@ export async function GET(req: Request) {
   }
   const admin = createAdminClient();
 
-  const { data: agencies } = await admin
-    .from("agencies")
-    .select("id, settings, ghl_api_key, ghl_location_id");
+  const { data: agencies } = await admin.from("agencies").select("*");
 
   let created = 0;
   const nowMs = Date.now();
@@ -110,6 +109,30 @@ export async function GET(req: Request) {
             opts
           );
         } catch (e) { console.error("auto-create-rounds: GHL sync failed", e); }
+      }
+
+      const ownerContactId = (agency as Agency).settings?.owner_ghl_contact_id;
+      if (ownerContactId) {
+        try {
+          const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.clientdeckpro.com";
+          await sendGHLNotification(
+            agency as Agency,
+            "staff_next_round_ready",
+            {
+              contactId: ownerContactId,
+              firstName: "Team",
+              lastName: (agency as Agency).name,
+              data: {
+                client_name: `${client.first_name} ${client.last_name}`,
+                round_number: roundNumber,
+                dashboard_link: `${base}/clients/${client.id}`,
+              },
+            },
+            { agencyId: agency.id, clientId: client.id }
+          );
+        } catch (e) {
+          console.error("auto-create-rounds: staff notification failed", e);
+        }
       }
       created++;
     }
