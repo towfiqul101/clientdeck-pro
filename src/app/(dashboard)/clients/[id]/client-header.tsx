@@ -5,6 +5,7 @@ import { CopyPortalLink } from "./copy-portal-link";
 import { AssignClient } from "./assign-client";
 import { AIStrategyPanel } from "./ai-strategy-panel";
 import { SendReviewRequestButton } from "./send-review-request-button";
+import { PullScoresButton } from "./pull-scores-button";
 import { cn, scoreChange } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
 import {
@@ -71,9 +72,11 @@ function BureauScore({
 export function ClientHeader({
   client,
   members,
+  showCreditMonitoring,
 }: {
   client: Client;
   members: { id: string; name: string }[];
+  showCreditMonitoring: boolean;
 }) {
   // total_items_current tracks all items on file; total_items_deleted is the
   // subset resolved by deletion.
@@ -138,6 +141,7 @@ export function ClientHeader({
             </Button>
           </Link>
           <CopyPortalLink clientId={client.id} />
+          {showCreditMonitoring && <PullScoresButton client={client} />}
         </div>
       </div>
 
