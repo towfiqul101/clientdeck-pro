@@ -87,31 +87,31 @@ export function OnboardingBanner({
   }
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50/60 shadow-sm">
+    <div className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 shadow-sm">
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between gap-3 p-4 text-left"
       >
-        <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-          <Rocket className="h-4 w-4 text-blue-600" />
+        <span className="flex items-center gap-2 text-sm font-semibold text-white">
+          <Rocket className="h-4 w-4 text-white" />
           Get ClientDeck Pro ready in {total} steps
         </span>
         <span className="flex items-center gap-3">
-          <span className="text-xs font-medium text-gray-600">
+          <span className="text-xs font-medium text-blue-100">
             {completedCount} of {total} complete
           </span>
           {open ? (
-            <ChevronUp className="h-4 w-4 text-gray-500" />
+            <ChevronUp className="h-4 w-4 text-blue-100" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-500" />
+            <ChevronDown className="h-4 w-4 text-blue-100" />
           )}
         </span>
       </button>
 
       <div className="px-4">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-blue-100">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-white/30">
           <div
-            className="h-full rounded-full bg-blue-600 transition-all"
+            className="h-full rounded-full bg-white transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -124,25 +124,25 @@ export function OnboardingBanner({
               key={row.key}
               className="flex items-center justify-between rounded-md px-2 py-2"
             >
-              <span className="flex items-center gap-2 text-sm text-gray-700">
+              <span className="flex items-center gap-2 text-sm text-white">
                 <span
                   className={cn(
                     "flex h-5 w-5 items-center justify-center rounded-full border",
                     row.done
-                      ? "border-green-500 bg-green-500 text-white"
-                      : "border-gray-300 bg-white"
+                      ? "border-white bg-white text-blue-600"
+                      : "border-white/40 bg-transparent"
                   )}
                 >
                   {row.done && <Check className="h-3 w-3" />}
                 </span>
-                <span className={cn(row.done && "text-gray-500 line-through")}>
+                <span className={cn(row.done && "text-blue-100 line-through")}>
                   {row.label}
                 </span>
               </span>
               {!row.done && row.cta && (
                 <Link
                   href={row.href}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-md bg-white/20 px-3 py-1 text-xs font-medium text-white transition-colors duration-150 hover:bg-white/30"
                 >
                   {row.cta}
                 </Link>
@@ -153,10 +153,10 @@ export function OnboardingBanner({
       )}
 
       {open && allComplete && (
-        <div className="border-t border-blue-100 p-3 text-right">
+        <div className="border-t border-white/20 p-3 text-right">
           <button
             onClick={() => router.refresh()}
-            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+            className="text-xs font-medium text-white hover:text-blue-100"
           >
             Dismiss — I&apos;ll finish later
           </button>

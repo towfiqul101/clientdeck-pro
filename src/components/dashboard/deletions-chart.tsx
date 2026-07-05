@@ -15,6 +15,16 @@ export interface MonthlyDeletion {
   deletions: number;
 }
 
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-gray-100 bg-white px-3 py-2 shadow-[var(--shadow-elevated)]">
+      <p className="text-xs font-medium text-gray-500">{label}</p>
+      <p className="text-sm font-semibold text-gray-900">{payload[0].value} deletions</p>
+    </div>
+  );
+}
+
 export function DeletionsChart({ data }: { data: MonthlyDeletion[] }) {
   const hasData = data.some((d) => d.deletions > 0);
 
@@ -30,33 +40,25 @@ export function DeletionsChart({ data }: { data: MonthlyDeletion[] }) {
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+          <defs>
+            <linearGradient id="deletionsGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563eb" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#2563eb" stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
           <XAxis
             dataKey="label"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 12, fill: "#6b7280" }}
+            tick={{ fontSize: 12, fill: "#9ca3af" }}
           />
-          <YAxis
-            allowDecimals={false}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 12, fill: "#6b7280" }}
-          />
-          <Tooltip
-            cursor={{ fill: "#f8fafc" }}
-            contentStyle={{
-              borderRadius: 8,
-              border: "1px solid #e5e7eb",
-              fontSize: 13,
-            }}
-            labelStyle={{ color: "#111827", fontWeight: 600 }}
-          />
+          <YAxis hide />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f3f4f6" }} />
           <Bar
             dataKey="deletions"
-            fill="#2563eb"
-            radius={[4, 4, 0, 0]}
-            maxBarSize={48}
+            fill="url(#deletionsGradient)"
+            radius={[6, 6, 0, 0]}
           />
         </BarChart>
       </ResponsiveContainer>

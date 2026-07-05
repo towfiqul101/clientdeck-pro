@@ -39,9 +39,13 @@ export function StatCard({
         >
           <Icon className={cn("h-5 w-5", color.text)} />
         </span>
-        {trend && <span className="text-xs text-gray-400">{trend}</span>}
+        {trend && (
+          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+            {trend}
+          </span>
+        )}
       </div>
-      <p className="mt-4 text-2xl font-semibold tracking-tight text-gray-900">
+      <p className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
         {value}
       </p>
       <p className="mt-1 text-sm text-gray-500">{label}</p>
