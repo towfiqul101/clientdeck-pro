@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, List, LayoutGrid } from "lucide-react";
+import { cn } from "@/lib/utils/helpers";
 import { CLIENT_STATUSES, PAYMENT_STATUSES } from "@/lib/constants";
 
 const SORT_OPTIONS = [
@@ -10,6 +11,13 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
   { value: "score_high", label: "Score (highest)" },
   { value: "score_low", label: "Score (lowest)" },
+];
+
+const STATUS_PILLS = [
+  { value: "", label: "All" },
+  { value: "active", label: "Active" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "completed", label: "Completed" },
 ];
 
 const selectClass =
@@ -26,6 +34,8 @@ export function ClientsFilters({
   const [isPending, startTransition] = useTransition();
 
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const currentStatus = searchParams.get("status") ?? "";
+  const currentView = searchParams.get("view") ?? "";
 
   const pushParams = useCallback(
     (updates: Record<string, string>) => {
@@ -52,73 +62,122 @@ export function ClientsFilters({
   }, [search, searchParams, pushParams]);
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-      <div className="relative flex-1 sm:min-w-[240px]">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        {isPending && (
-          <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
-        )}
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search name, email, or phone…"
-          className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-9 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap gap-2">
+        {STATUS_PILLS.map((pill) => (
+          <button
+            key={pill.value}
+            type="button"
+            onClick={() => pushParams({ status: pill.value })}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150",
+              currentStatus === pill.value
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            )}
+          >
+            {pill.label}
+          </button>
+        ))}
       </div>
 
-      <select
-        value={searchParams.get("status") ?? ""}
-        onChange={(e) => pushParams({ status: e.target.value })}
-        className={selectClass}
-      >
-        <option value="">All statuses</option>
-        {CLIENT_STATUSES.map((s) => (
-          <option key={s.value} value={s.value}>
-            {s.label}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative flex-1 sm:min-w-[240px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          {isPending && (
+            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+          )}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, email, or phone…"
+            className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-9 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
 
-      <select
-        value={searchParams.get("payment") ?? ""}
-        onChange={(e) => pushParams({ payment: e.target.value })}
-        className={selectClass}
-      >
-        <option value="">All payments</option>
-        {PAYMENT_STATUSES.filter((p) =>
-          ["active", "failed", "paused"].includes(p.value)
-        ).map((p) => (
-          <option key={p.value} value={p.value}>
-            {p.label}
-          </option>
-        ))}
-      </select>
+        <select
+          value={currentStatus}
+          onChange={(e) => pushParams({ status: e.target.value })}
+          className={selectClass}
+        >
+          <option value="">All statuses</option>
+          {CLIENT_STATUSES.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
 
-      <select
-        value={searchParams.get("assigned") ?? ""}
-        onChange={(e) => pushParams({ assigned: e.target.value })}
-        className={selectClass}
-      >
-        <option value="">All assignees</option>
-        <option value="unassigned">Unassigned</option>
-        {members.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.name}
-          </option>
-        ))}
-      </select>
+        <select
+          value={searchParams.get("payment") ?? ""}
+          onChange={(e) => pushParams({ payment: e.target.value })}
+          className={selectClass}
+        >
+          <option value="">All payments</option>
+          {PAYMENT_STATUSES.filter((p) =>
+            ["active", "failed", "paused"].includes(p.value)
+          ).map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
 
-      <select
-        value={searchParams.get("sort") ?? "name"}
-        onChange={(e) => pushParams({ sort: e.target.value })}
-        className={selectClass}
-      >
-        {SORT_OPTIONS.map((s) => (
-          <option key={s.value} value={s.value}>
-            {s.label}
-          </option>
-        ))}
-      </select>
+        <select
+          value={searchParams.get("assigned") ?? ""}
+          onChange={(e) => pushParams({ assigned: e.target.value })}
+          className={selectClass}
+        >
+          <option value="">All assignees</option>
+          <option value="unassigned">Unassigned</option>
+          {members.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={searchParams.get("sort") ?? "name"}
+          onChange={(e) => pushParams({ sort: e.target.value })}
+          className={selectClass}
+        >
+          {SORT_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="flex items-center gap-1 rounded-md border border-gray-200 p-0.5">
+          <button
+            type="button"
+            onClick={() => pushParams({ view: "" })}
+            className={cn(
+              "rounded p-1.5 transition-colors duration-150",
+              currentView !== "cards"
+                ? "bg-gray-100 text-gray-700"
+                : "text-gray-400 hover:text-gray-600"
+            )}
+            aria-label="Table view"
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => pushParams({ view: "cards" })}
+            className={cn(
+              "rounded p-1.5 transition-colors duration-150",
+              currentView === "cards"
+                ? "bg-gray-100 text-gray-700"
+                : "text-gray-400 hover:text-gray-600"
+            )}
+            aria-label="Card view"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

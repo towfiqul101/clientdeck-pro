@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { ClientsFilters } from "./clients-filters";
+import { ClientCardsView } from "./client-cards-view";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   cn,
   formatDate,
   formatPhone,
+  getInitials,
+  scoreChange,
 } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
-import { Users, Plus, UserPlus } from "lucide-react";
+import { Users, Plus, UserPlus, ArrowUp, Eye, Pencil } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -47,6 +50,24 @@ function ScoreCell({ value }: { value: number | null }) {
   );
 }
 
+function ScoreCellWithChange({
+  start,
+  current,
+}: {
+  start: number | null;
+  current: number | null;
+}) {
+  const change = scoreChange(start, current);
+  return (
+    <span className="flex items-center gap-0.5">
+      <ScoreCell value={current} />
+      {change.direction === "up" && (
+        <ArrowUp className="h-3 w-3 text-green-600" />
+      )}
+    </span>
+  );
+}
+
 export default async function ClientsPage({
   searchParams,
 }: {
@@ -58,6 +79,7 @@ export default async function ClientsPage({
   const payment = param(sp, "payment");
   const assigned = param(sp, "assigned");
   const sort = param(sp, "sort") || "name";
+  const view = param(sp, "view");
   const page = Math.max(1, parseInt(param(sp, "page") || "1", 10) || 1);
 
   const supabase = await createServerSupabaseClient();
@@ -119,6 +141,7 @@ export default async function ClientsPage({
     if (payment) params.set("payment", payment);
     if (assigned) params.set("assigned", assigned);
     if (sort) params.set("sort", sort);
+    if (view) params.set("view", view);
     params.set("page", String(p));
     return `/clients?${params.toString()}`;
   };
@@ -146,9 +169,9 @@ export default async function ClientsPage({
 
       <ClientsFilters members={members} />
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-        {clients.length === 0 ? (
+      {/* Client list */}
+      {clients.length === 0 ? (
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
           <EmptyState
             icon={hasFilters ? Users : UserPlus}
             title={hasFilters ? "No matching clients" : "No clients yet"}
@@ -169,10 +192,14 @@ export default async function ClientsPage({
               )
             }
           />
-        ) : (
+        </div>
+      ) : view === "cards" ? (
+        <ClientCardsView clients={clients} />
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              <thead className="sticky top-0 z-10 bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                 <tr>
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Status</th>
@@ -182,28 +209,36 @@ export default async function ClientsPage({
                   <th className="px-4 py-3">Payment</th>
                   <th className="px-4 py-3">Assigned To</th>
                   <th className="px-4 py-3">Created</th>
+                  <th className="px-4 py-3 text-right">
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {clients.map((c) => (
                   <tr
                     key={c.id}
-                    className="group cursor-pointer transition-colors hover:bg-gray-50"
+                    className="group border-b border-gray-100 bg-white transition-colors duration-150 last:border-b-0 hover:bg-gray-50 cursor-pointer"
                   >
                     <td className="px-4 py-3">
                       <Link
                         href={`/clients/${c.id}`}
-                        className="block"
+                        className="flex items-center gap-3"
                         // Stretch the link across the row visually.
                       >
-                        <p className="flex items-center gap-1.5 font-medium text-gray-900 group-hover:text-blue-600">
-                          {c.first_name} {c.last_name}
-                          <SignatureDot status={c.signature_status} />
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {c.email || "No email"}
-                          {c.phone ? ` · ${formatPhone(c.phone)}` : ""}
-                        </p>
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700">
+                          {getInitials(c.first_name, c.last_name)}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="flex items-center gap-1.5 truncate font-medium text-gray-900 group-hover:text-blue-600">
+                            {c.first_name} {c.last_name}
+                            <SignatureDot status={c.signature_status} />
+                          </p>
+                          <p className="truncate text-xs text-gray-500">
+                            {c.email || "No email"}
+                            {c.phone ? ` · ${formatPhone(c.phone)}` : ""}
+                          </p>
+                        </div>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
@@ -214,11 +249,20 @@ export default async function ClientsPage({
                     <td className="px-4 py-3">
                       <Link
                         href={`/clients/${c.id}`}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1.5"
                       >
-                        <ScoreCell value={c.score_eq_current} />
-                        <ScoreCell value={c.score_exp_current} />
-                        <ScoreCell value={c.score_tu_current} />
+                        <ScoreCellWithChange
+                          start={c.score_eq_start}
+                          current={c.score_eq_current}
+                        />
+                        <ScoreCellWithChange
+                          start={c.score_exp_start}
+                          current={c.score_exp_current}
+                        />
+                        <ScoreCellWithChange
+                          start={c.score_tu_start}
+                          current={c.score_tu_current}
+                        />
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-gray-700">
@@ -258,13 +302,31 @@ export default async function ClientsPage({
                         {formatDate(c.created_at)}
                       </Link>
                     </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                        <Link
+                          href={`/clients/${c.id}`}
+                          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          aria-label="View"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={`/clients/${c.id}/edit`}
+                          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          aria-label="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
