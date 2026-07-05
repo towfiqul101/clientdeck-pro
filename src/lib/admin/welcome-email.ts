@@ -6,18 +6,26 @@ interface WelcomeEmailAgency {
 
 /** Sends (or logs, if RESEND_API_KEY is unset) the onboarding welcome email. */
 export async function sendAgencyWelcomeEmail(
-  agency: WelcomeEmailAgency
+  agency: WelcomeEmailAgency,
+  options?: { setPasswordLink?: string }
 ): Promise<{ ok: boolean; message: string }> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://clientdeckpro.com";
   const subject = "Welcome to ClientDeck Pro — let's get you set up";
+  const steps = options?.setPasswordLink
+    ? `1. Set your password: ${options.setPasswordLink}
+2. Log in at ${appUrl}/login
+3. Connect your GoHighLevel account under Settings → GHL (paste your Location ID and API key)
+4. Install the ClientDeck Pro snapshot to load your pipelines and custom fields
+5. Add your first client and generate a dispute round`
+    : `1. Log in at ${appUrl}/login
+2. Connect your GoHighLevel account under Settings → GHL (paste your Location ID and API key)
+3. Install the ClientDeck Pro snapshot to load your pipelines and custom fields
+4. Add your first client and generate a dispute round`;
   const text = `Hi ${agency.owner_name || "there"},
 
 Welcome to ClientDeck Pro! Here's how to get ${agency.name} up and running:
 
-1. Log in at ${appUrl}/login
-2. Connect your GoHighLevel account under Settings → GHL (paste your Location ID and API key)
-3. Install the ClientDeck Pro snapshot to load your pipelines and custom fields
-4. Add your first client and generate a dispute round
+${steps}
 
 Need a hand? Just reply to this email and we'll help you get set up.
 

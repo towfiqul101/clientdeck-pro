@@ -24,7 +24,7 @@ export interface CreateAgencyInput {
 
 export type CreateAgencyResult =
   | { success: true; agencyId: string }
-  | { success: false; error: string; fieldErrors?: Record<string, string> };
+  | { success: false; error: string; fieldErrors?: Record<string, string>; agencyId?: string };
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -122,7 +122,11 @@ export async function adminCreateAgency(
     role: "owner",
   });
   if (memberError) {
-    return { success: false, error: `Agency created but owner could not be linked: ${memberError.message}` };
+    return {
+      success: false,
+      error: `Agency created but owner could not be linked: ${memberError.message}`,
+      agencyId: agency.id,
+    };
   }
 
   const actor = await getAdminEmail();
@@ -135,7 +139,22 @@ export async function adminCreateAgency(
   });
 
   if (input.sendWelcomeEmail) {
-    await sendAgencyWelcomeEmail({ name, owner_name: ownerName, owner_email: ownerEmail });
+    let setPasswordLink: string | undefined;
+    try {
+      const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+        type: "recovery",
+        email: ownerEmail,
+      });
+      if (!linkError && linkData?.properties?.action_link) {
+        setPasswordLink = linkData.properties.action_link;
+      }
+    } catch (e) {
+      console.error("Could not generate password-set link:", e);
+    }
+    await sendAgencyWelcomeEmail(
+      { name, owner_name: ownerName, owner_email: ownerEmail },
+      { setPasswordLink }
+    );
   }
 
   return { success: true, agencyId: agency.id };
