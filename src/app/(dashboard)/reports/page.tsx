@@ -7,6 +7,7 @@ import {
   type MonthlyDeletion,
 } from "@/components/dashboard/deletions-chart";
 import { Card, CardHeader } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   cn,
   formatCurrency,
@@ -19,7 +20,7 @@ import {
   typeBreakdown,
   clientMetrics,
 } from "@/lib/reports/metrics";
-import { Users, Trash2, Percent, DollarSign } from "lucide-react";
+import { Users, Trash2, Percent, DollarSign, BarChart3 } from "lucide-react";
 
 const ACTIVE_STATUSES = ["active", "onboarding", "analysis", "on_hold"];
 
@@ -108,6 +109,18 @@ export default async function ReportsPage() {
   const bureauStats = bureauBreakdown(disputeResultsRes.data ?? []);
   const typeStats = typeBreakdown(itemTypesRes.data ?? []);
   const retention = clientMetrics({ clients });
+
+  if (totalClients === 0) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <EmptyState
+          icon={BarChart3}
+          title="Data appears as you work"
+          description="Create your first client to start tracking disputes, letters, and results."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

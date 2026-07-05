@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils/helpers";
 import type { ActivityLog, ActorType } from "@/types";
-import { Activity, User, Webhook, CreditCard, Cpu, UserCircle } from "lucide-react";
+import { Activity, User, Webhook, CreditCard, Cpu, UserCircle, Clock } from "lucide-react";
 
 const ACTOR_META: Record<
   ActorType,
@@ -72,9 +72,9 @@ export default async function ClientTimelinePage({
     return (
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         <EmptyState
-          icon={Activity}
+          icon={Clock}
           title="No activity yet"
-          description="Every action on this client — item edits, rounds, uploads, and syncs — will show up here."
+          description="Actions taken on this client will appear here."
         />
       </div>
     );
