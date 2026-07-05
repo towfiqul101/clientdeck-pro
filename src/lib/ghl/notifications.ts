@@ -99,8 +99,10 @@ export async function sendGHLNotification(
 
   if (result.method === "none" && process.env.RESEND_API_KEY && payload.email) {
     try {
-      await sendResendFallback(type, payload, agency);
-      result = { success: true, method: "resend" };
+      const sent = await sendResendFallback(type, payload, agency);
+      if (sent) {
+        result = { success: true, method: "resend" };
+      }
     } catch (err) {
       console.error(`[Resend Fallback] ${type} failed:`, err);
     }
@@ -136,8 +138,8 @@ async function sendResendFallback(
   type: GHLNotificationType,
   payload: GHLNotificationPayload,
   agency: Agency
-): Promise<void> {
-  if (!process.env.RESEND_API_KEY || !payload.email) return;
+): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY || !payload.email) return false;
 
   const templates: Partial<Record<GHLNotificationType, { subject: string; body: string }>> = {
     round_sent: {
@@ -159,7 +161,7 @@ async function sendResendFallback(
   };
 
   const template = templates[type];
-  if (!template) return;
+  if (!template) return false;
 
   await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -175,6 +177,7 @@ async function sendResendFallback(
     }),
     signal: AbortSignal.timeout(8000),
   });
+  return true;
 }
 
 function portalLinkFor(client: NotifiableClient): string {

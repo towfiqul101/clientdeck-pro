@@ -7,6 +7,7 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils/helpers";
 import { avatarColor, initials, statusDotClass } from "@/lib/admin/avatar";
 import type { AgencyPanelData } from "@/lib/admin/agency-panel";
 import type { Plan, PlanStatus } from "@/types";
+import type { GHLNotificationType } from "@/lib/ghl/notifications";
 import {
   saveAgencyStatus,
   extendTrial14,
@@ -26,7 +27,7 @@ const STATUSES: PlanStatus[] = ["active", "trialing", "past_due", "paused", "can
 const TABS = ["Status", "GHL Config", "Tools", "Branding", "Payments"] as const;
 type Tab = (typeof TABS)[number];
 
-const WIRED_NOTIFICATION_TYPES = [
+const WIRED_NOTIFICATION_TYPES: readonly GHLNotificationType[] = [
   "round_sent",
   "deletion_win",
   "round_results_in",
@@ -37,7 +38,7 @@ const WIRED_NOTIFICATION_TYPES = [
   "staff_round_overdue",
   "staff_next_round_ready",
   "monthly_progress",
-] as const;
+];
 
 const field =
   "w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";

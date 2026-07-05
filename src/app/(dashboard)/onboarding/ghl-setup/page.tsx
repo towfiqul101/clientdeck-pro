@@ -46,7 +46,7 @@ const WORKFLOWS: WorkflowDoc[] = [
   },
   {
     title: "Monthly Progress Update (Client SMS)",
-    fields: ["{{score_eq}}", "{{score_exp}}", "{{score_tu}}", "{{total_deletions}}", "{{total_items}}", "{{current_round}}", "{{portal_link}}"],
+    fields: ["{{score_eq}}", "{{score_exp}}", "{{score_tu}}", "{{total_deletions}}", "{{total_items}}", "{{current_round}}", "{{months_in_program}}", "{{portal_link}}"],
     suggestedCopy:
       "Hi {{contact.first_name}}, your monthly update: {{total_deletions}} of {{total_items}} items resolved, currently on Round {{current_round}}. View details: {{portal_link}}",
   },
