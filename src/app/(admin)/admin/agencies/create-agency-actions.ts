@@ -141,9 +141,11 @@ export async function adminCreateAgency(
   if (input.sendWelcomeEmail) {
     let setPasswordLink: string | undefined;
     try {
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://clientdeckpro.com").replace(/\/$/, "");
       const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
         type: "recovery",
         email: ownerEmail,
+        options: { redirectTo: `${appUrl}/reset-password` },
       });
       if (!linkError && linkData?.properties?.action_link) {
         setPasswordLink = linkData.properties.action_link;

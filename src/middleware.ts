@@ -5,7 +5,11 @@ import { createServerClient } from "@supabase/ssr";
 const AUTH_ROUTES = ["/login", "/signup"];
 
 // Public marketing/legal pages — reachable while signed out.
-const PUBLIC_ROUTES = ["/", "/snapshot", "/terms", "/privacy"];
+// /reset-password lives here (not AUTH_ROUTES): a Supabase password-recovery
+// session is itself a valid signed-in session, so putting it in AUTH_ROUTES
+// would trigger the "signed-in user hitting an auth route -> /dashboard" rule
+// below and bounce the user away before they can set their password.
+const PUBLIC_ROUTES = ["/", "/snapshot", "/terms", "/privacy", "/reset-password"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
