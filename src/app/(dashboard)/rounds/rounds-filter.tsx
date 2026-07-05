@@ -4,10 +4,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All statuses" },
-  { value: "awaiting_response", label: "Awaiting response" },
   { value: "preparing", label: "Preparing" },
   { value: "letters_generated", label: "Letters generated" },
   { value: "sent", label: "Sent" },
+  { value: "awaiting_response", label: "Awaiting response" },
   { value: "complete", label: "Complete" },
 ];
 
