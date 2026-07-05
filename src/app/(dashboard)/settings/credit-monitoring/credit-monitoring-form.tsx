@@ -31,6 +31,12 @@ export function CreditMonitoringForm({ initial }: CreditMonitoringFormProps) {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
 
+  function handleServiceChange(next: CreditMonitoringService | "none") {
+    setService(next);
+    setApiKey("");
+    setApiSecret("");
+  }
+
   async function handleSave() {
     setSaving(true);
     const result = await updateCreditMonitoringSettings({ service, apiKey, apiSecret });
@@ -58,7 +64,7 @@ export function CreditMonitoringForm({ initial }: CreditMonitoringFormProps) {
             id="service"
             options={SERVICE_OPTIONS}
             value={service}
-            onChange={(e) => setService(e.target.value as CreditMonitoringService | "none")}
+            onChange={(e) => handleServiceChange(e.target.value as CreditMonitoringService | "none")}
           />
         </Field>
 
