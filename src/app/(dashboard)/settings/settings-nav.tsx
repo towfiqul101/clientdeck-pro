@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/helpers";
-import { Building2, Plug, Palette, CreditCard, FolderOpen } from "lucide-react";
+import { Building2, Plug, Palette, CreditCard, FolderOpen, LineChart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const TABS: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "General", href: "/settings", icon: Building2 },
   { label: "GHL Integration", href: "/settings/ghl", icon: Plug },
   { label: "Documents", href: "/settings/documents", icon: FolderOpen },
+  { label: "Credit Monitoring", href: "/settings/credit-monitoring", icon: LineChart },
   { label: "Branding", href: "/settings/branding", icon: Palette },
   { label: "Billing", href: "/settings/billing", icon: CreditCard },
 ];

@@ -9,6 +9,8 @@ import { markOnboardingStep } from "@/lib/onboarding/mark";
 import type { AgencySettings, GhlFieldKeys } from "@/types";
 import type { GHLNotificationType } from "@/lib/ghl/notifications";
 import type { PipelineStageKey } from "@/lib/ghl/pipeline";
+import { testConnection } from "@/lib/credit-monitoring";
+import type { CreditMonitoringService } from "@/types";
 
 export interface ActionResult {
   success: boolean;
@@ -314,4 +316,45 @@ export async function updateBranding(input: {
   revalidatePath("/settings/branding");
   revalidatePath("/", "layout");
   return { success: true };
+}
+
+/** Saves the agency's credit-monitoring provider selection + API credentials. */
+export async function updateCreditMonitoringSettings(input: {
+  service: CreditMonitoringService | "none";
+  apiKey: string;
+  apiSecret: string;
+}): Promise<ActionResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("agencies")
+    .update({
+      credit_monitoring_service: input.service,
+      credit_monitoring_api_key: input.apiKey.trim() || null,
+      credit_monitoring_api_secret: input.apiSecret.trim() || null,
+    })
+    .eq("id", session.agency.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/credit-monitoring");
+  return { success: true };
+}
+
+/** Live credential check for the Credit Monitoring "Test Connection" button. */
+export async function testCreditMonitoringConnection(input: {
+  service: CreditMonitoringService | "none";
+  apiKey: string;
+  apiSecret: string;
+}): Promise<{ ok: boolean; message: string }> {
+  const session = await getSessionContext();
+  if (!session) return { ok: false, message: "Not authenticated." };
+
+  if (input.service === "none") {
+    return { ok: false, message: "Select a provider first." };
+  }
+
+  return testConnection(input.service, input.apiKey, input.apiSecret);
 }
