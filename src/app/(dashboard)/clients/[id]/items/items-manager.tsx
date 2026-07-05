@@ -20,7 +20,28 @@ import { addItems, updateItem, deleteItem, type NewItemInput } from "./actions";
 import { ItemDraftRow, blankDraft } from "./item-draft-row";
 import { CreditReportParser } from "./credit-report-parser";
 import type { Bureau, DisputeStatus, NegativeItem } from "@/types";
-import { Plus, Zap, Pencil, Trash2, ListTree, List, FileWarning, Bot } from "lucide-react";
+import {
+  Plus,
+  Zap,
+  Pencil,
+  Trash2,
+  ListTree,
+  List,
+  FileWarning,
+  Bot,
+  Check,
+  Clock,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+
+// Icons for the three dispute statuses the visual spec calls out; the rest
+// (not_disputed, updated, pending) keep the plain Badge with no icon.
+const STATUS_ICONS: Partial<Record<DisputeStatus, LucideIcon>> = {
+  deleted: Check,
+  in_dispute: Clock,
+  verified: X,
+};
 
 interface ItemsManagerProps {
   clientId: string;
@@ -525,8 +546,9 @@ function ItemRow({
   onDelete: () => void;
 }) {
   const style = BUREAU_STYLES[item.bureau];
+  const StatusIcon = STATUS_ICONS[item.dispute_status];
   return (
-    <tr className="hover:bg-gray-50">
+    <tr className={cn("border-l-4 hover:bg-gray-50", style.border)}>
       <td className="px-4 py-3">
         <span className="inline-flex items-center gap-1.5">
           <span className={cn("h-2 w-2 rounded-full", style.dot)} />
@@ -550,7 +572,10 @@ function ItemRow({
         {item.balance != null ? formatCurrency(item.balance) : "—"}
       </td>
       <td className="px-4 py-3">
-        <Badge status={item.dispute_status} />
+        <span className="inline-flex items-center gap-1">
+          {StatusIcon && <StatusIcon className="h-3 w-3" />}
+          <Badge status={item.dispute_status} />
+        </span>
       </td>
       <td className="px-4 py-3 text-gray-600">
         {item.round_disputed ? `R${item.round_disputed}` : "—"}

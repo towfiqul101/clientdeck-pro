@@ -22,14 +22,21 @@ function BureauScore({
   label,
   start,
   current,
+  borderTopClass,
 }: {
   label: string;
   start: number | null;
   current: number | null;
+  borderTopClass: string;
 }) {
   const change = scoreChange(start, current);
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+    <div
+      className={cn(
+        "rounded-lg border border-t-2 border-gray-200 bg-gray-50 px-3 py-2",
+        borderTopClass
+      )}
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
         {label}
       </p>
@@ -74,10 +81,14 @@ export function ClientHeader({
     client.total_items_start,
     client.total_items_current
   );
-  const resolvedPct =
+  // 2-segment progress bar (deleted / remaining) computed only from fields
+  // already on `Client` — an "in dispute" 3rd segment would need a query
+  // this component doesn't make, so it's intentionally out of scope here.
+  const deletedPct =
     totalItems > 0
       ? Math.round((client.total_items_deleted / totalItems) * 100)
       : 0;
+  const remainingPct = 100 - deletedPct;
 
   return (
     <div className="space-y-5">
@@ -182,16 +193,19 @@ export function ClientHeader({
           label="Equifax"
           start={client.score_eq_start}
           current={client.score_eq_current}
+          borderTopClass="border-t-blue-500"
         />
         <BureauScore
           label="Experian"
           start={client.score_exp_start}
           current={client.score_exp_current}
+          borderTopClass="border-t-orange-500"
         />
         <BureauScore
           label="TransUnion"
           start={client.score_tu_start}
           current={client.score_tu_current}
+          borderTopClass="border-t-green-500"
         />
       </div>
 
@@ -201,12 +215,16 @@ export function ClientHeader({
           <span className="text-gray-600">
             {client.total_items_deleted} of {totalItems} items resolved
           </span>
-          <span className="font-medium text-gray-900">{resolvedPct}%</span>
+          <span className="font-medium text-gray-900">{deletedPct}%</span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="flex h-2 w-full overflow-hidden rounded-full bg-gray-100">
           <div
-            className="h-full rounded-full bg-green-500 transition-all"
-            style={{ width: `${resolvedPct}%` }}
+            className="h-full bg-green-500 transition-all duration-150 ease-in-out"
+            style={{ width: `${deletedPct}%` }}
+          />
+          <div
+            className="h-full bg-gray-300 transition-all duration-150 ease-in-out"
+            style={{ width: `${remainingPct}%` }}
           />
         </div>
       </div>
