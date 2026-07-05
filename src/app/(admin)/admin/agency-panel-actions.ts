@@ -238,3 +238,29 @@ export async function recordAgencyPayment(
   revalidatePath("/admin/payments");
   return { success: true };
 }
+
+// ── Danger zone ──────────────────────────────────────────────────────────────
+
+export async function deleteAgencyAdmin(
+  agencyId: string,
+  confirmName: string
+): Promise<Result> {
+  if (!(await guard())) return { success: false, error: "Forbidden." };
+
+  const admin = createAdminClient();
+  const { data } = await admin.from("agencies").select("name").eq("id", agencyId).single();
+  if (!data) return { success: false, error: "Agency not found." };
+  if (confirmName.trim() !== data.name) {
+    return { success: false, error: "Name did not match. Deletion cancelled." };
+  }
+
+  const { error } = await admin.from("agencies").delete().eq("id", agencyId);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/agencies");
+  revalidatePath("/admin/pending");
+  revalidatePath("/admin/payments");
+  revalidatePath("/admin/clients");
+  return { success: true };
+}

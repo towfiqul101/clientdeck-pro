@@ -15,6 +15,7 @@ import {
   testConnection,
   saveBranding,
   recordAgencyPayment,
+  deleteAgencyAdmin,
 } from "@/app/(admin)/admin/agency-panel-actions";
 
 const PLANS: { id: Plan; label: string }[] = [
@@ -197,7 +198,17 @@ export function AgencySlideover({
                 selected agency changes (useState initializers only run on mount). */}
             <div className="flex-1 overflow-y-auto p-5">
               {tab === "Status" && (
-                <StatusTab key={agency.id} data={current!} pending={pending} run={run} onExtend={() => run(() => extendTrial14(agency.id), "Trial extended 14 days.")} />
+                <StatusTab
+                  key={agency.id}
+                  data={current!}
+                  pending={pending}
+                  run={run}
+                  onExtend={() => run(() => extendTrial14(agency.id), "Trial extended 14 days.")}
+                  onDeleted={() => {
+                    onClose();
+                    onChange?.();
+                  }}
+                />
               )}
               {tab === "GHL Config" && (
                 <GhlTab key={agency.id} data={current!} pending={pending} run={run} toast={toast} />
@@ -235,22 +246,35 @@ function StatusTab({
   pending,
   run,
   onExtend,
+  onDeleted,
 }: {
   data: AgencyPanelData;
   pending: boolean;
   run: (fn: () => Promise<{ success: boolean; error?: string }>, ok: string) => void;
   onExtend: () => void;
+  onDeleted: () => void;
 }) {
   const a = data.agency;
+  const { toast } = useToast();
   const [plan, setPlan] = useState<Plan>(a.plan);
   const [status, setStatus] = useState<PlanStatus>(a.plan_status);
   const [maxClients, setMaxClients] = useState(String(a.max_clients));
   const [trialEnd, setTrialEnd] = useState(a.trial_ends_at ? a.trial_ends_at.slice(0, 10) : "");
-  const [notes, setNotes] = useState(
-    ((a.settings as unknown as Record<string, unknown> | undefined)?.admin_notes as
-      | string
-      | undefined) ?? ""
-  );
+  const [notes, setNotes] = useState(a.settings?.admin_notes ?? "");
+  const [confirmName, setConfirmName] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    const res = await deleteAgencyAdmin(a.id, confirmName);
+    setDeleting(false);
+    if (res.success) {
+      toast("Agency deleted.", "success");
+      onDeleted();
+    } else {
+      toast(res.error ?? "Something went wrong.", "error");
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -330,6 +354,32 @@ function StatusTab({
           <Row k="Clients" v={String(data.clientCount)} />
           <Row k="License key" v={a.license_key} />
         </dl>
+      </div>
+
+      <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-red-700">
+          Danger Zone
+        </h4>
+        <p className="mt-1 text-sm text-red-600">
+          Permanently delete this agency and all of its clients, rounds, letters, and
+          documents. Type <span className="font-semibold">{a.name}</span> to confirm.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            value={confirmName}
+            onChange={(e) => setConfirmName(e.target.value)}
+            placeholder="Type agency name…"
+            className={cn(field, "max-w-[220px] border-red-300")}
+          />
+          <button
+            disabled={deleting || confirmName.trim() !== a.name}
+            onClick={handleDelete}
+            className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+          >
+            {deleting ? "Deleting…" : "Delete Agency"}
+          </button>
+        </div>
       </div>
     </div>
   );
