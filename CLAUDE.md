@@ -57,7 +57,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 5. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload (mirrored to Drive)
 
 ## Database Tables (Supabase)
-- `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB GHL field map), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `max_clients`, `plan`/`plan_status`, `settings` (JSONB: onboarding_steps, admin_notes, etc.)
+- `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB GHL field map), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `credit_monitoring_service`/`credit_monitoring_api_key`/`credit_monitoring_api_secret` (Agency-plan credit monitoring, migration 017), `max_clients`, `plan`/`plan_status`, `settings` (JSONB: onboarding_steps, admin_notes, etc.)
 - `team_members` — Staff accounts linked to agencies (roles: owner/admin/staff/viewer)
 - `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`, `ghl_opportunity_id` (cached GHL pipeline opportunity id, migration 016)
 - `negative_items` — Items on credit reports to dispute (per bureau)
@@ -70,13 +70,14 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - `snapshot_requests` — GHL snapshot install requests (migration 008)
 - `ghl_sync_log` — Outbound GHL sync attempts + failures (migration 005)
 - `score_history` — Bureau score snapshots per round for the portal chart (migration 006)
+- `credit_monitoring_pulls` — Per-pull audit trail (service, scores returned, status/error) for the credit monitoring integration (migration 017)
 
 ### Migrations (`supabase/migrations/`, run in order in Supabase SQL editor)
 001 schema · 002 RLS · 003 seed templates · 004 finalized col · 005 ghl_sync_log ·
 006 score_history · 007 team RLS fix · 008 snapshot_requests · 009 manual_payments ·
 010 609/611/623 templates · 011 signature+onboarding+ghl_field_keys · 012 google_drive ·
 013 client_assignment · 014 personal_info_types · 015 personal_info_template ·
-**016 ghl_opportunity_id**
+016 ghl_opportunity_id · **017 credit_monitoring**
 
 ## Key Libraries & Locations
 - `src/lib/supabase/{client,server,admin}.ts` — browser / SSR / service-role clients
@@ -130,6 +131,13 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - **Configure at Settings → GHL:** "Notification Webhooks" (per-type URL + Test button, backed by `/api/ghl/test-webhook`), "Pipeline Configuration", and a link to the full setup guide at `/onboarding/ghl-setup`.
 - **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through 3 stages of the existing "Active Client" pipeline (`round_1_sent`, `round_2_plus`, `goal_achieved` — configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`). Lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()` and caches it on `clients.ghl_opportunity_id`. Best-effort, no-ops cleanly if unconfigured.
 - **Visibility:** client Timeline tab shows a "✓ GHL" / "⚠ Email fallback" badge on notification entries; admin agency slide-over's GHL Config tab shows a 10-row configured/not-set breakdown.
+
+## Credit Monitoring Integration (Session 7)
+- **Gated to the Agency plan** via `isAgencyPlanOrHigher()` (`src/lib/billing/plans.ts`) — Starter/Pro agencies see an upgrade-gate card at Settings → Credit Monitoring instead of the connection form, and `/api/credit-monitoring/pull` returns 403 for non-Agency agencies.
+- **Three provider adapters** under `src/lib/credit-monitoring/` (`myfreescorenow.ts`, `identityiq.ts`, `smartcredit.ts`, dispatched via `index.ts`'s `pullCreditScores()`/`testConnection()`) — each carries a standing `TODO: Verify endpoint URL and field names` comment; these are unverified placeholder API calls pending real partner API docs, not confirmed integrations.
+- **`credit_monitoring_pulls`** (migration 017) — per-pull audit row (`agency_id`, `client_id`, `service`, scores, `status`/`error_message`, `raw_response`). Credentials live on `agencies.credit_monitoring_service`/`_api_key`/`_api_secret`.
+- **Settings tab** at Settings → Credit Monitoring: provider select + API key/secret fields (cleared on provider change), Test Connection button. **Pull Scores button** lives on client detail — calls `/api/credit-monitoring/pull`, writes `score_history`, and syncs the GHL score custom fields. An opt-in auto-pull (`settings.auto_pull_scores`) also fires non-blocking from the GHL onboarding webhook for newly onboarded clients.
+- Also surfaced in Reports ("Credit Score Analytics" section) and the admin agency slide-over (status + test-connection tool, `/api/admin/tools/test-credit-monitoring`).
 
 ## Super-Admin Panel (`/admin`)
 - **Auth is standalone** — password (`ADMIN_PASSWORD`) → SHA-256 → httpOnly `cdp_admin_session` cookie. NO Supabase Auth. Middleware lets all `/admin/*` through; `(admin)/layout.tsx` guards via `requireAdmin()`; `/admin/login` lives in a separate `(admin-auth)` group. `ADMIN_EMAIL` is only an optional audit label.
@@ -227,6 +235,15 @@ analytics, landing page.
   rounds kanban pipeline board with list/pipeline view toggle (click-only —
   no drag-and-drop yet); landing page hero/pricing-card/comparison-table
   upgrades; empty-state polish across clients list, timeline, and reports.
+- **Session 7 (Part B)** — Credit monitoring integration, gated to the
+  **Agency** plan (`isAgencyPlanOrHigher()`): per-agency provider connection
+  (MyFreeScoreNow/IdentityIQ/SmartCredit) in Settings → Credit Monitoring;
+  `credit_monitoring_pulls` audit table (migration 017); a Pull Scores flow on
+  client detail that fetches bureau scores, writes `score_history`, and syncs
+  the GHL score custom fields; an opt-in, non-blocking auto-pull fired from
+  the GHL onboarding webhook for new clients (`settings.auto_pull_scores`);
+  a Reports "Credit Score Analytics" section; and an admin agency slide-over
+  tool to check credit-monitoring status and test the stored connection.
 
 ## Common Commands
 ```bash
