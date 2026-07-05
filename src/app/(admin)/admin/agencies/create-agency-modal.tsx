@@ -39,6 +39,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
   const [adminNotes, setAdminNotes] = useState("");
   const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showApiKey, setShowApiKey] = useState(false);
 
   function reset() {
     setName("");
@@ -54,6 +55,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
     setAdminNotes("");
     setSendWelcomeEmail(true);
     setFieldErrors({});
+    setShowApiKey(false);
   }
 
   function submit() {
@@ -65,7 +67,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
         phone: phone || undefined,
         plan,
         status,
-        maxClients: Number(maxClients),
+        maxClients: maxClients.trim() === "" ? undefined : Number(maxClients),
         trialEndDate: trialEnd || undefined,
         ghlLocationId: ghlLocationId || undefined,
         ghlApiKey: ghlApiKey || undefined,
@@ -106,7 +108,10 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
         footer={
           <>
             <button
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                reset();
+              }}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
@@ -212,7 +217,21 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
               </div>
               <div>
                 <label className={label}>GHL API Key (PIT)</label>
-                <input value={ghlApiKey} onChange={(e) => setGhlApiKey(e.target.value)} className={field} />
+                <div className="flex gap-2">
+                  <input
+                    type={showApiKey ? "text" : "password"}
+                    value={ghlApiKey}
+                    onChange={(e) => setGhlApiKey(e.target.value)}
+                    className={field}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey((s) => !s)}
+                    className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    {showApiKey ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
