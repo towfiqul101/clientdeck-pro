@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -80,7 +81,7 @@ export function DashboardShell({
   }
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-gray-900">
+    <div className="flex h-full flex-col border-r border-gray-800 bg-gray-900">
       {/* Brand */}
       <div className="flex h-16 items-center justify-between px-4">
         <Logo variant="light" />
@@ -95,9 +96,15 @@ export function DashboardShell({
 
       {/* Agency name */}
       <div className="px-4 pb-2">
-        <p className="truncate text-xs font-medium uppercase tracking-wide text-gray-500">
-          {agencyName}
-        </p>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition-colors duration-150 hover:bg-gray-800"
+        >
+          <p className="truncate text-xs font-medium uppercase tracking-wide text-gray-500">
+            {agencyName}
+          </p>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -111,13 +118,18 @@ export function DashboardShell({
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm font-medium transition-colors duration-150",
                 active
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  ? "border-blue-500 bg-blue-500/15 text-white"
+                  : "border-transparent text-gray-300 hover:bg-gray-800 hover:text-white"
               )}
             >
-              <Icon className="h-5 w-5 shrink-0" />
+              <Icon
+                className={cn(
+                  "h-5 w-5 shrink-0",
+                  active ? "text-blue-400" : "text-gray-400"
+                )}
+              />
               {item.label}
             </Link>
           );
@@ -126,8 +138,8 @@ export function DashboardShell({
 
       {/* User + logout */}
       <div className="border-t border-gray-800 p-3">
-        <div className="flex items-center gap-3 px-1 py-2">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-700 text-sm font-medium text-white">
+        <div className="flex items-center gap-2 px-1 py-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white">
             {getInitials(
               userName.split(" ")[0] ?? userName,
               userName.split(" ")[1] ?? userName.slice(1)
@@ -139,14 +151,14 @@ export function DashboardShell({
             </p>
             <p className="truncate text-xs text-gray-400">{userEmail}</p>
           </div>
+          <button
+            onClick={handleLogout}
+            aria-label="Log out"
+            className="shrink-0 rounded-md p-2 text-gray-400 transition-colors duration-150 hover:bg-gray-800 hover:text-white"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
-        <button
-          onClick={handleLogout}
-          className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
-        >
-          <LogOut className="h-5 w-5" />
-          Log out
-        </button>
       </div>
     </div>
   );
