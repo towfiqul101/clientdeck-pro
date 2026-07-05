@@ -218,6 +218,15 @@ analytics, landing page.
   sync (`src/lib/ghl/pipeline.ts`, migration 016 `ghl_opportunity_id`); monthly
   client-progress cron (`/api/cron/monthly-progress`); notification-method badge
   on the client Timeline tab + admin notification-health widget.
+- **Session 7 (Part A)** — UI/UX visual redesign: design system tokens (button
+  press state, input focus ring, badge dot/size variants), sidebar upgrade
+  (active-state left border, workspace-switcher affordance), dashboard stat
+  cards + gradient onboarding banner + deletions chart styling, client list
+  (avatars, hover actions, status pills, table/card view toggle), client
+  detail header (bureau score cards, progress bar, item status icons); new
+  rounds kanban pipeline board with list/pipeline view toggle (click-only —
+  no drag-and-drop yet); landing page hero/pricing-card/comparison-table
+  upgrades; empty-state polish across clients list, timeline, and reports.
 
 ## Common Commands
 ```bash
