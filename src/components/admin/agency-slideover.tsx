@@ -210,6 +210,12 @@ export function AgencySlideover({
                   driveEnabled={Boolean(current!.agency.google_drive_enabled)}
                   driveEmail={current!.agency.google_drive_email}
                   driveFolderId={current!.agency.google_drive_root_folder_id}
+                  creditMonitoringService={current!.agency.credit_monitoring_service}
+                  creditMonitoringConfigured={
+                    current!.agency.credit_monitoring_service !== "none" &&
+                    Boolean(current!.agency.credit_monitoring_api_key)
+                  }
+                  creditMonitoringPullsThisMonth={current!.creditMonitoring.pullsThisMonth}
                 />
               )}
               {tab === "Branding" && <BrandingTab key={agency.id} data={current!} pending={pending} run={run} />}
@@ -464,12 +470,18 @@ function ToolsTab({
   driveEnabled,
   driveEmail,
   driveFolderId,
+  creditMonitoringService,
+  creditMonitoringConfigured,
+  creditMonitoringPullsThisMonth,
 }: {
   agencyId: string;
   configured: boolean;
   driveEnabled: boolean;
   driveEmail: string | null;
   driveFolderId: string | null;
+  creditMonitoringService: string;
+  creditMonitoringConfigured: boolean;
+  creditMonitoringPullsThisMonth: number;
 }) {
   const { toast } = useToast();
   const [busy, setBusy] = useState<string | null>(null);
@@ -555,6 +567,34 @@ function ToolsTab({
             View their Drive folder ↗
           </a>
         )}
+      </div>
+
+      {/* Credit Monitoring status (display only + test button) */}
+      <div className="rounded-lg border border-gray-200 p-4">
+        <h4 className="text-sm font-semibold text-gray-900">Credit Monitoring</h4>
+        <div className="mt-2 flex items-center gap-2 text-sm">
+          <span className={cn("h-2 w-2 rounded-full", creditMonitoringConfigured ? "bg-green-500" : "bg-gray-300")} />
+          <span className="text-gray-600">
+            {creditMonitoringConfigured ? `Connected (${creditMonitoringService})` : "Not connected"}
+          </span>
+        </div>
+        {creditMonitoringConfigured && (
+          <p className="mt-1 text-xs text-gray-500">{creditMonitoringPullsThisMonth} pulls this month</p>
+        )}
+        {creditMonitoringConfigured && (
+          <button
+            disabled={busy !== null}
+            onClick={() => runTool("credit-monitoring", "/api/admin/tools/test-credit-monitoring")}
+            className={cn(
+              "mt-2 flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium",
+              busy !== null ? "cursor-not-allowed bg-gray-100 text-gray-400" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+            )}
+          >
+            {busy === "credit-monitoring" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Test API Connection
+          </button>
+        )}
+        {results["credit-monitoring"] && <p className="mt-1 text-xs font-medium text-gray-700">{results["credit-monitoring"]}</p>}
       </div>
 
       <p className="text-sm text-gray-500">

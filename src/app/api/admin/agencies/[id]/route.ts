@@ -27,7 +27,7 @@ export async function GET(
     return NextResponse.json({ ok: false, error: "Agency not found" }, { status: 404 });
   }
 
-  const [{ count: clientCount }, { data: payments }, { data: lastSync }] =
+  const [{ count: clientCount }, { data: payments }, { data: lastSync }, { count: pullsThisMonth }] =
     await Promise.all([
       admin
         .from("clients")
@@ -46,6 +46,11 @@ export async function GET(
         .order("attempted_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      admin
+        .from("credit_monitoring_pulls")
+        .select("id", { count: "exact", head: true })
+        .eq("agency_id", id)
+        .gte("pulled_at", new Date(new Date().setDate(1)).toISOString()),
     ]);
 
   const a = agency as Agency;
@@ -64,6 +69,9 @@ export async function GET(
     ghl: {
       configured: Boolean(a.ghl_api_key && a.ghl_location_id),
       lastSyncAt: lastSync?.attempted_at ?? null,
+    },
+    creditMonitoring: {
+      pullsThisMonth: pullsThisMonth ?? 0,
     },
   };
 

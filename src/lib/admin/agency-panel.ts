@@ -18,4 +18,7 @@ export interface AgencyPanelData {
     configured: boolean;
     lastSyncAt: string | null;
   };
+  creditMonitoring: {
+    pullsThisMonth: number;
+  };
 }
