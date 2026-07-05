@@ -59,7 +59,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 ## Database Tables (Supabase)
 - `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB GHL field map), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `max_clients`, `plan`/`plan_status`, `settings` (JSONB: onboarding_steps, admin_notes, etc.)
 - `team_members` — Staff accounts linked to agencies (roles: owner/admin/staff/viewer)
-- `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`
+- `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`, `ghl_opportunity_id` (cached GHL pipeline opportunity id, migration 016)
 - `negative_items` — Items on credit reports to dispute (per bureau)
 - `dispute_rounds` — Round lifecycle (preparing → sent → awaiting → complete)
 - `disputes` — Individual item disputes within a round (with AI-generated letter content)
@@ -74,14 +74,18 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 ### Migrations (`supabase/migrations/`, run in order in Supabase SQL editor)
 001 schema · 002 RLS · 003 seed templates · 004 finalized col · 005 ghl_sync_log ·
 006 score_history · 007 team RLS fix · 008 snapshot_requests · 009 manual_payments ·
-**010 609/611/623 templates · 011 signature+onboarding+ghl_field_keys · 012 google_drive**
+010 609/611/623 templates · 011 signature+onboarding+ghl_field_keys · 012 google_drive ·
+013 client_assignment · 014 personal_info_types · 015 personal_info_template ·
+**016 ghl_opportunity_id**
 
 ## Key Libraries & Locations
 - `src/lib/supabase/{client,server,admin}.ts` — browser / SSR / service-role clients
 - `src/lib/claude/generate-letter.ts` — AI letter generation (single + bulk)
-- `src/lib/ghl/api.ts` — GHL API v2 wrapper (contacts, tags, pipeline, tasks, custom fields, pipelines)
+- `src/lib/ghl/api.ts` — GHL API v2 wrapper (contacts, tags, pipeline, tasks, custom fields, pipelines, opportunity find-or-create)
 - `src/lib/ghl/webhook.ts` — Inbound GHL webhook handler
 - `src/lib/ghl/field-detect.ts` — heuristic GHL custom-field → CDP key mapping (auto-detect)
+- `src/lib/ghl/notifications.ts` — GHL webhook notification service (10 `GHLNotificationType`s → agency's own GHL workflow, Resend email fallback, log-only no-op; never throws)
+- `src/lib/ghl/pipeline.ts` — best-effort GHL opportunity/pipeline-stage sync (`moveClientPipelineStage`)
 - `src/lib/google-drive/{auth,client,sync,letter-sync}.ts` — OAuth, Drive API, non-blocking sync
 - `src/lib/admin/session.ts` — super-admin password/cookie auth (`cdp_admin_session`)
 - `src/lib/admin/{mrr,avatar,agency-panel,tool-helpers}.ts` — admin dashboard helpers
@@ -119,6 +123,13 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - **Sync events:** Round sent → pipeline move + tag + note. Deletion → tag + field update. Score update → custom fields. Completion → goal-achieved tag.
 - **GHL custom fields** the snapshot expects: `dispute_round_current`, `items_deleted_total`, `total_negative_items`, `next_dispute_date`, `credit_score_eq_current`, `credit_score_exp_current`, `credit_score_tu_current`, `clientdeck_portal_link`, `clientdeck_client_id`
 - **Field mapping (`agencies.ghl_field_keys` JSONB):** because GHL field IDs are unique per location, each agency maps its keys (SSN, DOB, scores, signature status/date, credit-report/ID/proof-of-address uploads) in Settings → GHL. Manual entry or heuristic "Auto-detect" (`field-detect.ts`).
+
+## GHL Notifications & Pipeline Sync (Session 6)
+- **Independent channel, additive to outbound sync above.** `src/lib/ghl/notifications.ts` POSTs to an agency-configured GHL "Custom Webhook" trigger URL per event (`agencies.settings.ghl_webhook_triggers`, one URL per `GHLNotificationType`), falling back to Resend email (only 4 of 10 types have a template — `round_sent`/`deletion_win`/`goal_achieved`/`payment_failed`), falling back to a log-only no-op. Every send is logged to `activity_log` (`action: "notification_sent"`) and never throws past its caller.
+- **10 notification types**, each wired into one event: `round_sent`, `deletion_win`, `round_results_in` (round lifecycle), `goal_achieved` (client completed), `payment_failed` (Stripe webhook — client's own `stripe_customer_id`, distinct from the agency's SaaS subscription), `portal_link` (regeneration), `staff_new_client` (onboarding webhook), `staff_round_overdue` / `staff_next_round_ready` (crons), `monthly_progress` (new monthly cron, `/api/cron/monthly-progress`, `0 9 1 * *`). Staff-facing types need `agencies.settings.owner_ghl_contact_id` configured.
+- **Configure at Settings → GHL:** "Notification Webhooks" (per-type URL + Test button, backed by `/api/ghl/test-webhook`), "Pipeline Configuration", and a link to the full setup guide at `/onboarding/ghl-setup`.
+- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through 3 stages of the existing "Active Client" pipeline (`round_1_sent`, `round_2_plus`, `goal_achieved` — configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`). Lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()` and caches it on `clients.ghl_opportunity_id`. Best-effort, no-ops cleanly if unconfigured.
+- **Visibility:** client Timeline tab shows a "✓ GHL" / "⚠ Email fallback" badge on notification entries; admin agency slide-over's GHL Config tab shows a 10-row configured/not-set breakdown.
 
 ## Super-Admin Panel (`/admin`)
 - **Auth is standalone** — password (`ADMIN_PASSWORD`) → SHA-256 → httpOnly `cdp_admin_session` cookie. NO Supabase Auth. Middleware lets all `/admin/*` through; `(admin)/layout.tsx` guards via `requireAdmin()`; `/admin/login` lives in a separate `(admin-auth)` group. `ADMIN_EMAIL` is only an optional audit label.
@@ -196,7 +207,17 @@ analytics, landing page.
   (`/api/ai/strategy` + client-header panel); case-completion review-request automation
   (extended `syncClientCompleted`, `/api/ghl/send-review-request`, portal celebration +
   review/referral links); `personal_info_error` + `duplicate_account` item types
-  (migrations 013 + 014 + 015). Sessions 3–4 (GHL snapshot/workflow wiring) still deferred.
+  (migrations 013 + 014 + 015).
+- **Session 6** — GHL notification webhooks + pipeline-stage sync (the deferred
+  Sessions 3–4 GHL workflow wiring, done as two phases): new independent
+  `src/lib/ghl/notifications.ts` service (10 notification types, GHL webhook →
+  Resend → log-only fallback chain, never throws) wired into all round/client/
+  payment/staff-alert events alongside the existing tag/field sync; Settings →
+  GHL config UI (webhook URLs + Test buttons, pipeline configuration) and a
+  `/onboarding/ghl-setup` guide page; best-effort GHL opportunity/pipeline-stage
+  sync (`src/lib/ghl/pipeline.ts`, migration 016 `ghl_opportunity_id`); monthly
+  client-progress cron (`/api/cron/monthly-progress`); notification-method badge
+  on the client Timeline tab + admin notification-health widget.
 
 ## Common Commands
 ```bash
