@@ -106,6 +106,11 @@ export function maxTeamMembersForPlan(plan: Plan): number {
   return PLAN_MAX_TEAM_MEMBERS[plan] ?? 2;
 }
 
+/** True for the plans that unlock the credit-monitoring integration (Agency and Enterprise). */
+export function isAgencyPlanOrHigher(plan: Plan): boolean {
+  return plan === "agency" || plan === "enterprise";
+}
+
 export function stripePriceIdForPlan(plan: Plan): string | undefined {
   const config = PLAN_BY_ID[plan];
   if (!config) return undefined;

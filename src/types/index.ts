@@ -25,6 +25,9 @@ export type ActorType = "system" | "staff" | "client" | "ghl" | "stripe";
 export type SignatureStatus = "pending" | "signed" | "not_required";
 export type SignatureType = "drawn" | "typed" | "electronic";
 
+export type CreditMonitoringService = "myfreescorenow" | "identityiq" | "smartcredit";
+export type CreditMonitoringPullStatus = "success" | "failed" | "pending";
+
 /**
  * Per-agency map of GHL custom-field keys → CDP data. Values are the GHL
  * custom-field id/fieldKey for that location (which is unique per location).
@@ -80,6 +83,10 @@ export interface Agency {
   google_drive_root_folder_id: string | null;
   google_drive_connected_at: string | null;
   google_drive_email: string | null;
+  // Credit monitoring (migration 017)
+  credit_monitoring_service: "myfreescorenow" | "identityiq" | "smartcredit" | "none";
+  credit_monitoring_api_key: string | null;
+  credit_monitoring_api_secret: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -307,6 +314,21 @@ export interface ScoreHistory {
   recorded_at: string;
   round_number: number | null;
   notes: string | null;
+}
+
+export interface CreditMonitoringPull {
+  id: string;
+  agency_id: string;
+  client_id: string;
+  service: CreditMonitoringService | "manual";
+  pulled_at: string;
+  score_eq: number | null;
+  score_exp: number | null;
+  score_tu: number | null;
+  raw_response: Record<string, unknown> | null;
+  status: CreditMonitoringPullStatus;
+  error_message: string | null;
+  created_at: string;
 }
 
 export type GhlSyncAction =
