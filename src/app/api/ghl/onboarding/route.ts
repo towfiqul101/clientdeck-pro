@@ -4,6 +4,7 @@ import { getGHLContact, updateGHLContactFields } from "@/lib/ghl/api";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
+import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
 import type { Agency, GHLContact, GHLContactCustomField } from "@/types";
 
 // Hobby plan caps at 60s. Client creation runs inline; Drive/GHL sync run via
@@ -243,6 +244,7 @@ export async function POST(req: Request) {
         (async () => {
           if (!isNewClient) return;
           if (!agency.settings?.auto_pull_scores) return;
+          if (!isAgencyPlanOrHigher(agency.plan)) return;
           if (
             agency.credit_monitoring_service === "none" ||
             !agency.credit_monitoring_api_key ||
