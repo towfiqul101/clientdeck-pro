@@ -323,17 +323,25 @@ export async function updateCreditMonitoringSettings(input: {
   service: CreditMonitoringService | "none";
   apiKey: string;
   apiSecret: string;
+  autoPullScores: boolean;
 }): Promise<ActionResult> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };
 
   const supabase = await createServerSupabaseClient();
+
+  const nextSettings: AgencySettings = {
+    ...session.agency.settings,
+    auto_pull_scores: input.autoPullScores,
+  };
+
   const { error } = await supabase
     .from("agencies")
     .update({
       credit_monitoring_service: input.service,
       credit_monitoring_api_key: input.apiKey.trim() || null,
       credit_monitoring_api_secret: input.apiSecret.trim() || null,
+      settings: nextSettings,
     })
     .eq("id", session.agency.id);
 

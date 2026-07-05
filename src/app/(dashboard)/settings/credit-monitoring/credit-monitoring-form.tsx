@@ -20,6 +20,7 @@ interface CreditMonitoringFormProps {
     service: CreditMonitoringService | "none";
     apiKey: string;
     apiSecret: string;
+    autoPullScores: boolean;
   };
 }
 
@@ -28,6 +29,7 @@ export function CreditMonitoringForm({ initial }: CreditMonitoringFormProps) {
   const [service, setService] = useState(initial.service);
   const [apiKey, setApiKey] = useState(initial.apiKey);
   const [apiSecret, setApiSecret] = useState(initial.apiSecret);
+  const [autoPullOnNewClient, setAutoPullOnNewClient] = useState(initial.autoPullScores);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
 
@@ -39,7 +41,12 @@ export function CreditMonitoringForm({ initial }: CreditMonitoringFormProps) {
 
   async function handleSave() {
     setSaving(true);
-    const result = await updateCreditMonitoringSettings({ service, apiKey, apiSecret });
+    const result = await updateCreditMonitoringSettings({
+      service,
+      apiKey,
+      apiSecret,
+      autoPullScores: autoPullOnNewClient,
+    });
     setSaving(false);
     if (result.success) toast("Credit monitoring settings saved.", "success");
     else toast(result.error ?? "Could not save.", "error");
@@ -76,6 +83,25 @@ export function CreditMonitoringForm({ initial }: CreditMonitoringFormProps) {
             <Field label="API Secret" htmlFor="apiSecret">
               <Input id="apiSecret" type="password" value={apiSecret} onChange={(e) => setApiSecret(e.target.value)} className="font-mono text-xs" />
             </Field>
+
+            <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 text-sm">
+              <input
+                type="checkbox"
+                checked={autoPullOnNewClient}
+                onChange={(e) => setAutoPullOnNewClient(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>
+                <span className="font-medium text-gray-900">
+                  Auto-pull scores for new clients
+                </span>
+                <span className="block text-gray-500">
+                  When a brand-new client completes onboarding, automatically
+                  pull their scores from this provider instead of waiting for
+                  a staff member to trigger it manually.
+                </span>
+              </span>
+            </label>
           </>
         )}
 

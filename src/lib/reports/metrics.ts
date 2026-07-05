@@ -66,3 +66,27 @@ export function clientMetrics(input: {
 
   return { retentionRate, cancelled, totalClients, avgScoreIncrease };
 }
+
+export interface ScoreDistributionBucket {
+  bucket: string;
+  count: number;
+  pct: number;
+}
+
+const SCORE_BUCKETS: { label: string; min: number; max: number }[] = [
+  { label: "300-499", min: 300, max: 499 },
+  { label: "500-579", min: 500, max: 579 },
+  { label: "580-669", min: 580, max: 669 },
+  { label: "670-739", min: 670, max: 739 },
+  { label: "740+", min: 740, max: Infinity },
+];
+
+/** Buckets active clients' current Equifax score into 5 FICO-ish ranges. */
+export function scoreDistribution(clients: { score_eq_current: number | null }[]): ScoreDistributionBucket[] {
+  const scored = clients.filter((c) => c.score_eq_current !== null) as { score_eq_current: number }[];
+  const total = scored.length;
+  return SCORE_BUCKETS.map((b) => {
+    const count = scored.filter((c) => c.score_eq_current >= b.min && c.score_eq_current <= b.max).length;
+    return { bucket: b.label, count, pct: total > 0 ? Math.round((count / total) * 100) : 0 };
+  });
+}

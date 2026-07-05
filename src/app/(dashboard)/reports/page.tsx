@@ -19,6 +19,7 @@ import {
   bureauBreakdown,
   typeBreakdown,
   clientMetrics,
+  scoreDistribution,
 } from "@/lib/reports/metrics";
 import { Users, Trash2, Percent, DollarSign, BarChart3 } from "lucide-react";
 
@@ -47,6 +48,10 @@ export default async function ReportsPage() {
     .toISOString()
     .split("T")[0];
 
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
   const [
     clientsRes,
     itemsRes,
@@ -54,11 +59,12 @@ export default async function ReportsPage() {
     deletionsSeriesRes,
     disputeResultsRes,
     itemTypesRes,
+    pullsThisMonthRes,
   ] = await Promise.all([
     supabase
       .from("clients")
       .select(
-        "id, status, payment_status, monthly_fee, score_eq_start, score_eq_current"
+        "id, status, payment_status, monthly_fee, score_eq_start, score_eq_current, score_exp_start, score_exp_current, score_tu_start, score_tu_current"
       ),
     supabase.from("negative_items").select("id", { count: "exact", head: true }),
     supabase
@@ -72,6 +78,11 @@ export default async function ReportsPage() {
       .gte("result_date", twelveMonthsAgo),
     supabase.from("disputes").select("bureau, result"),
     supabase.from("negative_items").select("negative_type"),
+    supabase
+      .from("credit_monitoring_pulls")
+      .select("id", { count: "exact", head: true })
+      .eq("agency_id", session.agency.id)
+      .gte("pulled_at", monthStart.toISOString()),
   ]);
 
   const clients = clientsRes.data ?? [];
@@ -109,6 +120,23 @@ export default async function ReportsPage() {
   const bureauStats = bureauBreakdown(disputeResultsRes.data ?? []);
   const typeStats = typeBreakdown(itemTypesRes.data ?? []);
   const retention = clientMetrics({ clients });
+
+  const avg = (nums: (number | null)[]) => {
+    const valid = nums.filter((n): n is number => n !== null);
+    return valid.length ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length) : null;
+  };
+  const avgStart = {
+    eq: avg(clients.map((c) => c.score_eq_start)),
+    exp: avg(clients.map((c) => c.score_exp_start)),
+    tu: avg(clients.map((c) => c.score_tu_start)),
+  };
+  const avgCurrent = {
+    eq: avg(clients.map((c) => c.score_eq_current)),
+    exp: avg(clients.map((c) => c.score_exp_current)),
+    tu: avg(clients.map((c) => c.score_tu_current)),
+  };
+  const distribution = scoreDistribution(clients);
+  const pullsThisMonthCount = pullsThisMonthRes.count ?? 0;
 
   if (totalClients === 0) {
     return (
@@ -284,6 +312,34 @@ export default async function ReportsPage() {
           </ul>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader title="Credit Score Analytics" />
+        <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Average Starting Score</p>
+            <p className="mt-1 text-sm text-gray-900">
+              {avgStart.eq ?? "—"} (EQ) / {avgStart.exp ?? "—"} (EXP) / {avgStart.tu ?? "—"} (TU)
+            </p>
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-gray-500">Average Current Score</p>
+            <p className="mt-1 text-sm text-gray-900">
+              {avgCurrent.eq ?? "—"} (EQ) / {avgCurrent.exp ?? "—"} (EXP) / {avgCurrent.tu ?? "—"} (TU)
+            </p>
+            <p className="mt-3 text-xs text-gray-500">{pullsThisMonthCount} score pulls this month</p>
+          </div>
+          <div className="space-y-2">
+            {distribution.map((d) => (
+              <div key={d.bucket} className="flex items-center gap-2 text-xs">
+                <span className="w-16 shrink-0 text-gray-500">{d.bucket}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
+                  <div className="h-full rounded-full bg-blue-600" style={{ width: `${d.pct}%` }} />
+                </div>
+                <span className="w-20 shrink-0 text-right text-gray-600">{d.pct}% ({d.count})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

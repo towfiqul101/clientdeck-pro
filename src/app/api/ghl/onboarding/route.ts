@@ -240,6 +240,69 @@ export async function POST(req: Request) {
           };
           await notifyStaffNewClient(agency, notifClient);
         })().catch((err) => console.error("[Onboarding] Staff notification error:", err)),
+        (async () => {
+          if (!isNewClient) return;
+          if (!agency.settings?.auto_pull_scores) return;
+          if (
+            agency.credit_monitoring_service === "none" ||
+            !agency.credit_monitoring_api_key ||
+            !agency.credit_monitoring_api_secret
+          )
+            return;
+          if (
+            !clientData.ssn_last4 ||
+            !clientData.dob ||
+            !clientData.address_line1 ||
+            !clientData.city ||
+            !clientData.state ||
+            !clientData.zip
+          )
+            return;
+
+          const { pullCreditScores } = await import("@/lib/credit-monitoring");
+          const result = await pullCreditScores(
+            agency.credit_monitoring_service,
+            agency.credit_monitoring_api_key,
+            agency.credit_monitoring_api_secret,
+            {
+              firstName: clientData.first_name,
+              lastName: clientData.last_name,
+              ssnLast4: clientData.ssn_last4,
+              dob: clientData.dob,
+              address: clientData.address_line1,
+              city: clientData.city,
+              state: clientData.state,
+              zip: clientData.zip,
+            }
+          );
+
+          const succeeded =
+            !result.error &&
+            (result.score_eq !== null || result.score_exp !== null || result.score_tu !== null);
+
+          await supabase.from("credit_monitoring_pulls").insert({
+            agency_id: agency.id,
+            client_id: clientId,
+            service: agency.credit_monitoring_service,
+            score_eq: result.score_eq,
+            score_exp: result.score_exp,
+            score_tu: result.score_tu,
+            raw_response: result.raw_response ?? null,
+            status: succeeded ? "success" : "failed",
+            error_message: result.error ?? null,
+          });
+
+          if (succeeded) {
+            await supabase
+              .from("clients")
+              .update({
+                score_eq_current: result.score_eq ?? clientData.score_eq_current,
+                score_exp_current: result.score_exp ?? clientData.score_exp_current,
+                score_tu_current: result.score_tu ?? clientData.score_tu_current,
+              })
+              .eq("id", clientId);
+          }
+        })().catch((err) => console.error("[Onboarding] Credit monitoring auto-pull error:", err)),
       ]);
     });
 

@@ -41,6 +41,7 @@ export default async function CreditMonitoringSettingsPage() {
         service: agency.credit_monitoring_service === "none" ? "none" : agency.credit_monitoring_service,
         apiKey: agency.credit_monitoring_api_key ?? "",
         apiSecret: agency.credit_monitoring_api_secret ?? "",
+        autoPullScores: agency.settings?.auto_pull_scores ?? false,
       }}
     />
   );

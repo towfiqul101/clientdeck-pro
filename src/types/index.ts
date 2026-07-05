@@ -126,6 +126,8 @@ export interface AgencySettings {
     "round_1_sent" | "round_2_plus" | "goal_achieved",
     string
   >>;
+  // Credit monitoring (Session 7)
+  auto_pull_scores?: boolean;
 }
 
 export interface TeamMember {
