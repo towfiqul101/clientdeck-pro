@@ -108,7 +108,7 @@ export default async function AdminClientsPage({
                     </td>
                     <td className="px-5 py-3">
                       <Link
-                        href={`/admin/agencies/${c.agency_id}`}
+                        href={`/admin/agencies?open=${c.agency_id}`}
                         className="text-gray-600 hover:text-blue-600"
                       >
                         {agencyName.get(c.agency_id as string) ?? "—"}

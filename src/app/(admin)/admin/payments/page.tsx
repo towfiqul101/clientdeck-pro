@@ -96,7 +96,7 @@ export default async function AdminPaymentsPage({
                 agencies.map((a) => (
                   <tr key={a.id} className="hover:bg-gray-50">
                     <td className="px-5 py-3 font-medium text-gray-900">
-                      <Link href={`/admin/agencies/${a.id}`} className="hover:text-blue-600">
+                      <Link href={`/admin/agencies?open=${a.id}`} className="hover:text-blue-600">
                         {a.name}
                       </Link>
                     </td>
