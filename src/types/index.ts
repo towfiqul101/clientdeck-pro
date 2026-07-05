@@ -128,6 +128,8 @@ export interface AgencySettings {
   >>;
   // Credit monitoring (Session 7)
   auto_pull_scores?: boolean;
+  // Admin panel internal notes (not shown to the agency)
+  admin_notes?: string | null;
 }
 
 export interface TeamMember {
