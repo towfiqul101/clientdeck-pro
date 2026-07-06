@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
@@ -25,6 +26,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const [pending, start] = useTransition();
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [ownerName, setOwnerName] = useState("");
@@ -78,6 +80,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
         toast(`${name} created.`, "success");
         setOpen(false);
         reset();
+        router.refresh();
         onCreated?.(res.agencyId);
       } else {
         setFieldErrors(res.fieldErrors ?? {});
