@@ -59,6 +59,7 @@ export async function inviteTeamMember(input: {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.clientdeckpro.com").replace(/\/$/, "");
 
   let userId: string | null = null;
+  let createdNewUser = false;
   let inviteLink = `${appUrl}/login`;
   try {
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
@@ -68,8 +69,9 @@ export async function inviteTeamMember(input: {
     });
     if (!linkError && linkData?.user) {
       userId = linkData.user.id;
+      createdNewUser = true;
       inviteLink = linkData.properties?.action_link ?? inviteLink;
-    } else if (linkError && /already.*(registered|exists)/i.test(linkError.message)) {
+    } else if (linkError && /already.*(registered|exists)|email.*exists/i.test(linkError.message)) {
       // Email already has a Supabase Auth account elsewhere (e.g. owns/works
       // at another agency) — reuse that user id instead of failing the invite.
       for (let page = 1; page <= 5; page++) {
@@ -95,7 +97,14 @@ export async function inviteTeamMember(input: {
     role,
     is_active: true,
   });
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    if (createdNewUser && userId) {
+      await admin.auth.admin.deleteUser(userId).catch((e) =>
+        console.error("Could not clean up orphaned invite account:", e)
+      );
+    }
+    return { success: false, error: error.message };
+  }
 
   after(() => {
     sendStaffInviteEmail({
