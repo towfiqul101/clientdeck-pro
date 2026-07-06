@@ -7,9 +7,8 @@ import { GHLSyncActivity } from "./sync-activity";
 import { GhlFieldMapping } from "./ghl-field-mapping";
 import { GhlSetupTools } from "./setup-tools";
 import { OnboardingWebhookCard } from "./onboarding-webhook-card";
-import { NotificationWebhooksForm } from "./notification-webhooks-form";
+import { TagNotificationGuide } from "./tag-notification-guide";
 import { PipelineConfigForm } from "./pipeline-config-form";
-import { ResendFallbackBanner } from "./resend-fallback-banner";
 
 export default async function GHLSettingsPage() {
   const session = await getSessionContext();
@@ -40,13 +39,7 @@ export default async function GHLSettingsPage() {
       <GhlFieldMapping initial={agency.ghl_field_keys ?? {}} />
       <GhlSetupTools />
       <OnboardingWebhookCard webhookUrl={onboardingWebhookUrl} />
-      <ResendFallbackBanner triggers={agency.settings?.ghl_webhook_triggers ?? {}} />
-      <NotificationWebhooksForm
-        initial={{
-          triggers: agency.settings?.ghl_webhook_triggers ?? {},
-          ownerGhlContactId: agency.settings?.owner_ghl_contact_id ?? "",
-        }}
-      />
+      <TagNotificationGuide ownerGhlContactId={agency.settings?.owner_ghl_contact_id ?? ""} />
       <PipelineConfigForm
         initial={{
           pipelineId: agency.settings?.ghl_pipeline_id ?? "",
