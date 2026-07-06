@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Agency auth pages — always reachable while signed out.
-const AUTH_ROUTES = ["/login", "/signup"];
+const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 
 // Public marketing/legal pages — reachable while signed out.
 // /reset-password lives here (not AUTH_ROUTES): a Supabase password-recovery

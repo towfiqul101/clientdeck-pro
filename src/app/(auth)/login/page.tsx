@@ -117,6 +117,12 @@ function LoginForm() {
           />
         </Field>
 
+        <p className="text-right text-sm">
+          <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-700">
+            Forgot password?
+          </Link>
+        </p>
+
         <Button type="submit" loading={pending} className="w-full">
           {pending ? "Signing in…" : "Sign in"}
         </Button>
