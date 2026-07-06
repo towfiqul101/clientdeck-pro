@@ -562,7 +562,7 @@ function ToolsTab({
       key: "fields",
       icon: Wrench,
       title: "Setup GHL Custom Fields",
-      desc: "Creates all 9 custom fields in their GHL location.",
+      desc: "Creates all 16 custom fields in their GHL location.",
       path: "/api/admin/tools/setup-ghl-fields",
     },
     {

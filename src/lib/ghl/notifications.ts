@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { addGHLTag, removeGHLTag, updateGHLContactFields } from "@/lib/ghl/api";
 import type { Agency, Client } from "@/types";
 
 export type GHLNotificationType =
@@ -12,6 +13,20 @@ export type GHLNotificationType =
   | "staff_round_overdue"
   | "staff_next_round_ready"
   | "monthly_progress";
+
+/** GHL contact tags that fire each event's agency-built workflow. Removed 5s after being added so they can refire next time. */
+export const NOTIFICATION_TAGS: Record<GHLNotificationType, string> = {
+  round_sent: "cdp-round-sent",
+  deletion_win: "cdp-deletion-win",
+  round_results_in: "cdp-round-complete",
+  goal_achieved: "cdp-goal-achieved",
+  payment_failed: "cdp-payment-failed",
+  portal_link: "cdp-portal-sent",
+  staff_new_client: "cdp-staff-new-client",
+  staff_round_overdue: "cdp-staff-overdue",
+  staff_next_round_ready: "cdp-next-round-ready",
+  monthly_progress: "cdp-monthly-update",
+};
 
 /** Columns every notify* helper needs off a `clients` row. Select this whenever a call site needs to notify. */
 export const NOTIFIABLE_CLIENT_COLUMNS =
@@ -54,46 +69,46 @@ interface NotificationLogIds {
 }
 
 /**
- * Fires a notification through the agency's configured GHL webhook, falling
- * back to Resend email, falling back to a log-only no-op. Never throws —
- * callers can fire-and-forget or await without try/catch.
+ * Fires a notification by tagging the client's GHL contact (which fires the
+ * agency's own workflow) and syncing relevant custom fields, falling back to
+ * Resend email, falling back to a log-only no-op. Never throws — callers can
+ * fire-and-forget or await without try/catch.
  */
 export async function sendGHLNotification(
   agency: Agency,
   type: GHLNotificationType,
   payload: GHLNotificationPayload,
   logging: NotificationLogIds
-): Promise<{ success: boolean; method: "ghl" | "resend" | "none" }> {
-  const triggers = agency.settings?.ghl_webhook_triggers ?? {};
-  const webhookUrl = triggers[type];
-
-  let result: { success: boolean; method: "ghl" | "resend" | "none" } = {
+): Promise<{ success: boolean; method: "ghl_tag" | "resend" | "none" }> {
+  let result: { success: boolean; method: "ghl_tag" | "resend" | "none" } = {
     success: false,
     method: "none",
   };
 
-  if (webhookUrl) {
+  const hasGhl = Boolean(agency.ghl_api_key && agency.ghl_location_id && payload.contactId);
+
+  if (hasGhl) {
     try {
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contact_id: payload.contactId,
-          first_name: payload.firstName,
-          last_name: payload.lastName,
-          ...payload.data,
-          triggered_at: new Date().toISOString(),
-          source: "clientdeck_pro",
-        }),
-        signal: AbortSignal.timeout(8000),
-      });
-      if (res.ok) {
-        result = { success: true, method: "ghl" };
-      } else {
-        console.error(`[GHL Notification] ${type} webhook returned status ${res.status}`);
+      const opts = { apiKey: agency.ghl_api_key!, locationId: agency.ghl_location_id! };
+      const tag = NOTIFICATION_TAGS[type];
+      const fields = buildNotificationFields(type, payload.data);
+
+      if (Object.keys(fields).length > 0) {
+        await updateGHLContactFields(payload.contactId, fields, opts);
       }
+      await addGHLTag(payload.contactId, [tag], opts);
+
+      // Remove the tag shortly after so the same workflow can refire next
+      // time this event happens for this contact. Never blocks the caller.
+      setTimeout(() => {
+        removeGHLTag(payload.contactId, [tag], opts).catch((err) => {
+          console.error(`[GHL Notification] Tag removal failed for ${type}:`, err);
+        });
+      }, 5000);
+
+      result = { success: true, method: "ghl_tag" };
     } catch (err) {
-      console.error(`[GHL Notification] ${type} webhook failed:`, err);
+      console.error(`[GHL Notification] ${type} tag/field update failed:`, err);
     }
   }
 
@@ -132,6 +147,78 @@ export async function sendGHLNotification(
   }
 
   return result;
+}
+
+/**
+ * Maps each notification's payload data onto the GHL custom-field keys a
+ * workflow can read via merge tags. Staff alerts fire on the OWNER's own GHL
+ * contact (not the client's) — writing client-specific data there would
+ * clobber the owner's own field values, so those three are tag-only.
+ */
+function buildNotificationFields(
+  type: GHLNotificationType,
+  data: GHLNotificationPayload["data"]
+): Record<string, string | number> {
+  switch (type) {
+    case "round_sent":
+      return {
+        dispute_round_current: Number(data.round_number),
+        cdp_items_disputed: Number(data.items_disputed),
+        next_dispute_date: String(data.response_deadline),
+        clientdeck_portal_link: String(data.portal_link),
+      };
+    case "deletion_win":
+      return {
+        cdp_deletions_this_round: Number(data.deletions_this_round),
+        items_deleted_total: Number(data.total_deletions),
+        cdp_deleted_items_list: String(data.deleted_items_list),
+        credit_score_eq_current: Number(data.score_eq),
+        credit_score_exp_current: Number(data.score_exp),
+        credit_score_tu_current: Number(data.score_tu),
+        clientdeck_portal_link: String(data.portal_link),
+      };
+    case "round_results_in":
+      return {
+        dispute_round_current: Number(data.round_number),
+        items_deleted_total: Number(data.total_deletions),
+        total_negative_items: Number(data.total_items_disputed),
+        clientdeck_portal_link: String(data.portal_link),
+      };
+    case "goal_achieved":
+      return {
+        items_deleted_total: Number(data.total_deletions),
+        cdp_score_improvement: Number(data.score_improvement),
+        credit_score_eq_current: Number(data.final_score_eq),
+        credit_score_exp_current: Number(data.final_score_exp),
+        credit_score_tu_current: Number(data.final_score_tu),
+        clientdeck_portal_link: String(data.portal_link),
+        cdp_google_review_link: String(data.review_link ?? ""),
+      };
+    case "payment_failed":
+      return {
+        cdp_monthly_fee: Number(data.monthly_fee),
+        clientdeck_portal_link: String(data.portal_link),
+        cdp_agency_phone: String(data.agency_phone ?? ""),
+      };
+    case "portal_link":
+      return { clientdeck_portal_link: String(data.portal_link) };
+    case "monthly_progress":
+      return {
+        credit_score_eq_current: Number(data.score_eq),
+        credit_score_exp_current: Number(data.score_exp),
+        credit_score_tu_current: Number(data.score_tu),
+        items_deleted_total: Number(data.total_deletions),
+        total_negative_items: Number(data.total_items),
+        dispute_round_current: Number(data.current_round),
+        clientdeck_portal_link: String(data.portal_link),
+      };
+    case "staff_new_client":
+    case "staff_round_overdue":
+    case "staff_next_round_ready":
+      return {};
+    default:
+      return {};
+  }
 }
 
 async function sendResendFallback(
