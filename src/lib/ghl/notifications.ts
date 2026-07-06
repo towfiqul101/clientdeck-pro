@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { addGHLTag, removeGHLTag, updateGHLContactFields } from "@/lib/ghl/api";
 import type { Agency, Client } from "@/types";
@@ -100,11 +101,15 @@ export async function sendGHLNotification(
 
       // Remove the tag shortly after so the same workflow can refire next
       // time this event happens for this contact. Never blocks the caller.
-      setTimeout(() => {
-        removeGHLTag(payload.contactId, [tag], opts).catch((err) => {
+      // Uses after() (not a bare setTimeout) so Vercel keeps the function
+      // alive until this completes instead of possibly freezing/recycling
+      // it once the response is sent.
+      after(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await removeGHLTag(payload.contactId, [tag], opts).catch((err) => {
           console.error(`[GHL Notification] Tag removal failed for ${type}:`, err);
         });
-      }, 5000);
+      });
 
       result = { success: true, method: "ghl_tag" };
     } catch (err) {
