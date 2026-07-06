@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CopyPortalLink } from "./copy-portal-link";
+import { PortalLinkMenu } from "./portal-link-menu";
 import { AssignClient } from "./assign-client";
 import { AIStrategyPanel } from "./ai-strategy-panel";
 import { SendReviewRequestButton } from "./send-review-request-button";
@@ -140,7 +140,7 @@ export function ClientHeader({
               Start New Round
             </Button>
           </Link>
-          <CopyPortalLink clientId={client.id} />
+          <PortalLinkMenu clientId={client.id} />
           {showCreditMonitoring && <PullScoresButton client={client} />}
         </div>
       </div>
