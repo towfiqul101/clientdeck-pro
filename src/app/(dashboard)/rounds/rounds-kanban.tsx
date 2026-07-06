@@ -111,7 +111,7 @@ function primaryAction(round: KanbanRound): { label: string; href: string } {
       return { label: "Start Next Round", href: `/clients/${round.client_id}/rounds/new` };
     case "sent":
     default:
-      return { label: "View →", href: workspaceHref };
+      return { label: "View", href: workspaceHref };
   }
 }
 
