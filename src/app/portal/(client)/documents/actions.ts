@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { getPortalSession } from "@/lib/portal/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
+import { resolveAssignedStaffEmail } from "@/lib/team/staff-contact";
+import { sendStaffDocUploadAlert } from "@/lib/email/templates";
 import type { DocumentCategory } from "@/types";
 
 const BUCKET = "documents";
@@ -84,6 +86,21 @@ export async function portalUploadDocument(
       });
     } catch (err) {
       console.error("[Drive] Portal upload sync failed:", err);
+    }
+
+    try {
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.clientdeckpro.com").replace(/\/$/, "");
+      const staffEmail = await resolveAssignedStaffEmail(admin, client.assigned_to, agency.owner_email);
+      await sendStaffDocUploadAlert({
+        staffEmail,
+        staffName: "Team",
+        clientName,
+        documentName: file.name,
+        documentCategory: category,
+        clientDashboardUrl: `${appUrl}/clients/${client.id}`,
+      });
+    } catch (err) {
+      console.error("[Email] Staff doc-upload alert failed:", err);
     }
   });
 

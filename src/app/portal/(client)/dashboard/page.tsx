@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { getPortalSession } from "@/lib/portal/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveAssignedStaffEmail } from "@/lib/team/staff-contact";
+import { sendStaffFirstLoginAlert } from "@/lib/email/templates";
 import { cn, scoreChange, daysRemaining } from "@/lib/utils/helpers";
 import { BUREAU_STYLES } from "@/lib/constants";
 import type { Bureau, DisputeRound } from "@/types";
@@ -143,6 +146,38 @@ export default async function PortalDashboardPage() {
 
   const { client, agency } = session;
   const supabase = createAdminClient();
+
+  try {
+    const { data: priorView } = await supabase
+      .from("activity_log")
+      .select("id")
+      .eq("client_id", client.id)
+      .eq("action", "Portal viewed")
+      .limit(1)
+      .maybeSingle();
+
+    if (!priorView) {
+      await supabase.from("activity_log").insert({
+        agency_id: agency.id,
+        client_id: client.id,
+        actor_type: "client",
+        action: "Portal viewed",
+        description: "Client viewed their portal for the first time.",
+      });
+
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.clientdeckpro.com").replace(/\/$/, "");
+      const staffEmail = await resolveAssignedStaffEmail(supabase, client.assigned_to, agency.owner_email);
+      after(() => {
+        sendStaffFirstLoginAlert({
+          staffEmail,
+          clientName: `${client.first_name} ${client.last_name}`,
+          clientDashboardUrl: `${appUrl}/clients/${client.id}`,
+        }).catch((err) => console.error("[Email] Staff first-login alert failed:", err));
+      });
+    }
+  } catch (err) {
+    console.error("[Portal] First-view tracking failed:", err);
+  }
 
   const { data: latestRound } = await supabase
     .from("dispute_rounds")
