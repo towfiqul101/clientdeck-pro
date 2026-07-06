@@ -1,7 +1,9 @@
 "use server";
 
+import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendAgencyWelcomeEmail } from "@/lib/admin/welcome-email";
 
 export interface AuthActionState {
   error?: string;
@@ -145,6 +147,13 @@ export async function signUpAction(
       };
     }
   }
+
+  // Best-effort welcome email — never blocks or fails the signup response.
+  after(() => {
+    sendAgencyWelcomeEmail({ name: agencyName, owner_name: name, owner_email: email }).catch((err) =>
+      console.error("[Email] Welcome email failed:", err)
+    );
+  });
 
   return { success: true };
 }
