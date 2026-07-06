@@ -395,16 +395,22 @@ export interface GHLPipelineSpec {
   stages: string[];
 }
 
-/** Lists existing pipelines so setup can skip ones already present. */
+export interface GHLPipelineListItem {
+  id: string;
+  name: string;
+  stages?: { id: string; name: string }[];
+}
+
+/** Lists existing pipelines (with their stages) so setup can skip/match by name. */
 export async function getGHLPipelines(
   opts: GHLRequestOptions
-): Promise<{ id: string; name: string }[]> {
+): Promise<GHLPipelineListItem[]> {
   try {
     const data = await ghlFetch(
       `/opportunities/pipelines?locationId=${opts.locationId}`,
       opts
     );
-    return (data?.pipelines ?? []) as { id: string; name: string }[];
+    return (data?.pipelines ?? []) as GHLPipelineListItem[];
   } catch {
     return [];
   }

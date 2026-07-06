@@ -5,6 +5,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { GHLForm } from "./ghl-form";
 import { GHLSyncActivity } from "./sync-activity";
 import { GhlFieldMapping } from "./ghl-field-mapping";
+import { GhlSetupTools } from "./setup-tools";
 import { OnboardingWebhookCard } from "./onboarding-webhook-card";
 import { NotificationWebhooksForm } from "./notification-webhooks-form";
 import { PipelineConfigForm } from "./pipeline-config-form";
@@ -37,6 +38,7 @@ export default async function GHLSettingsPage() {
         webhookUrl={webhookUrl}
       />
       <GhlFieldMapping initial={agency.ghl_field_keys ?? {}} />
+      <GhlSetupTools />
       <OnboardingWebhookCard webhookUrl={onboardingWebhookUrl} />
       <ResendFallbackBanner triggers={agency.settings?.ghl_webhook_triggers ?? {}} />
       <NotificationWebhooksForm
