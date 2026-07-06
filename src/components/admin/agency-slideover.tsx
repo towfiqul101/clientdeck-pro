@@ -7,7 +7,6 @@ import { cn, formatCurrency, formatDate } from "@/lib/utils/helpers";
 import { avatarColor, initials, statusDotClass } from "@/lib/admin/avatar";
 import type { AgencyPanelData } from "@/lib/admin/agency-panel";
 import type { Plan, PlanStatus } from "@/types";
-import type { GHLNotificationType } from "@/lib/ghl/notifications";
 import {
   saveAgencyStatus,
   extendTrial14,
@@ -27,19 +26,6 @@ const PLANS: { id: Plan; label: string }[] = [
 const STATUSES: PlanStatus[] = ["active", "trialing", "past_due", "paused", "cancelled"];
 const TABS = ["Status", "GHL Config", "Tools", "Branding", "Payments"] as const;
 type Tab = (typeof TABS)[number];
-
-const WIRED_NOTIFICATION_TYPES: readonly GHLNotificationType[] = [
-  "round_sent",
-  "deletion_win",
-  "round_results_in",
-  "goal_achieved",
-  "payment_failed",
-  "portal_link",
-  "staff_new_client",
-  "staff_round_overdue",
-  "staff_next_round_ready",
-  "monthly_progress",
-];
 
 const field =
   "w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
@@ -472,28 +458,20 @@ function GhlTab({
 
       <div className="rounded-lg border border-gray-200 p-4">
         <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-          Notification Status
+          Notifications
         </h4>
-        <dl className="mt-2 space-y-1 text-sm">
-          {WIRED_NOTIFICATION_TYPES.map((type) => {
-            const configured = Boolean(a.settings?.ghl_webhook_triggers?.[type]);
-            return (
-              <div key={type} className="flex items-center justify-between gap-2">
-                <dt className="text-gray-600">{type}</dt>
-                <dd className="flex items-center gap-1.5">
-                  <span className={cn("h-1.5 w-1.5 rounded-full", configured ? "bg-green-500" : "bg-gray-300")} />
-                  <span className={configured ? "text-green-700" : "text-gray-400"}>
-                    {configured ? "Configured" : "Not set"}
-                  </span>
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
-        <p className="mt-3 text-xs text-gray-500">
-          {WIRED_NOTIFICATION_TYPES.filter((t) => a.settings?.ghl_webhook_triggers?.[t]).length} of{" "}
-          {WIRED_NOTIFICATION_TYPES.length} configured
+        <p className="mt-2 text-sm text-gray-600">
+          Notifications fire automatically via free GHL contact tags (e.g.{" "}
+          <code className="rounded bg-gray-100 px-1 text-xs">cdp-round-sent</code>) once GHL
+          is connected — no per-type setup needed here. The agency configures their own GHL
+          workflows to watch these tags.
         </p>
+        {!a.settings?.owner_ghl_contact_id && (
+          <p className="mt-2 text-xs text-amber-600">
+            No owner GHL contact set — staff alerts (overdue rounds, new clients) won&apos;t
+            fire until the agency sets one in Settings → GHL.
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2">
