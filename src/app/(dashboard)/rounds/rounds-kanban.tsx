@@ -91,7 +91,8 @@ function DeadlinePill({ status, deadline }: { status: RoundStatus; deadline: str
   }
   const tone = days <= 14 ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700";
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", tone)}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium", tone)}>
+      <Clock className="h-3 w-3" />
       {days}d remaining
     </span>
   );
@@ -121,7 +122,7 @@ function RoundCard({ round }: { round: KanbanRound }) {
   const totalItems = round.bureauCounts.equifax + round.bureauCounts.experian + round.bureauCounts.transunion;
 
   return (
-    <div className="w-60 shrink-0 rounded-xl border border-gray-200 bg-white shadow-[var(--shadow-card)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]">
+    <div className="w-[280px] shrink-0 rounded-xl border border-gray-200 bg-white shadow-[var(--shadow-card)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]">
       <Link href={workspaceHref} className="block border-b border-gray-100 p-3">
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-700">
@@ -136,13 +137,13 @@ function RoundCard({ round }: { round: KanbanRound }) {
         </div>
       </Link>
       {totalItems > 0 && (
-        <div className="space-y-1 border-b border-gray-100 p-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-gray-100 p-3">
           {(["equifax", "experian", "transunion"] as Bureau[]).map((b) =>
             round.bureauCounts[b] > 0 ? (
-              <p key={b} className="flex items-center gap-1.5 text-xs text-gray-600">
+              <span key={b} className="flex items-center gap-1.5 text-xs text-gray-600">
                 <span className={cn("h-1.5 w-1.5 rounded-full", BUREAU_DOTS[b])} />
-                {BUREAU_LABELS[b]} {round.bureauCounts[b]} items
-              </p>
+                {BUREAU_LABELS[b]} {round.bureauCounts[b]}
+              </span>
             ) : null
           )}
         </div>
@@ -150,12 +151,12 @@ function RoundCard({ round }: { round: KanbanRound }) {
       <div className="p-3">
         <DeadlinePill status={round.status} deadline={round.response_deadline} />
       </div>
-      <div className="flex items-center justify-between gap-2 border-t border-gray-100 p-3">
-        <Link href={action.href} className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white transition-colors duration-150 hover:bg-blue-700">
-          {action.label}
-        </Link>
-        <Link href={workspaceHref} className="text-xs font-medium text-gray-500 hover:text-gray-700">
-          View →
+      <div className="border-t border-gray-100 p-3">
+        <Link
+          href={action.href}
+          className="flex w-full items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors duration-150 hover:bg-blue-700"
+        >
+          {action.label} →
         </Link>
       </div>
     </div>
@@ -214,7 +215,8 @@ export function RoundsKanban({ rounds }: { rounds: KanbanRound[] }) {
               </div>
               <div className="space-y-3">
                 {stageRounds.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-xs text-gray-400">
+                  <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 px-4 py-8 text-center text-xs text-gray-400">
+                    <Icon className="h-5 w-5 text-gray-300" />
                     No rounds here
                   </div>
                 ) : (
@@ -252,7 +254,8 @@ export function RoundsKanban({ rounds }: { rounds: KanbanRound[] }) {
               {expanded && (
                 <div className="space-y-3 p-3">
                   {stageRounds.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-gray-200 p-4 text-center text-xs text-gray-400">
+                    <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 px-4 py-8 text-center text-xs text-gray-400">
+                      <Icon className="h-5 w-5 text-gray-300" />
                       No rounds here
                     </div>
                   ) : (
