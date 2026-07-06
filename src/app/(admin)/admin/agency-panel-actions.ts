@@ -25,10 +25,9 @@ async function logAgency(agencyId: string, action: string, description: string) 
   });
 }
 
-function revalidateAdmin(agencyId: string) {
+function revalidateAdmin() {
   revalidatePath("/admin");
   revalidatePath("/admin/agencies");
-  revalidatePath(`/admin/agencies/${agencyId}`);
   revalidatePath("/admin/pending");
 }
 
@@ -87,7 +86,7 @@ export async function saveAgencyStatus(
     "Account updated (admin)",
     `Plan ${input.plan} / ${input.status}, max ${maxClients} clients.`
   );
-  revalidateAdmin(agencyId);
+  revalidateAdmin();
   return { success: true };
 }
 
@@ -114,7 +113,7 @@ export async function extendTrial14(agencyId: string): Promise<Result> {
   if (error) return { success: false, error: error.message };
 
   await logAgency(agencyId, "Trial extended (admin)", "Trial extended by 14 days.");
-  revalidateAdmin(agencyId);
+  revalidateAdmin();
   return { success: true };
 }
 
@@ -137,7 +136,7 @@ export async function saveGhlConfig(
   if (error) return { success: false, error: error.message };
 
   await logAgency(agencyId, "GHL config updated (admin)", "Location ID / API key updated.");
-  revalidateAdmin(agencyId);
+  revalidateAdmin();
   return { success: true };
 }
 
@@ -196,7 +195,7 @@ export async function saveBranding(
   if (error) return { success: false, error: error.message };
 
   await logAgency(agencyId, "Branding updated (admin)", "Logo / brand color / portal footer updated.");
-  revalidateAdmin(agencyId);
+  revalidateAdmin();
   return { success: true };
 }
 
@@ -234,7 +233,7 @@ export async function recordAgencyPayment(
     }. Status set to active.`
   );
 
-  revalidateAdmin(agencyId);
+  revalidateAdmin();
   revalidatePath("/admin/payments");
   return { success: true };
 }
