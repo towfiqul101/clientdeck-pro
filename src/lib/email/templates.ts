@@ -1,4 +1,4 @@
-import { sendEmail } from "./index";
+import { sendEmail, escapeHtml } from "./index";
 
 export async function sendStaffInviteEmail(params: {
   inviteeName: string;
@@ -9,8 +9,8 @@ export async function sendStaffInviteEmail(params: {
 }): Promise<boolean> {
   const html = `
     <h2>You've been invited!</h2>
-    <p>${params.inviterName} has invited you to join <strong>${params.agencyName}</strong> on ClientDeck Pro.</p>
-    <p><a href="${params.inviteLink}" style="background:#2563EB;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">Accept Invitation →</a></p>
+    <p>${escapeHtml(params.inviterName)} has invited you to join <strong>${escapeHtml(params.agencyName)}</strong> on ClientDeck Pro.</p>
+    <p><a href="${escapeHtml(params.inviteLink)}" style="background:#2563EB;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">Accept Invitation →</a></p>
     <p>This link expires in 24 hours.</p>
     <p>ClientDeck Pro is a dispute management platform for credit professionals.</p>
   `;
@@ -30,14 +30,14 @@ export async function sendPortalLinkEmail(params: {
   portalUrl: string;
   agencyPhone?: string;
 }): Promise<boolean> {
-  const phoneLine = params.agencyPhone ? `<p>Questions? Call us: ${params.agencyPhone}</p>` : "";
+  const phoneLine = params.agencyPhone ? `<p>Questions? Call us: ${escapeHtml(params.agencyPhone)}</p>` : "";
   const html = `
-    <h2>Hi ${params.clientFirstName}!</h2>
+    <h2>Hi ${escapeHtml(params.clientFirstName)}!</h2>
     <p>Your personal credit repair portal is ready. View your progress, upload documents, and track your journey.</p>
-    <p><a href="${params.portalUrl}" style="background:#2563EB;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">View My Portal →</a></p>
+    <p><a href="${escapeHtml(params.portalUrl)}" style="background:#2563EB;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">View My Portal →</a></p>
     <p>This link is personal to you — don't share it.</p>
     ${phoneLine}
-    <p>— ${params.agencyName} Team</p>
+    <p>— ${escapeHtml(params.agencyName)} Team</p>
   `;
   const text = `Hi ${params.clientFirstName}!\n\nYour personal credit repair portal is ready: ${params.portalUrl}\n\nThis link is personal to you — don't share it.${params.agencyPhone ? `\n\nQuestions? Call us: ${params.agencyPhone}` : ""}\n\n— ${params.agencyName} Team`;
   return sendEmail({
@@ -58,12 +58,12 @@ export async function sendStaffDocUploadAlert(params: {
 }): Promise<boolean> {
   const html = `
     <h3>Document uploaded by client</h3>
-    <p><strong>${params.clientName}</strong> just uploaded a document to their portal:</p>
+    <p><strong>${escapeHtml(params.clientName)}</strong> just uploaded a document to their portal:</p>
     <ul>
-      <li>File: ${params.documentName}</li>
-      <li>Category: ${params.documentCategory}</li>
+      <li>File: ${escapeHtml(params.documentName)}</li>
+      <li>Category: ${escapeHtml(params.documentCategory)}</li>
     </ul>
-    <p><a href="${params.clientDashboardUrl}">View in ClientDeck Pro →</a></p>
+    <p><a href="${escapeHtml(params.clientDashboardUrl)}">View in ClientDeck Pro →</a></p>
   `;
   const text = `${params.clientName} uploaded a document to their portal.\n\nFile: ${params.documentName}\nCategory: ${params.documentCategory}\n\nView in ClientDeck Pro: ${params.clientDashboardUrl}`;
   return sendEmail({
@@ -80,9 +80,9 @@ export async function sendStaffFirstLoginAlert(params: {
   clientDashboardUrl: string;
 }): Promise<boolean> {
   const html = `
-    <p><strong>${params.clientName}</strong> just logged into their credit repair portal for the first time.</p>
+    <p><strong>${escapeHtml(params.clientName)}</strong> just logged into their credit repair portal for the first time.</p>
     <p>This is a great time to reach out and check in!</p>
-    <p><a href="${params.clientDashboardUrl}">View Client →</a></p>
+    <p><a href="${escapeHtml(params.clientDashboardUrl)}">View Client →</a></p>
   `;
   const text = `${params.clientName} just logged into their credit repair portal for the first time.\n\nThis is a great time to reach out and check in!\n\nView client: ${params.clientDashboardUrl}`;
   return sendEmail({

@@ -1,5 +1,15 @@
 const FROM = "ClientDeck Pro <noreply@clientdeckpro.com>";
 
+/** Escapes a string for safe interpolation into HTML — every template below uses this on user-supplied values before inserting them into `html`. */
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /**
  * Sends a transactional email via Resend's REST API directly (no SDK
  * dependency, matching the pattern already used in
