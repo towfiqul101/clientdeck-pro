@@ -29,35 +29,35 @@ interface StageConfig {
 const STAGE_CONFIG: Record<RoundStatus, StageConfig> = {
   preparing: {
     label: "Preparing",
-    colorBorder: "border-t-gray-400",
+    colorBorder: "border-l-gray-400",
     headerBg: "bg-gray-50",
     icon: FileText,
     description: "Letters being prepared",
   },
   letters_generated: {
     label: "Letters Ready",
-    colorBorder: "border-t-indigo-500",
+    colorBorder: "border-l-indigo-500",
     headerBg: "bg-indigo-50",
     icon: CheckSquare,
     description: "Ready to send",
   },
   sent: {
     label: "Sent to Bureaus",
-    colorBorder: "border-t-blue-500",
+    colorBorder: "border-l-blue-500",
     headerBg: "bg-blue-50",
     icon: Send,
     description: "Awaiting bureau response",
   },
   awaiting_response: {
     label: "Awaiting Response",
-    colorBorder: "border-t-amber-500",
+    colorBorder: "border-l-amber-500",
     headerBg: "bg-amber-50",
     icon: Clock,
     description: "Bureau has 35 days",
   },
   complete: {
     label: "Complete",
-    colorBorder: "border-t-green-500",
+    colorBorder: "border-l-green-500",
     headerBg: "bg-green-50",
     icon: CheckCircle,
     description: "Results logged",
@@ -199,17 +199,18 @@ export function RoundsKanban({ rounds }: { rounds: KanbanRound[] }) {
         {byStage.map(({ status, config, rounds: stageRounds }) => {
           const Icon = config.icon;
           return (
-            <div key={status} className="w-60 shrink-0">
-              <div className={cn("mb-3 rounded-t-lg border-t-2 px-3 py-2", config.colorBorder, config.headerBg)}>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    <Icon className="h-3.5 w-3.5" />
+            <div key={status} className="w-[280px] shrink-0">
+              <div className={cn("mb-3 rounded-lg border-l-4 px-3 py-2.5", config.colorBorder, config.headerBg)}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                    <Icon className="h-4 w-4 text-gray-400" />
                     {config.label}
                   </span>
-                  <span className="rounded-full bg-white px-1.5 py-0.5 text-xs font-medium text-gray-600">
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600">
                     {stageRounds.length}
                   </span>
                 </div>
+                <p className="mt-0.5 text-xs text-gray-500">{config.description}</p>
               </div>
               <div className="space-y-3">
                 {stageRounds.length === 0 ? (
@@ -235,15 +236,18 @@ export function RoundsKanban({ rounds }: { rounds: KanbanRound[] }) {
               <button
                 type="button"
                 onClick={() => setExpandedMobileStage(status)}
-                className={cn("flex w-full items-center justify-between rounded-t-lg border-t-2 px-3 py-2", config.colorBorder, config.headerBg)}
+                className={cn("flex w-full flex-col rounded-t-lg border-l-4 px-3 py-2.5 text-left", config.colorBorder, config.headerBg)}
               >
-                <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <Icon className="h-3.5 w-3.5" />
-                  {config.label}
-                </span>
-                <span className="rounded-full bg-white px-1.5 py-0.5 text-xs font-medium text-gray-600">
-                  {stageRounds.length}
-                </span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                    <Icon className="h-4 w-4 text-gray-400" />
+                    {config.label}
+                  </span>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600">
+                    {stageRounds.length}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-gray-500">{config.description}</p>
               </button>
               {expanded && (
                 <div className="space-y-3 p-3">
