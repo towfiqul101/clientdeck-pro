@@ -1,6 +1,38 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionContext } from "@/lib/auth/session";
 import { MarketingNav } from "./marketing-nav";
+
+export const metadata: Metadata = {
+  title: "ClientDeck Pro — Dispute Management Software for GoHighLevel",
+  description:
+    "The only dispute management platform built for GoHighLevel agencies. AI-powered dispute letters, automated client updates, and a branded client portal. Stop managing credit repair in spreadsheets.",
+  keywords: [
+    "credit repair software",
+    "dispute management software",
+    "gohighlevel credit repair",
+    "credit repair automation",
+    "dispute letter software",
+    "credit repair crm",
+    "ghl credit repair",
+  ],
+  openGraph: {
+    title: "ClientDeck Pro — Credit Repair Software for GoHighLevel",
+    description:
+      "Stop managing credit repair in spreadsheets. AI letters, client portal, and full GHL sync — all in one platform.",
+    url: "https://clientdeckpro.com",
+    siteName: "ClientDeck Pro",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ClientDeck Pro — Dispute Management for GHL Agencies",
+    description:
+      "AI dispute letters + client portal + GHL sync. Built for credit repair businesses.",
+  },
+  robots: { index: true, follow: true },
+  alternates: { canonical: "https://clientdeckpro.com" },
+};
 
 export default async function MarketingLayout({
   children,
@@ -30,12 +62,15 @@ export default async function MarketingLayout({
               <div className="space-y-2">
                 <p className="font-medium text-white">Product</p>
                 <Link href="/#features" className="block hover:text-white">Features</Link>
+                <Link href="/#how-it-works" className="block hover:text-white">How It Works</Link>
                 <Link href="/#pricing" className="block hover:text-white">Pricing</Link>
+                <Link href="/#faq" className="block hover:text-white">FAQ</Link>
                 <Link href="/snapshot" className="block hover:text-white">GHL Snapshot</Link>
               </div>
               <div className="space-y-2">
-                <p className="font-medium text-white">Account</p>
-                <Link href="/login" className="block hover:text-white">Login</Link>
+                <p className="font-medium text-white">Company</p>
+                <a href="mailto:support@clientdeckpro.com" className="block hover:text-white">Contact</a>
+                <Link href="/login" className="block hover:text-white">Log In</Link>
                 <Link href="/signup" className="block hover:text-white">Sign Up</Link>
               </div>
               <div className="space-y-2">
@@ -46,7 +81,8 @@ export default async function MarketingLayout({
             </div>
           </div>
           <p className="mt-10 border-t border-gray-800 pt-6 text-xs text-gray-500">
-            © {new Date().getFullYear()} ClientDeck Pro. All rights reserved.
+            © {new Date().getFullYear()} ClientDeck Pro. All rights reserved. Not
+            affiliated with HighLevel, Inc.
           </p>
         </div>
       </footer>

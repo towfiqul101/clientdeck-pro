@@ -1,17 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
+import { cn } from "@/lib/utils/helpers";
+
+const LINKS = [
+  { id: "features", label: "Features" },
+  { id: "how-it-works", label: "How It Works" },
+  { id: "pricing", label: "Pricing" },
+  { id: "faq", label: "FAQ" },
+];
 
 export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
   const [open, setOpen] = useState(false);
-  const links = [
-    { href: "/#features", label: "Features" },
-    { href: "/#pricing", label: "Pricing" },
-    { href: "/snapshot", label: "GHL Snapshot" },
-  ];
+  const [active, setActive] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sections = LINKS.map((l) => document.getElementById(l.id)).filter(
+      (el): el is HTMLElement => el !== null
+    );
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActive(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: "-45% 0px -50% 0px", threshold: 0 }
+    );
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-800 bg-gray-950/90 backdrop-blur">
@@ -21,11 +45,14 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
-          {links.map((l) => (
+          {LINKS.map((l) => (
             <Link
-              key={l.href}
-              href={l.href}
-              className="text-sm text-gray-300 hover:text-white"
+              key={l.id}
+              href={`/#${l.id}`}
+              className={cn(
+                "text-sm transition-colors duration-150",
+                active === l.id ? "text-white" : "text-gray-400 hover:text-white"
+              )}
             >
               {l.label}
             </Link>
@@ -43,7 +70,7 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
           ) : (
             <>
               <Link href="/login" className="text-sm text-gray-300 hover:text-white">
-                Login
+                Log In
               </Link>
               <Link
                 href="/signup"
@@ -66,10 +93,10 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
 
       {open && (
         <div className="space-y-1 border-t border-gray-800 px-4 py-3 md:hidden">
-          {links.map((l) => (
+          {LINKS.map((l) => (
             <Link
-              key={l.href}
-              href={l.href}
+              key={l.id}
+              href={`/#${l.id}`}
               className="block py-2 text-sm text-gray-300"
               onClick={() => setOpen(false)}
             >
@@ -83,7 +110,7 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
           ) : (
             <>
               <Link href="/login" className="block py-2 text-sm text-gray-300">
-                Login
+                Log In
               </Link>
               <Link href="/signup" className="block py-2 text-sm font-medium text-blue-400">
                 Start Free Trial
