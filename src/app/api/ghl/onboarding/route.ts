@@ -118,6 +118,21 @@ async function syncOnboardingDocsToDrive(
 // ── Webhook ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  // Shared-secret check (same GHL_WEBHOOK_SECRET as /api/ghl/webhook). When
+  // configured, callers MUST present it — absent counts as invalid. Rejections
+  // still return 200 so GHL doesn't spin on retries.
+  const secret = process.env.GHL_WEBHOOK_SECRET;
+  if (secret) {
+    const provided =
+      req.headers.get("x-clientdeck-secret") ||
+      req.headers.get("x-wh-secret") ||
+      new URL(req.url).searchParams.get("secret");
+    if (!provided || provided !== secret) {
+      console.warn("GHL onboarding webhook rejected: missing or invalid secret");
+      return Response.json({ received: true, processed: false });
+    }
+  }
+
   try {
     const payload = await req.json();
     const contactId: string | undefined = payload.contactId;

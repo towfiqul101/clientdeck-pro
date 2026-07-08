@@ -5,6 +5,7 @@ import { isAdmin, getAdminEmail } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { maxClientsForPlan } from "@/lib/billing/plans";
 import { verifyGHLConnection } from "@/lib/ghl/api";
+import { isMaskedSecret } from "@/lib/utils/secrets";
 import type { Plan, PlanStatus } from "@/types";
 
 type Result = { success: boolean; error?: string };
@@ -126,13 +127,15 @@ export async function saveGhlConfig(
   if (!(await guard())) return { success: false, error: "Forbidden." };
 
   const admin = createAdminClient();
-  const { error } = await admin
-    .from("agencies")
-    .update({
-      ghl_location_id: input.locationId.trim() || null,
-      ghl_api_key: input.apiKey.trim() || null,
-    })
-    .eq("id", agencyId);
+  const update: { ghl_location_id: string | null; ghl_api_key?: string | null } = {
+    ghl_location_id: input.locationId.trim() || null,
+  };
+  // The panel pre-fills the key field with a masked placeholder — only a
+  // newly typed value (or a cleared field) should overwrite the stored key.
+  if (!isMaskedSecret(input.apiKey)) {
+    update.ghl_api_key = input.apiKey.trim() || null;
+  }
+  const { error } = await admin.from("agencies").update(update).eq("id", agencyId);
   if (error) return { success: false, error: error.message };
 
   await logAgency(agencyId, "GHL config updated (admin)", "Location ID / API key updated.");

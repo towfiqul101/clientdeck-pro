@@ -6,6 +6,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { verifyGHLConnection, getGHLCustomFields } from "@/lib/ghl/api";
 import { detectFieldKeys } from "@/lib/ghl/field-detect";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
+import { isMaskedSecret } from "@/lib/utils/secrets";
 import type { AgencySettings, GhlFieldKeys } from "@/types";
 import type { PipelineStageKey } from "@/lib/ghl/pipeline";
 import { testConnection } from "@/lib/credit-monitoring";
@@ -109,12 +110,18 @@ export async function updateGHLSettings(input: {
 
   const supabase = await createServerSupabaseClient();
 
+  const update: { ghl_location_id: string | null; ghl_api_key?: string | null } = {
+    ghl_location_id: input.locationId.trim() || null,
+  };
+  // A masked placeholder means the user didn't touch the field — keep the
+  // stored key. Only a newly typed value (or a cleared field) updates it.
+  if (!isMaskedSecret(input.apiKey)) {
+    update.ghl_api_key = input.apiKey.trim() || null;
+  }
+
   const { error } = await supabase
     .from("agencies")
-    .update({
-      ghl_location_id: input.locationId.trim() || null,
-      ghl_api_key: input.apiKey.trim() || null,
-    })
+    .update(update)
     .eq("id", session.agency.id);
 
   if (error) return { success: false, error: error.message };
@@ -131,13 +138,19 @@ export async function testGHLConnection(input: {
   const session = await getSessionContext();
   if (!session) return { ok: false, message: "Not authenticated." };
 
-  if (!input.locationId.trim() || !input.apiKey.trim()) {
+  // A masked placeholder means "use the stored key" — the browser never has
+  // the real value to send back.
+  const apiKey = isMaskedSecret(input.apiKey)
+    ? session.agency.ghl_api_key ?? ""
+    : input.apiKey;
+
+  if (!input.locationId.trim() || !apiKey.trim()) {
     return { ok: false, message: "Enter both a Location ID and an API key." };
   }
 
   const result = await verifyGHLConnection({
     locationId: input.locationId.trim(),
-    apiKey: input.apiKey.trim(),
+    apiKey: apiKey.trim(),
   });
 
   if (result.ok) {
@@ -326,14 +339,27 @@ export async function updateCreditMonitoringSettings(input: {
     auto_pull_scores: input.autoPullScores,
   };
 
+  // Masked placeholders mean the user didn't touch the field — keep the
+  // stored credential. Only newly typed values (or cleared fields) update it.
+  const update: {
+    credit_monitoring_service: CreditMonitoringService | "none";
+    credit_monitoring_api_key?: string | null;
+    credit_monitoring_api_secret?: string | null;
+    settings: AgencySettings;
+  } = {
+    credit_monitoring_service: input.service,
+    settings: nextSettings,
+  };
+  if (!isMaskedSecret(input.apiKey)) {
+    update.credit_monitoring_api_key = input.apiKey.trim() || null;
+  }
+  if (!isMaskedSecret(input.apiSecret)) {
+    update.credit_monitoring_api_secret = input.apiSecret.trim() || null;
+  }
+
   const { error } = await supabase
     .from("agencies")
-    .update({
-      credit_monitoring_service: input.service,
-      credit_monitoring_api_key: input.apiKey.trim() || null,
-      credit_monitoring_api_secret: input.apiSecret.trim() || null,
-      settings: nextSettings,
-    })
+    .update(update)
     .eq("id", session.agency.id);
 
   if (error) return { success: false, error: error.message };
@@ -355,5 +381,13 @@ export async function testCreditMonitoringConnection(input: {
     return { ok: false, message: "Select a provider first." };
   }
 
-  return testConnection(input.service, input.apiKey, input.apiSecret);
+  // Masked placeholders mean "use the stored credential".
+  const apiKey = isMaskedSecret(input.apiKey)
+    ? session.agency.credit_monitoring_api_key ?? ""
+    : input.apiKey;
+  const apiSecret = isMaskedSecret(input.apiSecret)
+    ? session.agency.credit_monitoring_api_secret ?? ""
+    : input.apiSecret;
+
+  return testConnection(input.service, apiKey, apiSecret);
 }

@@ -94,7 +94,6 @@ export function CreditReportParser({
     setPhase("analyzing");
     try {
       const fd = new FormData();
-      fd.set("clientId", clientId);
       fd.set("bureau", bureau);
       fd.set("file", file);
       const res = await fetch("/api/ai/parse-credit-report", {

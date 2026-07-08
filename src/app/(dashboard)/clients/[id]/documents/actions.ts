@@ -83,14 +83,23 @@ export async function uploadDocument(
 
 export async function deleteDocument(
   clientId: string,
-  documentId: string,
-  storagePath: string
+  documentId: string
 ): Promise<DocActionResult> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };
 
   const supabase = await createServerSupabaseClient();
-  // RLS ensures the row belongs to the caller's agency.
+  // Fetch under RLS first — the storage path must come from the DB row, never
+  // from client input, since the storage delete below runs with service role.
+  const { data: doc, error: fetchError } = await supabase
+    .from("documents")
+    .select("id, storage_path")
+    .eq("id", documentId)
+    .single();
+  if (fetchError || !doc) {
+    return { success: false, error: "Document not found or access denied." };
+  }
+
   const { error } = await supabase
     .from("documents")
     .delete()
@@ -98,7 +107,7 @@ export async function deleteDocument(
   if (error) return { success: false, error: error.message };
 
   const admin = createAdminClient();
-  await admin.storage.from(BUCKET).remove([storagePath]);
+  await admin.storage.from(BUCKET).remove([doc.storage_path]);
 
   revalidatePath(`/clients/${clientId}/documents`);
   return { success: true };

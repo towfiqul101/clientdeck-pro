@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Lock } from "lucide-react";
 import { getSessionContext } from "@/lib/auth/session";
+import { maskSecret } from "@/lib/utils/secrets";
 import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
 import { Card } from "@/components/ui/card";
 import { CreditMonitoringForm } from "./credit-monitoring-form";
@@ -39,8 +40,10 @@ export default async function CreditMonitoringSettingsPage() {
     <CreditMonitoringForm
       initial={{
         service: agency.credit_monitoring_service === "none" ? "none" : agency.credit_monitoring_service,
-        apiKey: agency.credit_monitoring_api_key ?? "",
-        apiSecret: agency.credit_monitoring_api_secret ?? "",
+        // Never send plaintext credentials to the browser — the save action
+        // treats masked placeholders as "keep the existing value".
+        apiKey: maskSecret(agency.credit_monitoring_api_key),
+        apiSecret: maskSecret(agency.credit_monitoring_api_secret),
         autoPullScores: agency.settings?.auto_pull_scores ?? false,
       }}
     />

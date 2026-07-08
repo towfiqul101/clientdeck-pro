@@ -21,11 +21,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Invalid upload." }, { status: 400 });
   }
 
-  const clientId = String(form.get("clientId") ?? "");
+  // clientId is intentionally not accepted here — this route only parses the
+  // PDF and returns extracted items; the caller persists them under RLS with
+  // its own session. Reading a clientId here would invite a future admin-client
+  // write that bypasses RLS scoping.
   const bureau = String(form.get("bureau") ?? "") as Bureau;
   const file = form.get("file");
 
-  if (!clientId) return NextResponse.json({ ok: false, error: "Missing client." }, { status: 400 });
   if (!VALID_BUREAUS.includes(bureau)) {
     return NextResponse.json({ ok: false, error: "Select a bureau." }, { status: 400 });
   }

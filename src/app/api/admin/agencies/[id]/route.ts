@@ -3,6 +3,7 @@ import { requireAdminApi } from "@/lib/admin/tool-helpers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Agency } from "@/types";
 import type { AgencyPanelData } from "@/lib/admin/agency-panel";
+import { maskSecret } from "@/lib/utils/secrets";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +56,24 @@ export async function GET(
 
   const a = agency as Agency;
 
+  // Never ship plaintext secrets to the browser: API keys are masked (last 4
+  // kept as a visual reference for the admin) and Drive OAuth tokens dropped.
+  // The slide-over save/test actions read the real values server-side.
+  const sanitizedAgency: Agency = {
+    ...a,
+    ghl_api_key: a.ghl_api_key ? maskSecret(a.ghl_api_key) : null,
+    credit_monitoring_api_key: a.credit_monitoring_api_key
+      ? maskSecret(a.credit_monitoring_api_key)
+      : null,
+    credit_monitoring_api_secret: a.credit_monitoring_api_secret
+      ? maskSecret(a.credit_monitoring_api_secret)
+      : null,
+    google_drive_access_token: null,
+    google_drive_refresh_token: null,
+  };
+
   const payload: AgencyPanelData = {
-    agency: a,
+    agency: sanitizedAgency,
     clientCount: clientCount ?? 0,
     payments: (payments ?? []).map((p) => ({
       id: p.id,

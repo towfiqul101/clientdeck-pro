@@ -88,11 +88,7 @@ export function DocumentsManager({
   async function handleDelete() {
     if (!deleting) return;
     setBusyId(deleting.id);
-    const result = await deleteDocument(
-      clientId,
-      deleting.id,
-      deleting.storage_path
-    );
+    const result = await deleteDocument(clientId, deleting.id);
     setBusyId(null);
     if (result.success) {
       toast("Document deleted.", "success");

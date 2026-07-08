@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookOpen } from "lucide-react";
 import { getSessionContext } from "@/lib/auth/session";
+import { maskSecret } from "@/lib/utils/secrets";
 import { GHLForm } from "./ghl-form";
 import { GHLSyncActivity } from "./sync-activity";
 import { GhlFieldMapping } from "./ghl-field-mapping";
@@ -32,7 +33,9 @@ export default async function GHLSettingsPage() {
       <GHLForm
         initial={{
           locationId: agency.ghl_location_id ?? "",
-          apiKey: agency.ghl_api_key ?? "",
+          // Never send the plaintext key to the browser — the save action
+          // treats the masked placeholder as "keep the existing key".
+          apiKey: maskSecret(agency.ghl_api_key),
         }}
         webhookUrl={webhookUrl}
       />

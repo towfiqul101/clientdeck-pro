@@ -8,9 +8,9 @@ import { handleGHLWebhook } from "@/lib/ghl/webhook";
  * processing errors here and rely on server logs instead.
  */
 export async function POST(req: Request) {
-  // Optional shared-secret check. If GHL_WEBHOOK_SECRET is configured, callers
-  // must present it (via header or ?secret=). Mismatches are ignored (200) so
-  // GHL doesn't spin on retries.
+  // Shared-secret check. If GHL_WEBHOOK_SECRET is configured, callers MUST
+  // present it (via header or ?secret=) — absent counts as invalid, not a
+  // pass-through. Rejections still return 200 so GHL doesn't spin on retries.
   const secret = process.env.GHL_WEBHOOK_SECRET;
   if (secret) {
     const url = new URL(req.url);
@@ -18,9 +18,9 @@ export async function POST(req: Request) {
       req.headers.get("x-clientdeck-secret") ||
       req.headers.get("x-wh-secret") ||
       url.searchParams.get("secret");
-    if (provided && provided !== secret) {
-      console.warn("GHL webhook rejected: secret mismatch");
-      return NextResponse.json({ received: true, ignored: true });
+    if (!provided || provided !== secret) {
+      console.warn("GHL webhook rejected: missing or invalid secret");
+      return NextResponse.json({ received: true, processed: false });
     }
   }
 
