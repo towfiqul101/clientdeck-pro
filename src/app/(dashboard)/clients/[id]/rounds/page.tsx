@@ -12,13 +12,13 @@ function DeadlineLabel({ round }: { round: DisputeRound }) {
   const days = daysRemaining(round.response_deadline);
   if (days < 0) {
     return (
-      <span className="text-sm font-medium text-red-600">
+      <span className="text-sm font-medium text-red-400">
         {Math.abs(days)} days overdue
       </span>
     );
   }
   return (
-    <span className="text-sm font-medium text-amber-600">
+    <span className="text-sm font-medium text-amber-400">
       {days} days remaining
     </span>
   );
@@ -43,7 +43,7 @@ export default async function ClientRoundsPage({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Dispute Rounds</h3>
+        <h3 className="text-sm font-semibold text-slate-100">Dispute Rounds</h3>
         <Link href={`/clients/${id}/rounds/new`}>
           <Button>
             <Plus className="h-4 w-4" />
@@ -53,7 +53,7 @@ export default async function ClientRoundsPage({
       </div>
 
       {rounds.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
           <EmptyState
             icon={Layers}
             title="No rounds yet"
@@ -74,25 +74,25 @@ export default async function ClientRoundsPage({
             <Link
               key={round.id}
               href={`/clients/${id}/rounds/${round.id}`}
-              className="block rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-colors hover:border-blue-300 hover:bg-gray-50"
+              className="block rounded-lg border border-white/10 bg-[#1a1a2e] p-5 shadow-sm transition-colors hover:border-blue-300 hover:bg-white/[0.03]"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div
                     className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-lg font-semibold text-blue-600"
+                      "flex h-12 w-12 items-center justify-center rounded-lg bg-blue-500/10 text-lg font-semibold text-blue-400"
                     )}
                   >
                     {round.round_number}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-slate-100">
                         Round {round.round_number}
                       </span>
                       <Badge status={round.status} />
                     </div>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="mt-0.5 text-sm text-slate-500">
                       {round.date_sent
                         ? `Sent ${formatDate(round.date_sent)}`
                         : "Not sent yet"}
@@ -104,17 +104,17 @@ export default async function ClientRoundsPage({
                 <DeadlineLabel round={round} />
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-4 border-t border-gray-100 pt-3 text-sm">
-                <span className="text-green-600">
+              <div className="mt-4 flex flex-wrap gap-4 border-t border-white/[0.06] pt-3 text-sm">
+                <span className="text-green-400">
                   {round.total_deletions} deleted
                 </span>
-                <span className="text-teal-600">
+                <span className="text-teal-400">
                   {round.total_updates} updated
                 </span>
-                <span className="text-red-600">
+                <span className="text-red-400">
                   {round.total_verified} verified
                 </span>
-                <span className="text-orange-600">
+                <span className="text-orange-400">
                   {round.total_no_response} no response
                 </span>
               </div>

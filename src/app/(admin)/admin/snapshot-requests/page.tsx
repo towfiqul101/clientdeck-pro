@@ -31,7 +31,7 @@ export default async function SnapshotRequestsAdminPage() {
         />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-sm">
-            <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+            <thead className="border-b border-white/10 text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-5 py-3 font-medium">Name</th>
                 <th className="px-5 py-3 font-medium">Email</th>
@@ -42,20 +42,20 @@ export default async function SnapshotRequestsAdminPage() {
                 <th className="px-5 py-3 font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/[0.06]">
               {requests.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-gray-500">
+                  <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
                     No requests yet.
                   </td>
                 </tr>
               ) : (
                 requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-medium text-gray-900">{r.name}</td>
-                    <td className="px-5 py-3 text-gray-600">{r.email}</td>
-                    <td className="px-5 py-3 text-gray-600">{r.agency_name ?? "—"}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-gray-600">
+                  <tr key={r.id} className="hover:bg-white/[0.03]">
+                    <td className="px-5 py-3 font-medium text-slate-100">{r.name}</td>
+                    <td className="px-5 py-3 text-slate-400">{r.email}</td>
+                    <td className="px-5 py-3 text-slate-400">{r.agency_name ?? "—"}</td>
+                    <td className="px-5 py-3 font-mono text-xs text-slate-400">
                       {r.ghl_location_id ?? "—"}
                     </td>
                     <td className="px-5 py-3">
@@ -68,7 +68,7 @@ export default async function SnapshotRequestsAdminPage() {
                         {r.status}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-gray-500">{formatDate(r.created_at)}</td>
+                    <td className="px-5 py-3 text-slate-500">{formatDate(r.created_at)}</td>
                     <td className="px-5 py-3">
                       <StatusButtons id={r.id} status={r.status} />
                     </td>

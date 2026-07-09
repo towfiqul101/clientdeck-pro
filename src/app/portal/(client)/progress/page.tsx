@@ -179,26 +179,26 @@ export default async function PortalProgressPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Your progress</h1>
+      <h1 className="text-2xl font-bold text-slate-100">Your progress</h1>
 
       {/* Overall stats */}
       <div className="grid grid-cols-2 gap-3">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+            className="rounded-xl border border-white/10 bg-[#1a1a2e] p-4 shadow-sm"
           >
-            <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-500">{s.label}</p>
+            <p className="text-2xl font-bold text-slate-100">{s.value}</p>
+            <p className="text-xs text-slate-500">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* Score chart */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-white/10 bg-[#1a1a2e] p-4 shadow-sm">
         <div className="mb-2 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-gray-400" />
-          <h2 className="text-sm font-semibold text-gray-900">
+          <TrendingUp className="h-4 w-4 text-slate-500" />
+          <h2 className="text-sm font-semibold text-slate-100">
             Score history
           </h2>
         </div>
@@ -207,11 +207,11 @@ export default async function PortalProgressPage() {
 
       {/* Timeline */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-gray-900">
+        <h2 className="mb-3 text-sm font-semibold text-slate-100">
           Round history
         </h2>
         {timeline.length === 0 ? (
-          <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+          <p className="rounded-xl border border-white/10 bg-[#1a1a2e] p-6 text-center text-sm text-slate-500">
             Your dispute rounds will appear here once your specialist starts
             working on your case.
           </p>

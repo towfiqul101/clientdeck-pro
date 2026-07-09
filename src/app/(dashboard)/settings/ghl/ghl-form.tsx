@@ -87,7 +87,7 @@ export function GHLForm({ initial, webhookUrl }: GHLFormProps) {
             <button
               type="button"
               onClick={() => setShowKey((s) => !s)}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-400"
               aria-label={showKey ? "Hide API key" : "Show API key"}
             >
               {showKey ? (
@@ -109,7 +109,7 @@ export function GHLForm({ initial, webhookUrl }: GHLFormProps) {
               id="webhook"
               value={webhookUrl}
               readOnly
-              className="bg-gray-50 font-mono text-xs"
+              className="bg-white/[0.03] font-mono text-xs"
             />
             <Button
               type="button"
@@ -118,7 +118,7 @@ export function GHLForm({ initial, webhookUrl }: GHLFormProps) {
               className="shrink-0"
             >
               {copied ? (
-                <Check className="h-4 w-4 text-green-600" />
+                <Check className="h-4 w-4 text-green-400" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
@@ -132,8 +132,8 @@ export function GHLForm({ initial, webhookUrl }: GHLFormProps) {
             className={cn(
               "flex items-start gap-2 rounded-md border p-3 text-sm",
               testResult.ok
-                ? "border-green-200 bg-green-50 text-green-700"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "border-green-500/30 bg-green-500/10 text-green-400"
+                : "border-red-500/30 bg-red-500/10 text-red-400"
             )}
           >
             {testResult.ok ? (

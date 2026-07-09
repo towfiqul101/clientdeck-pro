@@ -43,21 +43,21 @@ function DocRow({
 }) {
   return (
     <li className="flex items-center gap-3 px-4 py-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100">
-        <FileIcon className="h-4 w-4 text-gray-500" />
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/[0.06]">
+        <FileIcon className="h-4 w-4 text-slate-500" />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-medium text-gray-900">
+          <p className="truncate text-sm font-medium text-slate-100">
             {doc.name}
           </p>
           {ownUpload && (
-            <span className="shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
+            <span className="shrink-0 rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
               Your Upload
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           {categoryLabel(doc.category)} · {formatBytes(doc.file_size)} ·{" "}
           {formatDate(doc.created_at)}
         </p>
@@ -65,7 +65,7 @@ function DocRow({
       <button
         onClick={() => onDownload(doc)}
         disabled={busy}
-        className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40"
+        className="rounded-md p-2 text-slate-500 hover:bg-white/[0.06] hover:text-slate-300 disabled:opacity-40"
         aria-label="Download"
       >
         {busy ? (
@@ -77,7 +77,7 @@ function DocRow({
       {ownUpload && (
         <button
           onClick={() => onDelete(doc)}
-          className="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+          className="rounded-md p-2 text-slate-500 hover:bg-white/[0.06] hover:text-red-400"
           aria-label="Delete"
         >
           <Trash2 className="h-4 w-4" />
@@ -141,14 +141,14 @@ export function PortalDocumentsManager({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
+      <h1 className="text-2xl font-bold text-slate-100">Documents</h1>
 
       {/* Upload */}
       <div className="space-y-3">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as DocumentCategory)}
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700"
+          className="w-full rounded-lg border border-white/10 bg-[#1a1a2e] px-3 py-2.5 text-sm text-slate-300"
         >
           {CATEGORIES.map((c) => (
             <option key={c.value} value={c.value}>
@@ -168,8 +168,8 @@ export function PortalDocumentsManager({
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
           className={cn(
-            "flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white text-center",
-            "active:bg-gray-50"
+            "flex min-h-[120px] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/10 bg-[#1a1a2e] text-center",
+            "active:bg-white/[0.03]"
           )}
         >
           {uploading ? (
@@ -177,10 +177,10 @@ export function PortalDocumentsManager({
           ) : (
             <UploadCloud className="h-7 w-7" style={{ color: "var(--brand)" }} />
           )}
-          <span className="text-sm font-semibold text-gray-800">
+          <span className="text-sm font-semibold text-slate-200">
             {uploading ? "Uploading…" : "Tap to upload a document"}
           </span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-slate-500">
             Uploaded as “{categoryLabel(category)}” · up to 15 MB
           </span>
         </button>
@@ -188,16 +188,16 @@ export function PortalDocumentsManager({
 
       {/* Your uploads */}
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-gray-900">
+        <h2 className="mb-2 text-sm font-semibold text-slate-100">
           Your uploads
         </h2>
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1a1a2e] shadow-sm">
           {clientDocs.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-500">
+            <p className="px-4 py-6 text-center text-sm text-slate-500">
               You haven&apos;t uploaded anything yet.
             </p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-white/[0.06]">
               {clientDocs.map((doc) => (
                 <DocRow
                   key={doc.id}
@@ -215,16 +215,16 @@ export function PortalDocumentsManager({
 
       {/* Shared by specialist */}
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-gray-900">
+        <h2 className="mb-2 text-sm font-semibold text-slate-100">
           Shared by your specialist
         </h2>
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-[#1a1a2e] shadow-sm">
           {staffDocs.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-gray-500">
+            <p className="px-4 py-6 text-center text-sm text-slate-500">
               No shared documents yet.
             </p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-white/[0.06]">
               {staffDocs.map((doc) => (
                 <DocRow
                   key={doc.id}

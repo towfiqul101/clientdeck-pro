@@ -130,7 +130,7 @@ export function ItemDraftRow({
             <button
               type="button"
               onClick={onRemove}
-              className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+              className="rounded p-1.5 text-slate-400 hover:bg-white/5 hover:text-red-400"
               aria-label="Remove row"
             >
               <Trash2 className="h-4 w-4" />
@@ -143,19 +143,19 @@ export function ItemDraftRow({
 
   // Stacked (modal) layout
   return (
-    <div className="relative grid grid-cols-1 gap-3 rounded-lg border border-gray-200 p-4 sm:grid-cols-2">
+    <div className="relative grid grid-cols-1 gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:grid-cols-2">
       {onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          className="absolute right-2 top-2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+          className="absolute right-2 top-2 rounded p-1 text-slate-400 hover:bg-white/5 hover:text-red-400"
           aria-label="Remove item"
         >
           <Trash2 className="h-4 w-4" />
         </button>
       )}
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">Bureau</span>
+        <span className="mb-1 block font-medium text-slate-300">Bureau</span>
         <Select
           value={draft.bureau}
           onChange={(e) =>
@@ -165,7 +165,7 @@ export function ItemDraftRow({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">Creditor</span>
+        <span className="mb-1 block font-medium text-slate-300">Creditor</span>
         <Input
           value={draft.creditor_name}
           onChange={(e) => onChange({ creditor_name: e.target.value })}
@@ -173,7 +173,7 @@ export function ItemDraftRow({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">
+        <span className="mb-1 block font-medium text-slate-300">
           Account last 4
         </span>
         <Input
@@ -187,7 +187,7 @@ export function ItemDraftRow({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">
+        <span className="mb-1 block font-medium text-slate-300">
           Account type
         </span>
         <Select
@@ -202,7 +202,7 @@ export function ItemDraftRow({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">
+        <span className="mb-1 block font-medium text-slate-300">
           Negative type
         </span>
         <Select
@@ -216,7 +216,7 @@ export function ItemDraftRow({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">Balance</span>
+        <span className="mb-1 block font-medium text-slate-300">Balance</span>
         <Input
           type="number"
           value={draft.balance}
@@ -225,7 +225,7 @@ export function ItemDraftRow({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">Date opened</span>
+        <span className="mb-1 block font-medium text-slate-300">Date opened</span>
         <Input
           type="date"
           value={draft.date_opened}
@@ -233,7 +233,7 @@ export function ItemDraftRow({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block font-medium text-gray-700">
+        <span className="mb-1 block font-medium text-slate-300">
           First delinquency
         </span>
         <Input

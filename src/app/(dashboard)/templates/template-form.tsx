@@ -126,12 +126,12 @@ export function TemplateForm({ template }: { template?: LetterTemplate }) {
               onChange={(e) => setRoundSuggestion(e.target.value)}
             />
           </Field>
-          <label className="flex items-center gap-2 self-end pb-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 self-end pb-2 text-sm text-slate-300">
             <input
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-white/10"
             />
             Active
           </label>
@@ -145,10 +145,10 @@ export function TemplateForm({ template }: { template?: LetterTemplate }) {
             onClick={(e) => setCursorPos(e.currentTarget.selectionStart)}
             onKeyUp={(e) => setCursorPos(e.currentTarget.selectionStart)}
             rows={16}
-            className="block w-full rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-xs text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="block w-full rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 font-mono text-xs text-slate-100 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </Field>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
         <div className="flex items-center gap-2">
           <Button onClick={submit} loading={pending}>
             Save
@@ -161,22 +161,22 @@ export function TemplateForm({ template }: { template?: LetterTemplate }) {
           </Button>
         </div>
         {previewContent && (
-          <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">Preview</p>
-            <pre className="whitespace-pre-wrap font-mono text-xs text-gray-700">{previewContent}</pre>
+          <div className="rounded-md border border-white/10 bg-white/[0.03] p-4">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Preview</p>
+            <pre className="whitespace-pre-wrap font-mono text-xs text-slate-300">{previewContent}</pre>
           </div>
         )}
       </div>
 
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Insert Variable</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Insert Variable</p>
         <div className="flex flex-wrap gap-1.5">
           {VARIABLES.map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => insertVariable(v)}
-              className="rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700 hover:bg-gray-200"
+              className="rounded bg-white/[0.06] px-2 py-1 font-mono text-xs text-slate-300 hover:bg-white/[0.08]"
             >
               {`{{${v}}}`}
             </button>

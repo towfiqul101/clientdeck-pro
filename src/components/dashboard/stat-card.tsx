@@ -1,23 +1,37 @@
 import { cn } from "@/lib/utils/helpers";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
   label: string;
   value: string | number;
   icon: LucideIcon;
-  /** Tailwind color token base, e.g. "blue", "green", "amber". */
-  accent?: "blue" | "green" | "amber" | "purple";
+  /** Accent color for the icon chip. */
+  accent?: "blue" | "green" | "amber" | "purple" | "teal";
+  /** Short status/trend caption shown under the value. */
   trend?: string;
+  /** Tone controls the trend caption color + arrow. Defaults to neutral. */
+  trendTone?: "up" | "down" | "neutral";
 }
 
 const accents: Record<
   NonNullable<StatCardProps["accent"]>,
   { bg: string; text: string }
 > = {
-  blue: { bg: "bg-blue-50", text: "text-blue-600" },
-  green: { bg: "bg-green-50", text: "text-green-600" },
-  amber: { bg: "bg-amber-50", text: "text-amber-600" },
-  purple: { bg: "bg-purple-50", text: "text-purple-600" },
+  blue: { bg: "bg-blue-500/20", text: "text-blue-400" },
+  green: { bg: "bg-emerald-500/20", text: "text-emerald-400" },
+  amber: { bg: "bg-amber-500/20", text: "text-amber-400" },
+  purple: { bg: "bg-violet-500/20", text: "text-violet-400" },
+  teal: { bg: "bg-teal-500/20", text: "text-teal-400" },
+};
+
+const trendTones: Record<
+  NonNullable<StatCardProps["trendTone"]>,
+  { text: string; icon: LucideIcon }
+> = {
+  up: { text: "text-emerald-400", icon: TrendingUp },
+  down: { text: "text-amber-400", icon: TrendingDown },
+  neutral: { text: "text-slate-500", icon: Minus },
 };
 
 export function StatCard({
@@ -26,29 +40,40 @@ export function StatCard({
   icon: Icon,
   accent = "blue",
   trend,
+  trendTone = "neutral",
 }: StatCardProps) {
   const color = accents[accent];
+  const tone = trendTones[trendTone];
+  const TrendIcon = tone.icon;
+
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="glass-card animate-fade-up flex flex-col gap-3 p-5">
       <div className="flex items-center justify-between">
         <span
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-lg",
+            "flex h-10 w-10 items-center justify-center rounded-xl",
             color.bg
           )}
         >
           <Icon className={cn("h-5 w-5", color.text)} />
         </span>
+        <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-slate-500">
+          {label}
+        </span>
+      </div>
+      <div>
+        <div className="text-3xl font-bold tracking-tight text-white">
+          {value}
+        </div>
         {trend && (
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-            {trend}
-          </span>
+          <div className="mt-1 flex items-center gap-1.5">
+            <TrendIcon className={cn("h-3.5 w-3.5", tone.text)} />
+            <span className={cn("text-xs font-medium", tone.text)}>
+              {trend}
+            </span>
+          </div>
         )}
       </div>
-      <p className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
-        {value}
-      </p>
-      <p className="mt-1 text-sm text-gray-500">{label}</p>
     </div>
   );
 }

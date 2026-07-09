@@ -36,16 +36,16 @@ export function NotesEditor({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label htmlFor="notes" className="text-sm font-medium text-gray-700">
+        <label htmlFor="notes" className="text-sm font-medium text-slate-300">
           Notes
         </label>
         {status === "saving" && (
-          <span className="flex items-center gap-1 text-xs text-gray-400">
+          <span className="flex items-center gap-1 text-xs text-slate-500">
             <Loader2 className="h-3 w-3 animate-spin" /> Saving…
           </span>
         )}
         {status === "saved" && (
-          <span className="flex items-center gap-1 text-xs text-green-600">
+          <span className="flex items-center gap-1 text-xs text-green-400">
             <Check className="h-3 w-3" /> Saved
           </span>
         )}

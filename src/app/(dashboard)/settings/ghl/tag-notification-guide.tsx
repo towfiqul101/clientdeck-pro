@@ -51,21 +51,21 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
         description='ClientDeck Pro notifies clients using GHL contact tags. When an event happens, we update the contact’s custom fields with the event data, then add a tag like "cdp-round-sent" — your GHL workflow (Tag trigger, free in GHL) picks it up and sends SMS/email from your own number.'
       />
       <div className="space-y-4 p-6">
-        <div className="overflow-x-auto rounded-md border border-gray-200">
+        <div className="overflow-x-auto rounded-md border border-white/10">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
+            <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-3 py-2 font-medium">Event</th>
                 <th className="px-3 py-2 font-medium">Tag to watch</th>
                 <th className="px-3 py-2 font-medium">Data fields available</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/[0.06]">
               {ROWS.map((r) => (
                 <tr key={r.key}>
-                  <td className="px-3 py-2 text-gray-900">{r.event}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-blue-700">{NOTIFICATION_TAGS[r.key]}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-gray-500">{r.fields}</td>
+                  <td className="px-3 py-2 text-slate-100">{r.event}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-blue-400">{NOTIFICATION_TAGS[r.key]}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-slate-500">{r.fields}</td>
                 </tr>
               ))}
             </tbody>
@@ -79,7 +79,7 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
           </Button>
           <Link
             href="/onboarding/ghl-setup"
-            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="text-sm font-medium text-blue-400 hover:text-blue-400"
           >
             Full setup guide →
           </Link>

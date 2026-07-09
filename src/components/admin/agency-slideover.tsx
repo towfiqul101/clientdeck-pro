@@ -28,12 +28,12 @@ const TABS = ["Status", "GHL Config", "Tools", "Branding", "Payments"] as const;
 type Tab = (typeof TABS)[number];
 
 const field =
-  "w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
-const label = "block text-xs font-medium text-gray-600 mb-1";
+  "w-full rounded-md border border-white/10 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+const label = "block text-xs font-medium text-slate-400 mb-1";
 const primaryBtn =
   "rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50";
 const secondaryBtn =
-  "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50";
+  "rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.03] disabled:opacity-50";
 
 function webhookUrl(): string {
   const base = process.env.NEXT_PUBLIC_APP_URL || "https://clientdeckpro.com";
@@ -120,20 +120,20 @@ export function AgencySlideover({
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-full max-w-[480px] flex-col bg-white shadow-2xl transition-transform duration-200 ease-out",
+          "fixed inset-y-0 right-0 z-50 flex w-full max-w-[480px] flex-col bg-[#1a1a2e] shadow-2xl transition-transform duration-200 ease-out",
           open ? "translate-x-0" : "translate-x-full"
         )}
         role="dialog"
         aria-modal="true"
       >
         {loading || !agency ? (
-          <div className="flex flex-1 items-center justify-center text-gray-400">
+          <div className="flex flex-1 items-center justify-center text-slate-500">
             {open ? <Loader2 className="h-6 w-6 animate-spin" /> : null}
           </div>
         ) : (
           <>
             {/* Header */}
-            <div className="flex items-start justify-between gap-3 border-b border-gray-200 p-5">
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 p-5">
               <div className="flex min-w-0 items-center gap-3">
                 <span
                   className={cn(
@@ -144,10 +144,10 @@ export function AgencySlideover({
                   {initials(agency.name)}
                 </span>
                 <div className="min-w-0">
-                  <h2 className="truncate text-base font-semibold text-gray-900">
+                  <h2 className="truncate text-base font-semibold text-slate-100">
                     {agency.name}
                   </h2>
-                  <span className="mt-0.5 flex items-center gap-1.5 text-xs capitalize text-gray-500">
+                  <span className="mt-0.5 flex items-center gap-1.5 text-xs capitalize text-slate-500">
                     <span className={cn("h-2 w-2 rounded-full", statusDotClass(agency.plan_status))} />
                     {agency.plan_status.replace("_", " ")}
                   </span>
@@ -155,7 +155,7 @@ export function AgencySlideover({
               </div>
               <button
                 onClick={onClose}
-                className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                className="rounded-md p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-slate-300"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -163,7 +163,7 @@ export function AgencySlideover({
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-3">
+            <div className="flex gap-1 overflow-x-auto border-b border-white/10 px-3">
               {TABS.map((t) => (
                 <button
                   key={t}
@@ -171,8 +171,8 @@ export function AgencySlideover({
                   className={cn(
                     "whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
                     tab === t
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      ? "border-blue-600 text-blue-400"
+                      : "border-transparent text-slate-500 hover:text-slate-300"
                   )}
                 >
                   {t}
@@ -331,8 +331,8 @@ function StatusTab({
         </button>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Signup info</h4>
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Signup info</h4>
         <dl className="mt-2 space-y-1.5 text-sm">
           <Row k="Agency" v={a.name} />
           <Row k="Owner" v={a.owner_email} />
@@ -342,11 +342,11 @@ function StatusTab({
         </dl>
       </div>
 
-      <div className="rounded-lg border border-red-200 bg-red-50/50 p-4">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-red-700">
+      <div className="rounded-lg border border-red-500/30 bg-red-50/50 p-4">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-red-400">
           Danger Zone
         </h4>
-        <p className="mt-1 text-sm text-red-600">
+        <p className="mt-1 text-sm text-red-400">
           Permanently delete this agency and all of its clients, rounds, letters, and
           documents. Type <span className="font-semibold">{a.name}</span> to confirm.
         </p>
@@ -374,8 +374,8 @@ function StatusTab({
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-gray-500">{k}</dt>
-      <dd className="truncate font-medium text-gray-900">{v}</dd>
+      <dt className="text-slate-500">{k}</dt>
+      <dd className="truncate font-medium text-slate-100">{v}</dd>
     </div>
   );
 }
@@ -430,15 +430,15 @@ function GhlTab({
       </div>
       <div>
         <label className={label}>Webhook URL</label>
-        <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
-          <code className="flex-1 truncate text-xs text-gray-700">{url}</code>
+        <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.03] px-3 py-2">
+          <code className="flex-1 truncate text-xs text-slate-300">{url}</code>
           <button
             type="button"
             onClick={() => {
               navigator.clipboard?.writeText(url);
               toast("Webhook URL copied.", "success");
             }}
-            className="text-gray-400 hover:text-gray-700"
+            className="text-slate-500 hover:text-slate-300"
             aria-label="Copy webhook URL"
           >
             <Copy className="h-4 w-4" />
@@ -448,26 +448,26 @@ function GhlTab({
 
       <div className="flex items-center gap-2 text-sm">
         <span className={cn("h-2 w-2 rounded-full", data.ghl.configured ? "bg-green-500" : "bg-gray-300")} />
-        <span className="text-gray-600">
+        <span className="text-slate-400">
           {data.ghl.configured ? "Connected" : "Not configured"}
         </span>
         {data.ghl.lastSyncAt && (
-          <span className="text-gray-400">· last sync {formatDate(data.ghl.lastSyncAt)}</span>
+          <span className="text-slate-500">· last sync {formatDate(data.ghl.lastSyncAt)}</span>
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 p-4">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <div className="rounded-lg border border-white/10 p-4">
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           Notifications
         </h4>
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-slate-400">
           Notifications fire automatically via free GHL contact tags (e.g.{" "}
-          <code className="rounded bg-gray-100 px-1 text-xs">cdp-round-sent</code>) once GHL
+          <code className="rounded bg-white/[0.06] px-1 text-xs">cdp-round-sent</code>) once GHL
           is connected — no per-type setup needed here. The agency configures their own GHL
           workflows to watch these tags.
         </p>
         {!a.settings?.owner_ghl_contact_id && (
-          <p className="mt-2 text-xs text-amber-600">
+          <p className="mt-2 text-xs text-amber-400">
             No owner GHL contact set — staff alerts (overdue rounds, new clients) won&apos;t
             fire until the agency sets one in Settings → GHL.
           </p>
@@ -570,8 +570,8 @@ function ToolsTab({
   return (
     <div className="space-y-3">
       {/* Google Drive status (display only) */}
-      <div className="rounded-lg border border-gray-200 p-4">
-        <h4 className="text-sm font-semibold text-gray-900">Google Drive</h4>
+      <div className="rounded-lg border border-white/10 p-4">
+        <h4 className="text-sm font-semibold text-slate-100">Google Drive</h4>
         <div className="mt-2 flex items-center gap-2 text-sm">
           <span
             className={cn(
@@ -579,7 +579,7 @@ function ToolsTab({
               driveEnabled ? "bg-green-500" : "bg-gray-300"
             )}
           />
-          <span className="text-gray-600">
+          <span className="text-slate-400">
             {driveEnabled
               ? `Connected${driveEmail ? ` (${driveEmail})` : ""}`
               : "Not connected"}
@@ -590,7 +590,7 @@ function ToolsTab({
             href={`https://drive.google.com/drive/folders/${driveFolderId}`}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 inline-block text-xs font-medium text-blue-600 hover:text-blue-700"
+            className="mt-2 inline-block text-xs font-medium text-blue-400 hover:text-blue-400"
           >
             View their Drive folder ↗
           </a>
@@ -598,16 +598,16 @@ function ToolsTab({
       </div>
 
       {/* Credit Monitoring status (display only + test button) */}
-      <div className="rounded-lg border border-gray-200 p-4">
-        <h4 className="text-sm font-semibold text-gray-900">Credit Monitoring</h4>
+      <div className="rounded-lg border border-white/10 p-4">
+        <h4 className="text-sm font-semibold text-slate-100">Credit Monitoring</h4>
         <div className="mt-2 flex items-center gap-2 text-sm">
           <span className={cn("h-2 w-2 rounded-full", creditMonitoringConfigured ? "bg-green-500" : "bg-gray-300")} />
-          <span className="text-gray-600">
+          <span className="text-slate-400">
             {creditMonitoringConfigured ? `Connected (${creditMonitoringService})` : "Not connected"}
           </span>
         </div>
         {creditMonitoringConfigured && (
-          <p className="mt-1 text-xs text-gray-500">{creditMonitoringPullsThisMonth} pulls this month</p>
+          <p className="mt-1 text-xs text-slate-500">{creditMonitoringPullsThisMonth} pulls this month</p>
         )}
         {creditMonitoringConfigured && (
           <button
@@ -615,22 +615,22 @@ function ToolsTab({
             onClick={() => runTool("credit-monitoring", "/api/admin/tools/test-credit-monitoring")}
             className={cn(
               "mt-2 flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium",
-              busy !== null ? "cursor-not-allowed bg-gray-100 text-gray-400" : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+              busy !== null ? "cursor-not-allowed bg-white/[0.06] text-slate-500" : "bg-blue-500/10 text-blue-400 hover:bg-blue-500/15"
             )}
           >
             {busy === "credit-monitoring" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Test API Connection
           </button>
         )}
-        {results["credit-monitoring"] && <p className="mt-1 text-xs font-medium text-gray-700">{results["credit-monitoring"]}</p>}
+        {results["credit-monitoring"] && <p className="mt-1 text-xs font-medium text-slate-300">{results["credit-monitoring"]}</p>}
       </div>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-slate-500">
         These tools configure the agency&apos;s GHL account. Most require the GHL API
         key to be set on the GHL Config tab.
       </p>
       {!configured && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-400">
           GHL is not configured for this agency — connect it first to use the setup tools.
         </div>
       )}
@@ -638,22 +638,22 @@ function ToolsTab({
         const Icon = t.icon;
         const disabled = busy !== null || (!t.alwaysEnabled && !configured);
         return (
-          <div key={t.key} className="rounded-lg border border-gray-200 p-4">
+          <div key={t.key} className="rounded-lg border border-white/10 p-4">
             <button
               disabled={disabled}
               onClick={() => runTool(t.key, t.path)}
               className={cn(
                 "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
                 disabled
-                  ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                  : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  ? "cursor-not-allowed bg-white/[0.06] text-slate-500"
+                  : "bg-blue-500/10 text-blue-400 hover:bg-blue-500/15"
               )}
             >
               {busy === t.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <Icon className="h-4 w-4" />}
               {t.title}
             </button>
-            <p className="mt-2 text-xs text-gray-500">{t.desc}</p>
-            {results[t.key] && <p className="mt-1 text-xs font-medium text-gray-700">{results[t.key]}</p>}
+            <p className="mt-2 text-xs text-slate-500">{t.desc}</p>
+            {results[t.key] && <p className="mt-1 text-xs font-medium text-slate-300">{results[t.key]}</p>}
           </div>
         );
       })}
@@ -690,13 +690,13 @@ function BrandingTab({
             type="color"
             value={/^#([0-9a-fA-F]{6})$/.test(brandColor) ? brandColor : "#2563EB"}
             onChange={(e) => setBrandColor(e.target.value)}
-            className="h-9 w-12 cursor-pointer rounded border border-gray-300"
+            className="h-9 w-12 cursor-pointer rounded border border-white/10"
           />
           <input value={brandColor} onChange={(e) => setBrandColor(e.target.value)} className={cn(field, "max-w-[140px]")} />
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm text-gray-700">
-        <input type="checkbox" checked={poweredBy} onChange={(e) => setPoweredBy(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />
+      <label className="flex items-center gap-2 text-sm text-slate-300">
+        <input type="checkbox" checked={poweredBy} onChange={(e) => setPoweredBy(e.target.checked)} className="h-4 w-4 rounded border-white/10" />
         Show &quot;Powered by ClientDeck Pro&quot; in portal
       </label>
 
@@ -747,43 +747,43 @@ function PaymentsTab({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
+      <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-500">Current plan</span>
-          <span className="font-medium capitalize text-gray-900">{a.plan}</span>
+          <span className="text-slate-500">Current plan</span>
+          <span className="font-medium capitalize text-slate-100">{a.plan}</span>
         </div>
         <div className="mt-1 flex justify-between">
-          <span className="text-gray-500">Status</span>
-          <span className="font-medium capitalize text-gray-900">{a.plan_status.replace("_", " ")}</span>
+          <span className="text-slate-500">Status</span>
+          <span className="font-medium capitalize text-slate-100">{a.plan_status.replace("_", " ")}</span>
         </div>
         <div className="mt-1 flex justify-between">
-          <span className="text-gray-500">Max clients</span>
-          <span className="font-medium text-gray-900">{a.max_clients}</span>
+          <span className="text-slate-500">Max clients</span>
+          <span className="font-medium text-slate-100">{a.max_clients}</span>
         </div>
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Payment history</h4>
+        <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Payment history</h4>
         {data.payments.length === 0 ? (
-          <p className="mt-2 text-sm text-gray-400">No manual payments recorded.</p>
+          <p className="mt-2 text-sm text-slate-500">No manual payments recorded.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-gray-100">
+          <ul className="mt-2 divide-y divide-white/[0.06]">
             {data.payments.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-2 py-2 text-sm">
                 <div className="min-w-0">
-                  <span className="text-gray-500">{formatDate(p.created_at)}</span>{" "}
-                  <span className="text-gray-700">{p.payment_method}</span>
-                  {p.notes && <span className="text-gray-400"> · {p.notes}</span>}
+                  <span className="text-slate-500">{formatDate(p.created_at)}</span>{" "}
+                  <span className="text-slate-300">{p.payment_method}</span>
+                  {p.notes && <span className="text-slate-500"> · {p.notes}</span>}
                 </div>
-                <span className="shrink-0 font-medium text-gray-900">{formatCurrency(p.amount)}</span>
+                <span className="shrink-0 font-medium text-slate-100">{formatCurrency(p.amount)}</span>
               </li>
             ))}
           </ul>
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 p-4">
-        <h4 className="text-sm font-semibold text-gray-900">Record manual payment</h4>
+      <div className="rounded-lg border border-white/10 p-4">
+        <h4 className="text-sm font-semibold text-slate-100">Record manual payment</h4>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
             <label className={label}>Amount</label>

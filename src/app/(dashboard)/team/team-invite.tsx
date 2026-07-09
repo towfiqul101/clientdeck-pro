@@ -8,7 +8,7 @@ import { inviteTeamMember } from "./actions";
 import type { TeamRole } from "@/types";
 
 const field =
-  "rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "rounded-md border border-white/10 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
 export function TeamInvite({
   current,
@@ -54,7 +54,7 @@ export function TeamInvite({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-gray-500">{usage}</p>
+        <p className="text-sm text-slate-500">{usage}</p>
         {canInvite && (
           <button
             onClick={() => setOpen((o) => !o)}
@@ -69,7 +69,7 @@ export function TeamInvite({
       </div>
 
       {atLimit && canInvite && (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+        <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-400">
           You&apos;ve reached your plan limit of {max} team members.{" "}
           <a href="/settings/billing" className="font-medium underline">
             Upgrade
@@ -79,12 +79,12 @@ export function TeamInvite({
       )}
 
       {open && canInvite && !atLimit && (
-        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-400">
             Name
             <input value={name} onChange={(e) => setName(e.target.value)} className={field} placeholder="Jane Doe" />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-400">
             Email
             <input
               type="email"
@@ -94,7 +94,7 @@ export function TeamInvite({
               placeholder="jane@agency.com"
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-400">
             Role
             <select value={role} onChange={(e) => setRole(e.target.value as TeamRole)} className={field}>
               <option value="admin">Admin</option>

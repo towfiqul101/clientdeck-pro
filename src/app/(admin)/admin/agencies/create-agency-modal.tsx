@@ -19,8 +19,8 @@ const PLANS: { id: Plan; label: string }[] = [
 const STATUSES: PlanStatus[] = ["active", "trialing", "past_due", "paused", "cancelled"];
 
 const field =
-  "w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
-const label = "block text-xs font-medium text-gray-600 mb-1";
+  "w-full rounded-md border border-white/10 px-3 py-2 text-sm text-slate-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+const label = "block text-xs font-medium text-slate-400 mb-1";
 
 export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -115,7 +115,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
                 setOpen(false);
                 reset();
               }}
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/[0.03]"
             >
               Cancel
             </button>
@@ -131,19 +131,19 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
       >
         <div className="space-y-5">
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Agency Information
             </h4>
             <div className="mt-2 grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className={label}>Agency Name *</label>
                 <input value={name} onChange={(e) => setName(e.target.value)} className={field} />
-                {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+                {fieldErrors.name && <p className="mt-1 text-xs text-red-400">{fieldErrors.name}</p>}
               </div>
               <div>
                 <label className={label}>Owner Full Name *</label>
                 <input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} className={field} />
-                {fieldErrors.ownerName && <p className="mt-1 text-xs text-red-600">{fieldErrors.ownerName}</p>}
+                {fieldErrors.ownerName && <p className="mt-1 text-xs text-red-400">{fieldErrors.ownerName}</p>}
               </div>
               <div>
                 <label className={label}>Owner Email *</label>
@@ -154,7 +154,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
                   className={field}
                 />
                 {fieldErrors.ownerEmail && (
-                  <p className="mt-1 text-xs text-red-600">{fieldErrors.ownerEmail}</p>
+                  <p className="mt-1 text-xs text-red-400">{fieldErrors.ownerEmail}</p>
                 )}
               </div>
               <div className="col-span-2">
@@ -210,7 +210,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
           </div>
 
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               GHL Configuration (optional — can set later)
             </h4>
             <div className="mt-2 grid grid-cols-2 gap-3">
@@ -230,7 +230,7 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
                   <button
                     type="button"
                     onClick={() => setShowApiKey((s) => !s)}
-                    className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="shrink-0 rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/[0.03]"
                   >
                     {showApiKey ? "Hide" : "Show"}
                   </button>
@@ -249,12 +249,12 @@ export function CreateAgencyButton({ onCreated }: { onCreated?: (agencyId: strin
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-slate-300">
             <input
               type="checkbox"
               checked={sendWelcomeEmail}
               onChange={(e) => setSendWelcomeEmail(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-white/10"
             />
             Send welcome email to owner
           </label>

@@ -63,13 +63,13 @@ export function AdminShell({
       <div className="flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <span className="text-base font-semibold text-white">ClientDeck Pro</span>
-          <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+          <span className="rounded border border-red-500/40 bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.35)]">
             Admin
           </span>
         </div>
         <button
           onClick={() => setMobileOpen(false)}
-          className="rounded-md p-1 text-gray-400 hover:bg-gray-800 hover:text-white md:hidden"
+          className="rounded-md p-1 text-slate-500 hover:bg-gray-800 hover:text-white md:hidden"
           aria-label="Close menu"
         >
           <X className="h-5 w-5" />
@@ -89,7 +89,7 @@ export function AdminShell({
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-red-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
               )}
             >
               <Icon className="h-5 w-5 shrink-0" />
@@ -111,19 +111,19 @@ export function AdminShell({
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">Super Admin</p>
-            <p className="truncate text-xs text-gray-400">{adminEmail}</p>
+            <p className="truncate text-xs text-slate-500">{adminEmail}</p>
           </div>
         </div>
         <Link
           href="/dashboard"
-          className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
+          className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-gray-800 hover:text-white"
         >
           <LayoutDashboard className="h-5 w-5" />
           Back to app
         </Link>
         <a
           href="/api/admin/logout"
-          className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
+          className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-gray-800 hover:text-white"
         >
           <LogOut className="h-5 w-5" />
           Log out
@@ -133,7 +133,7 @@ export function AdminShell({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a15]">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 md:block">
         {sidebar}
       </aside>
@@ -149,16 +149,16 @@ export function AdminShell({
       )}
 
       <div className="md:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 md:px-8">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/10 bg-[#1a1a2e] px-4 md:px-8">
           <button
             onClick={() => setMobileOpen(true)}
-            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 md:hidden"
+            className="rounded-md p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-slate-300 md:hidden"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Admin</h1>
-          <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
+          <h1 className="text-lg font-semibold text-slate-100">Admin</h1>
+          <span className="rounded bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
             Super-admin mode
           </span>
         </header>

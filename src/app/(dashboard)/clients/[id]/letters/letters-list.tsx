@@ -30,7 +30,7 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
 
   if (letters.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
         <EmptyState
           icon={FileText}
           title="No letters yet"
@@ -42,10 +42,10 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
 
   return (
     <>
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+          <table className="min-w-full divide-y divide-white/[0.08] text-sm">
+            <thead className="bg-white/[0.03] text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Round</th>
                 <th className="px-4 py-3">Bureau</th>
@@ -56,25 +56,25 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/[0.06]">
               {letters.map((letter) => (
-                <tr key={letter.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-700">
+                <tr key={letter.id} className="hover:bg-white/[0.03]">
+                  <td className="px-4 py-3 text-slate-300">
                     {letter.round_number ? `Round ${letter.round_number}` : "—"}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-slate-300">
                     {getBureauLabel(letter.bureau)}
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-900">
+                  <td className="px-4 py-3 font-medium text-slate-100">
                     {letter.creditor_name ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-slate-300">
                     {getLetterTypeLabel(letter.letter_type)}
                   </td>
                   <td className="px-4 py-3">
                     <Badge status={letter.result} />
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-slate-500">
                     {formatDate(letter.created_at)}
                   </td>
                   <td className="px-4 py-3">
@@ -82,7 +82,7 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
                       <button
                         onClick={() => setViewing(letter)}
                         disabled={!letter.letter_content}
-                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-sm text-slate-400 hover:bg-white/[0.06] disabled:opacity-40"
                       >
                         <Eye className="h-4 w-4" />
                         View
@@ -92,7 +92,7 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
                           href={letter.letter_pdf_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-sm text-blue-600 hover:bg-blue-50"
+                          className="inline-flex items-center gap-1 rounded px-2 py-1 text-sm text-blue-400 hover:bg-blue-500/10"
                         >
                           <Download className="h-4 w-4" />
                           PDF
@@ -125,7 +125,7 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
           </Button>
         }
       >
-        <pre className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-md bg-gray-50 p-4 font-sans text-sm text-gray-800">
+        <pre className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-md bg-white/[0.03] p-4 font-sans text-sm text-slate-200">
           {viewing?.letter_content}
         </pre>
       </Modal>

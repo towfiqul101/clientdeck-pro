@@ -85,12 +85,12 @@ export default function GHLSetupGuidePage() {
       <div>
         <Link
           href="/settings/ghl"
-          className="mb-3 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
+          className="mb-3 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300"
         >
           <ArrowLeft className="h-4 w-4" /> Back to GHL Settings
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">GHL Workflow Setup Guide</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-slate-100">GHL Workflow Setup Guide</h1>
+        <p className="mt-1 text-sm text-slate-500">
           ClientDeck Pro notifies your clients using free GHL contact tags — your own GHL
           workflow sends the SMS/email, so it looks like it comes from your agency.
         </p>
@@ -98,13 +98,13 @@ export default function GHLSetupGuidePage() {
 
       <Card>
         <CardHeader title="How it works" />
-        <div className="space-y-2 p-6 text-sm text-gray-600">
+        <div className="space-y-2 p-6 text-sm text-slate-400">
           <p>1. Run <strong>Create Custom Fields</strong> from Settings → GHL (or use the CDP snapshot).</p>
           <p>2. In GHL, create a workflow with <strong>Tag Added</strong> as the trigger, watching the tag listed below for each event.</p>
           <p>3. Build SMS/email actions using the contact merge fields listed below.</p>
           <p>
             4. Set your owner GHL contact id in{" "}
-            <Link href="/settings/ghl" className="font-medium text-blue-600 hover:text-blue-700">
+            <Link href="/settings/ghl" className="font-medium text-blue-400 hover:text-blue-400">
               Settings → GHL
             </Link>{" "}
             so staff alerts have somewhere to land.
@@ -117,13 +117,13 @@ export default function GHLSetupGuidePage() {
           <CardHeader
             title={
               <span className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-blue-600" /> {wf.title}
+                <MessageSquare className="h-4 w-4 text-blue-400" /> {wf.title}
               </span>
             }
             description={
               <>
                 Trigger: <strong>Tag Added</strong> —{" "}
-                <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+                <code className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-xs">
                   {NOTIFICATION_TAGS[wf.key]}
                 </code>
               </>
@@ -131,17 +131,17 @@ export default function GHLSetupGuidePage() {
           />
           <div className="space-y-3 p-6 text-sm">
             <div>
-              <p className="mb-1.5 font-medium text-gray-700">Merge fields available:</p>
+              <p className="mb-1.5 font-medium text-slate-300">Merge fields available:</p>
               <div className="flex flex-wrap gap-1.5">
                 {wf.mergeFields.map((f) => (
-                  <code key={f} className="rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700">
+                  <code key={f} className="rounded bg-white/[0.06] px-2 py-1 font-mono text-xs text-slate-300">
                     {f}
                   </code>
                 ))}
               </div>
             </div>
             <div>
-              <p className="mb-1.5 font-medium text-gray-700">Suggested SMS/email copy:</p>
+              <p className="mb-1.5 font-medium text-slate-300">Suggested SMS/email copy:</p>
               <code className="block rounded-md bg-gray-900 px-3 py-2 font-mono text-xs leading-relaxed text-gray-100">
                 {wf.suggestedCopy}
               </code>

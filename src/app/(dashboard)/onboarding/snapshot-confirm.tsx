@@ -32,11 +32,11 @@ export function SnapshotConfirm({
     <button
       onClick={toggle}
       disabled={saving}
-      className="flex items-center gap-3 rounded-md border border-gray-200 bg-white px-4 py-3 text-left text-sm hover:bg-gray-50 disabled:opacity-60"
+      className="flex items-center gap-3 rounded-md border border-white/10 bg-[#1a1a2e] px-4 py-3 text-left text-sm hover:bg-white/[0.03] disabled:opacity-60"
     >
       <span
         className={`flex h-5 w-5 items-center justify-center rounded border ${
-          checked ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300"
+          checked ? "border-blue-600 bg-blue-600 text-white" : "border-white/10"
         }`}
       >
         {checked && <Check className="h-3 w-3" />}

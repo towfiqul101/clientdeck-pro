@@ -41,20 +41,20 @@ function ScoreCard({
         <span className={cn("text-xs font-semibold", style.text)}>{label}</span>
       </div>
       {current === null ? (
-        <p className="mt-3 text-xs text-gray-500">
+        <p className="mt-3 text-xs text-slate-500">
           Score pending — your specialist will update this soon.
         </p>
       ) : (
         <div className="mt-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-gray-900 tabular-nums">
+            <span className="text-3xl font-bold text-slate-100 tabular-nums">
               {current}
             </span>
             {change.direction !== "same" && (
               <span
                 className={cn(
                   "inline-flex items-center gap-0.5 text-sm font-semibold",
-                  change.direction === "up" ? "text-green-600" : "text-red-600"
+                  change.direction === "up" ? "text-green-400" : "text-red-400"
                 )}
               >
                 {change.direction === "up" ? (
@@ -67,10 +67,45 @@ function ScoreCard({
             )}
           </div>
           {start !== null && (
-            <p className="mt-0.5 text-xs text-gray-500">Started at {start}</p>
+            <p className="mt-0.5 text-xs text-slate-500">Started at {start}</p>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function ProgressRing({ percent }: { percent: number }) {
+  const radius = 34;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (Math.min(100, Math.max(0, percent)) / 100) * circumference;
+  return (
+    <div className="relative shrink-0" style={{ width: 84, height: 84 }}>
+      <svg width="84" height="84" className="-rotate-90">
+        <circle
+          cx="42"
+          cy="42"
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="7"
+        />
+        <circle
+          cx="42"
+          cy="42"
+          r={radius}
+          fill="none"
+          stroke="var(--brand)"
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 1s ease" }}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white">
+        {percent}%
+      </span>
     </div>
   );
 }
@@ -213,10 +248,10 @@ export default async function PortalDashboardPage() {
     <div className="space-y-6">
       {/* Hero */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-slate-100">
           Welcome back, {client.first_name}!
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-slate-500">
           Here&apos;s your credit progress as of {today}.
         </p>
       </div>
@@ -244,38 +279,34 @@ export default async function PortalDashboardPage() {
       </div>
 
       {/* Progress summary */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700">
-            {resolved} of {totalItems} items resolved
-          </span>
-          <span className="text-sm font-semibold text-gray-900">{pct}%</span>
+      <div className="rounded-2xl border border-white/10 bg-[#1a1a2e] p-5">
+        <div className="flex items-center gap-5">
+          <ProgressRing percent={pct} />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-slate-300">
+              {resolved} of {totalItems} items resolved
+            </p>
+            {resolved > 0 ? (
+              <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-emerald-400">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                {resolved} item{resolved === 1 ? "" : "s"} removed from your
+                credit report!
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">
+                Your specialist is actively working to remove negative items.
+              </p>
+            )}
+          </div>
         </div>
-        <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-gray-100">
-          <div
-            className="h-full rounded-full bg-green-500 transition-all"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        {resolved > 0 ? (
-          <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-green-700">
-            <CheckCircle2 className="h-4 w-4" />
-            {resolved} item{resolved === 1 ? "" : "s"} removed from your credit
-            report!
-          </p>
-        ) : (
-          <p className="mt-3 text-sm text-gray-500">
-            Your specialist is actively working to remove negative items.
-          </p>
-        )}
       </div>
 
       {/* Current status */}
       <div
-        className="rounded-xl border p-5"
+        className="rounded-2xl border p-5"
         style={{
-          borderColor: "color-mix(in srgb, var(--brand) 30%, transparent)",
-          backgroundColor: "color-mix(in srgb, var(--brand) 8%, white)",
+          borderColor: "color-mix(in srgb, var(--brand) 35%, transparent)",
+          backgroundColor: "color-mix(in srgb, var(--brand) 14%, #1a1a2e)",
         }}
       >
         <div className="flex items-start gap-3">
@@ -284,8 +315,8 @@ export default async function PortalDashboardPage() {
             style={{ color: "var(--brand)" }}
           />
           <div>
-            <h2 className="font-semibold text-gray-900">{status.title}</h2>
-            <p className="mt-0.5 text-sm text-gray-600">{status.body}</p>
+            <h2 className="font-semibold text-slate-100">{status.title}</h2>
+            <p className="mt-0.5 text-sm text-slate-400">{status.body}</p>
           </div>
         </div>
       </div>
@@ -298,7 +329,7 @@ export default async function PortalDashboardPage() {
                 href={agency.settings.google_review_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#1a1a2e] px-4 py-3 text-sm font-medium text-slate-300"
               >
                 <Star className="h-4 w-4 text-amber-500" />
                 Leave a Google Review
@@ -309,9 +340,9 @@ export default async function PortalDashboardPage() {
                 href={agency.settings.referral_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#1a1a2e] px-4 py-3 text-sm font-medium text-slate-300"
               >
-                <Gift className="h-4 w-4 text-green-600" />
+                <Gift className="h-4 w-4 text-green-400" />
                 Refer a Friend
                 {agency.settings?.referral_bonus
                   ? ` → Earn ${agency.settings.referral_bonus}`
@@ -334,14 +365,14 @@ export default async function PortalDashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           <Link
             href="/portal/progress"
-            className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700"
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#1a1a2e] px-4 py-3 text-sm font-medium text-slate-300"
           >
             <TrendingUp className="h-4 w-4" />
             Progress
           </Link>
           <a
             href={contactHref}
-            className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700"
+            className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#1a1a2e] px-4 py-3 text-sm font-medium text-slate-300"
           >
             <Phone className="h-4 w-4" />
             Contact Us

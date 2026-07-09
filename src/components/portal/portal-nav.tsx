@@ -17,7 +17,7 @@ export function PortalNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-lg items-stretch justify-around">
         {ITEMS.map((item) => {
           const active = pathname === item.href;
@@ -30,10 +30,10 @@ export function PortalNav() {
               style={active ? { color: "var(--brand)" } : undefined}
             >
               <Icon
-                className={cn("h-5 w-5", !active && "text-gray-400")}
+                className={cn("h-5 w-5", !active && "text-slate-500")}
                 style={active ? { color: "var(--brand)" } : undefined}
               />
-              <span className={cn(!active && "text-gray-500")}>
+              <span className={cn(!active && "text-slate-500")}>
                 {item.label}
               </span>
             </Link>

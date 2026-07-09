@@ -13,9 +13,9 @@ import { CREDIT_GOALS, US_STATES } from "@/lib/constants";
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between gap-4 py-2 text-sm">
-      <span className="text-gray-500">{label}</span>
-      <span className="text-right font-medium text-gray-900">
-        {value || <span className="text-gray-300">—</span>}
+      <span className="text-slate-500">{label}</span>
+      <span className="text-right font-medium text-slate-100">
+        {value || <span className="text-slate-600">—</span>}
       </span>
     </div>
   );
@@ -49,7 +49,7 @@ export default async function ClientOverviewPage({
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader title="Personal Information" />
-          <div className="divide-y divide-gray-100 px-5 py-2">
+          <div className="divide-y divide-white/[0.06] px-5 py-2">
             <Row
               label="Full name"
               value={`${client.first_name} ${client.last_name}`}
@@ -72,11 +72,11 @@ export default async function ClientOverviewPage({
 
         <Card>
           <CardHeader title="Address" />
-          <div className="px-5 py-4 text-sm text-gray-900">
+          <div className="px-5 py-4 text-sm text-slate-200">
             {address ? (
               <p className="whitespace-pre-line">{address}</p>
             ) : (
-              <span className="text-gray-300">No address on file</span>
+              <span className="text-slate-600">No address on file</span>
             )}
           </div>
         </Card>
@@ -92,7 +92,7 @@ export default async function ClientOverviewPage({
       <div className="space-y-6">
         <Card>
           <CardHeader title="Credit Goal" />
-          <div className="divide-y divide-gray-100 px-5 py-2">
+          <div className="divide-y divide-white/[0.06] px-5 py-2">
             <Row label="Goal" value={goalLabel} />
             <Row label="Target score" value={client.score_goal} />
           </div>
@@ -100,7 +100,7 @@ export default async function ClientOverviewPage({
 
         <Card>
           <CardHeader title="Service" />
-          <div className="divide-y divide-gray-100 px-5 py-2">
+          <div className="divide-y divide-white/[0.06] px-5 py-2">
             <Row
               label="Start date"
               value={formatDate(client.service_start_date)}

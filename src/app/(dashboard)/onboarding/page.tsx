@@ -39,8 +39,8 @@ export default async function OnboardingPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Setup Guide</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-slate-100">Setup Guide</h1>
+        <p className="text-sm text-slate-500">
           {state.completedCount} of {state.total} steps complete. Follow these to
           get the full ClientDeck Pro + GoHighLevel experience.
         </p>
@@ -51,22 +51,22 @@ export default async function OnboardingPage() {
         <CardHeader
           title={
             <span className="flex items-center gap-2">
-              <Plug className="h-4 w-4 text-blue-600" /> 1. Connect GoHighLevel
+              <Plug className="h-4 w-4 text-blue-400" /> 1. Connect GoHighLevel
             </span>
           }
           action={
             ghlConnected ? (
-              <span className="flex items-center gap-1 text-sm font-medium text-green-600">
+              <span className="flex items-center gap-1 text-sm font-medium text-green-400">
                 <CheckCircle2 className="h-4 w-4" /> Connected
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-sm text-gray-400">
+              <span className="flex items-center gap-1 text-sm text-slate-500">
                 <Circle className="h-4 w-4" /> Not connected
               </span>
             )
           }
         />
-        <div className="space-y-3 p-6 text-sm text-gray-600">
+        <div className="space-y-3 p-6 text-sm text-slate-400">
           <p>
             In GoHighLevel, go to{" "}
             <strong>Settings → Private Integrations</strong> and create a key
@@ -88,12 +88,12 @@ export default async function OnboardingPage() {
         <CardHeader
           title={
             <span className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-blue-600" /> 2. Install the GHL
+              <Package className="h-4 w-4 text-blue-400" /> 2. Install the GHL
               Snapshot
             </span>
           }
         />
-        <div className="space-y-3 p-6 text-sm text-gray-600">
+        <div className="space-y-3 p-6 text-sm text-slate-400">
           <p>
             The snapshot installs the pipelines, workflows, and custom fields
             ClientDeck Pro syncs into. In GoHighLevel go to{" "}
@@ -114,12 +114,12 @@ export default async function OnboardingPage() {
         <CardHeader
           title={
             <span className="flex items-center gap-2">
-              <ListChecks className="h-4 w-4 text-blue-600" /> 3. Verify Custom
+              <ListChecks className="h-4 w-4 text-blue-400" /> 3. Verify Custom
               Fields
             </span>
           }
         />
-        <div className="space-y-3 p-6 text-sm text-gray-600">
+        <div className="space-y-3 p-6 text-sm text-slate-400">
           <p>
             The snapshot auto-creates these {CUSTOM_FIELDS.length} custom fields.
             Confirm they exist under{" "}
@@ -129,7 +129,7 @@ export default async function OnboardingPage() {
             {CUSTOM_FIELDS.map((f) => (
               <code
                 key={f}
-                className="rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700"
+                className="rounded bg-white/[0.06] px-2 py-1 font-mono text-xs text-slate-300"
               >
                 {f}
               </code>
@@ -143,23 +143,23 @@ export default async function OnboardingPage() {
         <CardHeader
           title={
             <span className="flex items-center gap-2">
-              <Rocket className="h-4 w-4 text-blue-600" /> 4. Test the Full Flow
+              <Rocket className="h-4 w-4 text-blue-400" /> 4. Test the Full Flow
             </span>
           }
         />
         <div className="space-y-2 p-6 text-sm">
           <Link
             href="/clients/new"
-            className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50"
+            className="flex items-center justify-between rounded-md border border-white/10 px-3 py-2 hover:bg-white/[0.03]"
           >
-            Add a test client <ArrowRight className="h-4 w-4 text-gray-400" />
+            Add a test client <ArrowRight className="h-4 w-4 text-slate-500" />
           </Link>
           <Link
             href="/clients"
-            className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50"
+            className="flex items-center justify-between rounded-md border border-white/10 px-3 py-2 hover:bg-white/[0.03]"
           >
             Generate a portal link & open the branded portal
-            <ArrowRight className="h-4 w-4 text-gray-400" />
+            <ArrowRight className="h-4 w-4 text-slate-500" />
           </Link>
         </div>
       </Card>

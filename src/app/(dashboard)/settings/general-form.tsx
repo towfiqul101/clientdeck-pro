@@ -126,7 +126,7 @@ export function GeneralForm({ initial }: GeneralFormProps) {
             id="timezone"
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="block w-full rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm text-slate-100 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             {TIMEZONES.map((tz) => (
               <option key={tz} value={tz}>
@@ -147,27 +147,27 @@ export function GeneralForm({ initial }: GeneralFormProps) {
     <Card>
       <form onSubmit={handleAutomationSubmit} className="space-y-5 p-6">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">
+          <h3 className="text-sm font-semibold text-slate-100">
             Automation Settings
           </h3>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className="mt-0.5 text-sm text-slate-500">
             Automatically prepare the next dispute round once a completed
             round&apos;s response window has passed.
           </p>
         </div>
 
-        <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 text-sm">
+        <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-[#1a1a2e] p-4 text-sm">
           <input
             type="checkbox"
             checked={autoCreateRounds}
             onChange={(e) => setAutoCreateRounds(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 h-4 w-4 rounded border-white/10 text-blue-400 focus:ring-blue-500"
           />
           <span>
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-slate-100">
               Auto-create next round
             </span>
-            <span className="block text-gray-500">
+            <span className="block text-slate-500">
               When a client&apos;s round is complete and items are still in
               dispute, automatically prepare the next round for staff review.
             </span>
@@ -188,9 +188,9 @@ export function GeneralForm({ initial }: GeneralFormProps) {
           />
         </Field>
 
-        <div className="border-t border-gray-100 pt-5">
-          <h3 className="text-sm font-semibold text-gray-900">Client Wins</h3>
-          <p className="mt-0.5 text-sm text-gray-500">
+        <div className="border-t border-white/[0.06] pt-5">
+          <h3 className="text-sm font-semibold text-slate-100">Client Wins</h3>
+          <p className="mt-0.5 text-sm text-slate-500">
             Links shared with clients when they hit a milestone (e.g. an item
             deletion or goal completion).
           </p>

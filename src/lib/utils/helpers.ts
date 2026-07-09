@@ -58,35 +58,38 @@ export function scoreChange(start: number | null, current: number | null): {
 }
 
 export function getStatusColor(status: string): string {
+  // Dark-theme status pills: translucent tint + colored border + bright text.
+  // Badge derives its dot color from the `text-*` token in each string.
   const colors: Record<string, string> = {
     // Client status
-    onboarding: "bg-blue-100 text-blue-800",
-    analysis: "bg-purple-100 text-purple-800",
-    active: "bg-green-100 text-green-800",
-    on_hold: "bg-yellow-100 text-yellow-800",
-    completed: "bg-emerald-100 text-emerald-800",
-    cancelled: "bg-gray-100 text-gray-800",
+    onboarding: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+    analysis: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
+    trialing: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
+    active: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    on_hold: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    completed: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    cancelled: "bg-red-500/15 text-red-400 border border-red-500/30",
     // Dispute status
-    not_disputed: "bg-gray-100 text-gray-600",
-    in_dispute: "bg-blue-100 text-blue-800",
-    deleted: "bg-green-100 text-green-800",
-    updated: "bg-teal-100 text-teal-800",
-    verified: "bg-red-100 text-red-800",
-    pending: "bg-yellow-100 text-yellow-800",
+    not_disputed: "bg-white/5 text-slate-400 border border-white/10",
+    in_dispute: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+    deleted: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    updated: "bg-teal-500/15 text-teal-400 border border-teal-500/30",
+    verified: "bg-red-500/15 text-red-400 border border-red-500/30",
+    pending: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
     // Payment status
-    failed: "bg-red-100 text-red-800",
-    paused: "bg-orange-100 text-orange-800",
+    failed: "bg-red-500/15 text-red-400 border border-red-500/30",
+    paused: "bg-orange-500/15 text-orange-400 border border-orange-500/30",
     // Round status
-    preparing: "bg-gray-100 text-gray-600",
-    letters_generated: "bg-indigo-100 text-indigo-800",
-    sent: "bg-blue-100 text-blue-800",
-    awaiting_response: "bg-amber-100 text-amber-800",
-    complete: "bg-green-100 text-green-800",
+    preparing: "bg-white/5 text-slate-400 border border-white/10",
+    letters_generated: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
+    sent: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+    awaiting_response: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
+    complete: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
     // Results
-    no_response: "bg-orange-100 text-orange-800",
-    in_progress: "bg-blue-100 text-blue-800",
+    no_response: "bg-orange-500/15 text-orange-400 border border-orange-500/30",
+    in_progress: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
   };
-  return colors[status] || "bg-gray-100 text-gray-600";
+  return colors[status] || "bg-white/5 text-slate-400 border border-white/10";
 }
 
 export function getLetterTypeLabel(type: string): string {

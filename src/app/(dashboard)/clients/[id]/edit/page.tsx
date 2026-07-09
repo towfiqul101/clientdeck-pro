@@ -50,12 +50,12 @@ export default async function EditClientPage({
       <div>
         <Link
           href={`/clients/${id}`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to client
         </Link>
-        <h2 className="mt-2 text-lg font-semibold text-gray-900">
+        <h2 className="mt-2 text-lg font-semibold text-slate-100">
           Edit {client.first_name} {client.last_name}
         </h2>
       </div>

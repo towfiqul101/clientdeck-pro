@@ -20,21 +20,21 @@ export default async function AdminLoginPage({
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#0f172a] px-4 py-12">
       <div className="w-full max-w-sm">
-        <div className="rounded-2xl bg-white p-8 shadow-xl">
+        <div className="rounded-2xl bg-[#1a1a2e] p-8 shadow-xl">
           <div className="flex flex-col items-center text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-600 text-white">
               <ShieldCheck className="h-6 w-6" />
             </span>
-            <h1 className="mt-4 text-xl font-semibold text-gray-900">
+            <h1 className="mt-4 text-xl font-semibold text-slate-100">
               Admin Access
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               ClientDeck Pro Admin Panel
             </p>
           </div>
 
           {error && (
-            <div className="mt-6 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div className="mt-6 flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>Invalid password. Please try again.</span>
             </div>
@@ -44,7 +44,7 @@ export default async function AdminLoginPage({
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-slate-300"
               >
                 Admin Password
               </label>
@@ -56,7 +56,7 @@ export default async function AdminLoginPage({
                 autoFocus
                 required
                 placeholder="••••••••••••••••"
-                className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-md border border-white/10 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 

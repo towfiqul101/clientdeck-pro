@@ -6,14 +6,14 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#13131f] px-4 py-12">
       <div className="mb-8">
-        <Logo />
+        <Logo variant="light" />
       </div>
-      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+      <div className="w-full max-w-md rounded-lg border border-white/10 bg-[#1a1a2e] p-8 shadow-sm">
         {children}
       </div>
-      <p className="mt-6 text-center text-xs text-gray-400">
+      <p className="mt-6 text-center text-xs text-slate-500">
         Practice management software for credit professionals.
       </p>
     </div>

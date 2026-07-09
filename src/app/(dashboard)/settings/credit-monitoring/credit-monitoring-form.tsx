@@ -84,18 +84,18 @@ export function CreditMonitoringForm({ initial }: CreditMonitoringFormProps) {
               <Input id="apiSecret" type="password" value={apiSecret} onChange={(e) => setApiSecret(e.target.value)} className="font-mono text-xs" />
             </Field>
 
-            <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 text-sm">
+            <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-[#1a1a2e] p-4 text-sm">
               <input
                 type="checkbox"
                 checked={autoPullOnNewClient}
                 onChange={(e) => setAutoPullOnNewClient(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="mt-0.5 h-4 w-4 rounded border-white/10 text-blue-400 focus:ring-blue-500"
               />
               <span>
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-slate-100">
                   Auto-pull scores for new clients
                 </span>
-                <span className="block text-gray-500">
+                <span className="block text-slate-500">
                   When a brand-new client completes onboarding, automatically
                   pull their scores from this provider instead of waiting for
                   a staff member to trigger it manually.

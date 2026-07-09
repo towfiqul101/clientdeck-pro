@@ -104,11 +104,11 @@ export function DocumentsManager({
       {/* Upload area */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm font-medium text-gray-700">Category</label>
+          <label className="text-sm font-medium text-slate-300">Category</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as DocumentCategory)}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm text-slate-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>
@@ -133,8 +133,8 @@ export function DocumentsManager({
           className={cn(
             "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors",
             dragging
-              ? "border-blue-400 bg-blue-50"
-              : "border-gray-300 bg-gray-50 hover:border-gray-400"
+              ? "border-blue-400 bg-blue-500/10"
+              : "border-white/10 bg-white/[0.03] hover:border-gray-400"
           )}
         >
           <input
@@ -147,19 +147,19 @@ export function DocumentsManager({
           {uploading ? (
             <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
           ) : (
-            <UploadCloud className="h-6 w-6 text-gray-400" />
+            <UploadCloud className="h-6 w-6 text-slate-500" />
           )}
-          <p className="mt-2 text-sm font-medium text-gray-700">
+          <p className="mt-2 text-sm font-medium text-slate-300">
             {uploading ? "Uploading…" : "Drag & drop files here, or click to browse"}
           </p>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-slate-500">
             Uploaded as “{categoryLabel(category)}”. Up to 15 MB each.
           </p>
         </div>
       </div>
 
       {/* Documents list */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
         {documents.length === 0 ? (
           <EmptyState
             icon={FileIcon}
@@ -167,20 +167,20 @@ export function DocumentsManager({
             description="Upload IDs, proof of address, credit reports, and bureau responses here."
           />
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-white/[0.06]">
             {documents.map((doc) => (
               <li
                 key={doc.id}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03]"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100">
-                  <FileIcon className="h-4 w-4 text-gray-500" />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/[0.06]">
+                  <FileIcon className="h-4 w-4 text-slate-500" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-900">
+                  <p className="truncate text-sm font-medium text-slate-100">
                     {doc.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     {categoryLabel(doc.category)} · {formatBytes(doc.file_size)}{" "}
                     · {formatDate(doc.created_at)}
                   </p>
@@ -188,7 +188,7 @@ export function DocumentsManager({
                 <button
                   onClick={() => handleDownload(doc)}
                   disabled={busyId === doc.id}
-                  className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-blue-600 disabled:opacity-40"
+                  className="rounded p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-blue-400 disabled:opacity-40"
                   aria-label="Download"
                 >
                   {busyId === doc.id ? (
@@ -199,7 +199,7 @@ export function DocumentsManager({
                 </button>
                 <button
                   onClick={() => setDeleting(doc)}
-                  className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+                  className="rounded p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-red-400"
                   aria-label="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -230,9 +230,9 @@ export function DocumentsManager({
           </>
         }
       >
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-slate-400">
           Permanently delete{" "}
-          <span className="font-medium text-gray-900">{deleting?.name}</span>?
+          <span className="font-medium text-slate-100">{deleting?.name}</span>?
           This removes the file from storage and cannot be undone.
         </p>
       </Modal>

@@ -24,6 +24,10 @@ import {
   MoonStar,
   RefreshCw,
   ArrowRight,
+  Zap,
+  CheckCircle2,
+  BarChart3,
+  Sparkles,
 } from "lucide-react";
 
 const ACTIVE_STATUSES = ["active", "onboarding", "analysis", "on_hold"];
@@ -92,6 +96,9 @@ export default async function DashboardPage() {
     activityRes,
     recentActivityRes,
     syncFailRes,
+    resolvedRes,
+    winsRes,
+    roundStatusRes,
   ] = await Promise.all([
     supabase
       .from("clients")
@@ -139,6 +146,17 @@ export default async function DashboardPage() {
       .select("id", { count: "exact", head: true })
       .eq("status", "failed")
       .gte("attempted_at", last24h),
+    // Success rate: resolved disputes (denominator) vs wins (deleted/updated).
+    supabase
+      .from("disputes")
+      .select("id", { count: "exact", head: true })
+      .not("result", "is", null),
+    supabase
+      .from("disputes")
+      .select("id", { count: "exact", head: true })
+      .in("result", ["deleted", "updated"]),
+    // Pipeline overview: tally round statuses.
+    supabase.from("dispute_rounds").select("status"),
   ]);
 
   const clients = clientsRes.data ?? [];
@@ -156,6 +174,36 @@ export default async function DashboardPage() {
     .filter((c) => c.payment_status === "active")
     .reduce((sum, c) => sum + Number(c.monthly_fee ?? 0), 0);
   const syncFailures = syncFailRes.count ?? 0;
+
+  const resolvedCount = resolvedRes.count ?? 0;
+  const winsCount = winsRes.count ?? 0;
+  const successRate =
+    resolvedCount > 0 ? Math.round((winsCount / resolvedCount) * 100) : 0;
+
+  // Pipeline overview tally
+  const PIPELINE_STAGES = [
+    { key: "preparing", label: "Preparing", color: "bg-indigo-500" },
+    { key: "letters_generated", label: "Ready", color: "bg-violet-500" },
+    { key: "sent", label: "Sent", color: "bg-blue-500" },
+    { key: "awaiting_response", label: "Awaiting", color: "bg-amber-500" },
+    { key: "complete", label: "Complete", color: "bg-emerald-500" },
+  ] as const;
+  const stageCounts = new Map<string, number>(
+    PIPELINE_STAGES.map((s) => [s.key, 0])
+  );
+  for (const row of roundStatusRes.data ?? []) {
+    const key = String(row.status);
+    if (stageCounts.has(key))
+      stageCounts.set(key, (stageCounts.get(key) ?? 0) + 1);
+  }
+  const maxStage = Math.max(1, ...Array.from(stageCounts.values()));
+  const hasPipeline = (roundStatusRes.data ?? []).length > 0;
+
+  // Greeting
+  const hour = now.getHours();
+  const timeOfDay =
+    hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+  const firstName = session.teamMember.name.split(" ")[0] || "there";
 
   // Chart: deletions per month
   const buckets = monthBuckets();
@@ -196,8 +244,132 @@ export default async function DashboardPage() {
     staleClients.length > 0 ||
     syncFailures > 0;
 
+  const attentionRows: {
+    key: string;
+    href: string;
+    icon: typeof Clock;
+    label: string;
+    meta: string;
+    accent: string;
+    metaColor: string;
+  }[] = [
+    ...overdueList.map((r) => ({
+      key: `over-${r.id}`,
+      href: `/clients/${r.client_id}/rounds/${r.id}`,
+      icon: Clock,
+      label: `${
+        r.client ? `${r.client.first_name} ${r.client.last_name}` : "Client"
+      } — Round ${r.round_number} overdue`,
+      meta: `${Math.abs(daysAgo(r.response_deadline))}d`,
+      accent: "border-amber-500",
+      metaColor: "text-amber-400",
+    })),
+    ...failedPayments.map((c) => ({
+      key: `pay-${c.id}`,
+      href: `/clients/${c.id}`,
+      icon: CreditCard,
+      label: `Payment failed — ${c.first_name} ${c.last_name}`,
+      meta: `${daysAgo(c.updated_at)}d`,
+      accent: "border-red-500",
+      metaColor: "text-red-400",
+    })),
+    ...staleClients.map((c) => {
+      const last = lastActivityByClient.get(c.id) ?? c.created_at;
+      return {
+        key: `stale-${c.id}`,
+        href: `/clients/${c.id}`,
+        icon: MoonStar,
+        label: `${c.first_name} ${c.last_name} — no activity`,
+        meta: `${daysAgo(last)}d`,
+        accent: "border-blue-500",
+        metaColor: "text-blue-400",
+      };
+    }),
+    ...(syncFailures > 0
+      ? [
+          {
+            key: "sync",
+            href: "/settings/ghl",
+            icon: RefreshCw,
+            label: "GHL sync failures (24h)",
+            meta: String(syncFailures),
+            accent: "border-red-500",
+            metaColor: "text-red-400",
+          },
+        ]
+      : []),
+  ];
+
+  const quickActions = [
+    {
+      href: "/clients/new",
+      icon: Plus,
+      title: "Add New Client",
+      desc: "Start a new case",
+      iconBg: "bg-violet-500/20",
+      iconText: "text-violet-400",
+    },
+    {
+      href: "/clients",
+      icon: Sparkles,
+      title: "AI Strategy",
+      desc: "Open a client to advise",
+      iconBg: "bg-blue-500/20",
+      iconText: "text-blue-400",
+    },
+    {
+      href: "/rounds",
+      icon: Zap,
+      title: "Dispute Rounds",
+      desc: "Manage the pipeline",
+      iconBg: "bg-amber-500/20",
+      iconText: "text-amber-400",
+    },
+    {
+      href: "/reports",
+      icon: BarChart3,
+      title: "View Reports",
+      desc: "Track outcomes",
+      iconBg: "bg-teal-500/20",
+      iconText: "text-teal-400",
+    },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Hero banner */}
+      <div
+        className="relative overflow-hidden rounded-2xl"
+        style={{
+          background:
+            "linear-gradient(135deg, #1a0533 0%, #0a1628 50%, #0f1a2e 100%)",
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            background:
+              "radial-gradient(ellipse at 30% 50%, #8B5CF6 0%, transparent 60%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-20"
+          style={{
+            background:
+              "radial-gradient(ellipse at 80% 20%, #2563EB 0%, transparent 50%)",
+          }}
+        />
+        <div className="relative z-10 p-6 md:p-8">
+          <p className="mb-2 text-sm font-medium text-violet-300">
+            Good {timeOfDay}, {firstName} 👋
+          </p>
+          <h1 className="mb-1 text-2xl font-bold text-white md:text-3xl">
+            Welcome to <span className="text-violet-400">ClientDeck Pro</span>
+          </h1>
+          <p className="text-slate-400">Your credit repair command center.</p>
+        </div>
+      </div>
+
       {!onboarding.hidden && (
         <OnboardingBanner
           steps={onboarding.steps}
@@ -210,18 +382,22 @@ export default async function DashboardPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="Active Clients"
           value={activeClientCount}
           icon={Users}
-          accent="blue"
+          accent="purple"
+          trend={activeClientCount > 0 ? "Active caseload" : "No active clients"}
+          trendTone={activeClientCount > 0 ? "up" : "neutral"}
         />
         <StatCard
-          label="Deletions This Month"
+          label="Deletions"
           value={deletionsThisMonth}
           icon={Trash2}
           accent="green"
+          trend="This month"
+          trendTone={deletionsThisMonth > 0 ? "up" : "neutral"}
         />
         <StatCard
           label="Overdue Rounds"
@@ -229,99 +405,65 @@ export default async function DashboardPage() {
           icon={AlertTriangle}
           accent="amber"
           trend={overdueRounds > 0 ? "Needs attention" : "All on track"}
+          trendTone={overdueRounds > 0 ? "down" : "up"}
         />
         <StatCard
-          label="Revenue This Month"
+          label="Revenue"
           value={formatCurrency(revenueThisMonth)}
           icon={DollarSign}
-          accent="purple"
+          accent="blue"
           trend="Active clients"
+          trendTone="neutral"
+        />
+        <StatCard
+          label="Success Rate"
+          value={`${successRate}%`}
+          icon={CheckCircle2}
+          accent="teal"
+          trend={`${winsCount} of ${resolvedCount} resolved`}
+          trendTone={successRate >= 50 ? "up" : "neutral"}
         />
       </div>
 
       {/* Needs Attention */}
       {hasAttention && (
-        <Card className="border-amber-200">
-          <CardHeader
-            title="Needs Attention"
-            description="Items that may need action today."
-          />
-          <div className="grid grid-cols-1 divide-y divide-gray-100 md:grid-cols-2 md:divide-x md:divide-y-0">
-            <div className="space-y-1 p-4">
-              {overdueList.map((r) => {
-                const over = Math.abs(daysAgo(r.response_deadline));
-                return (
-                  <Link
-                    key={r.id}
-                    href={`/clients/${r.client_id}/rounds/${r.id}`}
-                    className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
-                  >
-                    <span className="flex items-center gap-2 text-gray-700">
-                      <Clock className="h-4 w-4 text-red-500" />
-                      Round {r.round_number} —{" "}
-                      {r.client
-                        ? `${r.client.first_name} ${r.client.last_name}`
-                        : "Client"}
-                    </span>
-                    <span className="font-medium text-red-600">
-                      {over}d overdue
-                    </span>
-                  </Link>
-                );
-              })}
-              {failedPayments.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/clients/${c.id}`}
-                  className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
-                >
-                  <span className="flex items-center gap-2 text-gray-700">
-                    <CreditCard className="h-4 w-4 text-red-500" />
-                    {c.first_name} {c.last_name}
-                  </span>
-                  <span className="font-medium text-red-600">
-                    Payment failed · {daysAgo(c.updated_at)}d
-                  </span>
-                </Link>
-              ))}
-            </div>
-
-            <div className="space-y-1 p-4">
-              {staleClients.map((c) => {
-                const last = lastActivityByClient.get(c.id) ?? c.created_at;
-                return (
-                  <Link
-                    key={c.id}
-                    href={`/clients/${c.id}`}
-                    className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
-                  >
-                    <span className="flex items-center gap-2 text-gray-700">
-                      <MoonStar className="h-4 w-4 text-amber-500" />
-                      {c.first_name} {c.last_name}
-                    </span>
-                    <span className="font-medium text-amber-600">
-                      Stale · {daysAgo(last)}d
-                    </span>
-                  </Link>
-                );
-              })}
-              {syncFailures > 0 && (
-                <Link
-                  href="/settings/ghl"
-                  className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-gray-50"
-                >
-                  <span className="flex items-center gap-2 text-gray-700">
-                    <RefreshCw className="h-4 w-4 text-red-500" />
-                    GHL sync failures (24h)
-                  </span>
-                  <span className="font-medium text-red-600">
-                    {syncFailures}
-                  </span>
-                </Link>
-              )}
-            </div>
+        <div className="glass-panel overflow-hidden">
+          <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] px-5 py-4">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+              <Zap className="h-4 w-4 text-amber-400" />
+              Needs Attention
+            </h2>
+            <Link
+              href="/rounds"
+              className="text-xs font-medium text-violet-400 hover:text-violet-300"
+            >
+              View all →
+            </Link>
           </div>
-        </Card>
+          <div className="space-y-1.5 p-3">
+            {attentionRows.map((row) => {
+              const Icon = row.icon;
+              return (
+                <Link
+                  key={row.key}
+                  href={row.href}
+                  className={cn(
+                    "flex items-center justify-between gap-3 rounded-lg border-l-2 bg-white/[0.02] px-3 py-2.5 text-sm transition-colors hover:bg-white/[0.05]",
+                    row.accent
+                  )}
+                >
+                  <span className="flex min-w-0 items-center gap-2.5 text-slate-300">
+                    <Icon className={cn("h-4 w-4 shrink-0", row.metaColor)} />
+                    <span className="truncate">{row.label}</span>
+                  </span>
+                  <span className={cn("shrink-0 font-medium", row.metaColor)}>
+                    {row.meta}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Chart + recent activity */}
@@ -343,25 +485,23 @@ export default async function DashboardPage() {
             <CardHeader title="Recent Activity" />
             {activities.length === 0 ? (
               <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                <Activity className="h-8 w-8 text-gray-300" />
-                <p className="mt-3 text-sm text-gray-500">
-                  No activity yet.
-                </p>
+                <Activity className="h-8 w-8 text-slate-600" />
+                <p className="mt-3 text-sm text-slate-500">No activity yet.</p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-white/[0.06]">
                 {activities.map((entry) => (
                   <li key={entry.id} className="px-5 py-3">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-slate-200">
                         {entry.action}
                       </p>
-                      <span className="shrink-0 text-xs text-gray-400">
+                      <span className="shrink-0 text-xs text-slate-500">
                         {timeAgo(entry.created_at)}
                       </span>
                     </div>
                     {entry.description && (
-                      <p className="mt-0.5 line-clamp-2 text-sm text-gray-500">
+                      <p className="mt-0.5 line-clamp-2 text-sm text-slate-400">
                         {entry.description}
                       </p>
                     )}
@@ -373,31 +513,68 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick action */}
-      <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900">Add a client</h3>
-          <p className="text-sm text-gray-500">
-            Start a new case, or view all active rounds.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/rounds"
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            )}
-          >
-            View Rounds
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
-            href="/clients/new"
-            className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            Add New Client
-          </Link>
+      {/* Pipeline overview */}
+      {hasPipeline && (
+        <Card>
+          <CardHeader
+            title="Dispute Pipeline Overview"
+            description="Rounds by stage across all clients."
+          />
+          <div className="grid grid-cols-2 gap-4 p-5 sm:grid-cols-3 md:grid-cols-5">
+            {PIPELINE_STAGES.map((stage) => {
+              const count = stageCounts.get(stage.key) ?? 0;
+              return (
+                <div key={stage.key} className="space-y-2">
+                  <p className="text-xs font-medium text-slate-400">
+                    {stage.label}
+                  </p>
+                  <p className="text-2xl font-bold text-white">{count}</p>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+                    <div
+                      className={cn("h-full rounded-full", stage.color)}
+                      style={{ width: `${(count / maxStage) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Quick Actions */}
+      <div className="glass-panel p-5">
+        <h3 className="text-sm font-semibold text-slate-100">Quick Actions</h3>
+        <p className="text-sm text-slate-400">Common tasks, one click away.</p>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="glass-card group flex items-center gap-3 p-4"
+              >
+                <span
+                  className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                    action.iconBg
+                  )}
+                >
+                  <Icon className={cn("h-5 w-5", action.iconText)} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-slate-100">
+                    {action.title}
+                  </span>
+                  <span className="block truncate text-xs text-slate-500">
+                    {action.desc}
+                  </span>
+                </span>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-400" />
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

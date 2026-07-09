@@ -23,6 +23,7 @@ export default async function DashboardLayout({
     <ToastProvider>
       <DashboardShell
         agencyName={agency.name}
+        agencyPlan={agency.plan}
         userName={teamMember.name}
         userEmail={teamMember.email}
       >

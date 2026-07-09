@@ -18,7 +18,7 @@ export function ClientTabs({ clientId }: { clientId: string }) {
   const base = `/clients/${clientId}`;
 
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-gray-200">
+    <nav className="flex gap-1 overflow-x-auto border-b border-white/[0.08]">
       {TABS.map((tab) => {
         const href = tab.segment ? `${base}/${tab.segment}` : base;
         const active = tab.segment
@@ -31,8 +31,8 @@ export function ClientTabs({ clientId }: { clientId: string }) {
             className={cn(
               "whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
               active
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                ? "border-violet-500 text-violet-400"
+                : "border-transparent text-slate-500 hover:border-white/20 hover:text-slate-300"
             )}
           >
             {tab.label}

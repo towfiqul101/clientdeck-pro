@@ -60,22 +60,22 @@ export function GhlSetupTools() {
         {TOOLS.map((t) => {
           const Icon = t.icon;
           return (
-            <div key={t.key} className="rounded-lg border border-gray-200 p-4">
+            <div key={t.key} className="rounded-lg border border-white/10 p-4">
               <button
                 disabled={busy !== null}
                 onClick={() => run(t.key, t.path)}
                 className={cn(
                   "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
                   busy !== null
-                    ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                    : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    ? "cursor-not-allowed bg-white/[0.06] text-slate-500"
+                    : "bg-blue-500/10 text-blue-400 hover:bg-blue-500/15"
                 )}
               >
                 <Icon className="h-4 w-4" />
                 {busy === t.key ? "Running…" : t.title}
               </button>
-              <p className="mt-2 text-xs text-gray-500">{t.desc}</p>
-              {results[t.key] && <p className="mt-1 text-xs font-medium text-gray-700">{results[t.key]}</p>}
+              <p className="mt-2 text-xs text-slate-500">{t.desc}</p>
+              {results[t.key] && <p className="mt-1 text-xs font-medium text-slate-300">{results[t.key]}</p>}
             </div>
           );
         })}

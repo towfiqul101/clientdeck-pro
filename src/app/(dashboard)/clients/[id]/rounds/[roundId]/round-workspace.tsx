@@ -336,15 +336,15 @@ export function RoundWorkspace({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-slate-100">
               Round {round.round_number}
             </h2>
             <Badge status={status} />
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             {clientName} · {round.total_items_disputed} item
             {round.total_items_disputed === 1 ? "" : "s"} disputed
             {showComplete ? ` · ${round.total_deletions} deleted` : ""}
@@ -358,15 +358,15 @@ export function RoundWorkspace({
       {/* GENERATE (preparing) */}
       {showGenerate && (
         <div className="space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+          <div className="rounded-lg border border-white/10 bg-[#1a1a2e] p-6 text-center shadow-sm">
             {genProgress.active ? (
               <div className="space-y-3">
-                <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-600" />
-                <p className="text-sm font-medium text-gray-900">
+                <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-400" />
+                <p className="text-sm font-medium text-slate-100">
                   Generating letters — {genProgress.done} of {genProgress.total}
                 </p>
-                <p className="text-sm text-gray-500">{genMessage}</p>
-                <div className="mx-auto h-2 max-w-sm overflow-hidden rounded-full bg-gray-100">
+                <p className="text-sm text-slate-500">{genMessage}</p>
+                <div className="mx-auto h-2 max-w-sm overflow-hidden rounded-full bg-white/[0.06]">
                   <div
                     className="h-full rounded-full bg-blue-600 transition-all"
                     style={{
@@ -379,15 +379,15 @@ export function RoundWorkspace({
               </div>
             ) : (
               <div className="space-y-3">
-                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
-                  <Sparkles className="h-6 w-6 text-blue-600" />
+                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
+                  <Sparkles className="h-6 w-6 text-blue-400" />
                 </span>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">
+                  <h3 className="text-sm font-semibold text-slate-100">
                     Ready to generate {disputes.length} letter
                     {disputes.length === 1 ? "" : "s"}
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-slate-500">
                     Claude will draft each dispute letter. You&apos;ll review and
                     edit every letter before anything is sent.
                   </p>
@@ -400,7 +400,7 @@ export function RoundWorkspace({
             )}
           </div>
 
-          <div className="divide-y divide-gray-100 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="divide-y divide-white/[0.06] overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
             {disputes.map((d) => (
               <div
                 key={d.id}
@@ -423,12 +423,12 @@ export function RoundWorkspace({
             return (
               <div
                 key={d.id}
-                className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+                className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm"
               >
                 <div
                   className={cn(
                     "flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3",
-                    l.finalized ? "bg-green-50" : "bg-gray-50"
+                    l.finalized ? "bg-green-500/10" : "bg-white/[0.03]"
                   )}
                 >
                   <LetterCardHeader dispute={d} />
@@ -449,7 +449,7 @@ export function RoundWorkspace({
                         "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium",
                         l.finalized
                           ? "bg-green-600 text-white hover:bg-green-700"
-                          : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                          : "border border-white/10 bg-[#1a1a2e] text-slate-300 hover:bg-white/[0.03]"
                       )}
                     >
                       <Check className="h-4 w-4" />
@@ -458,7 +458,7 @@ export function RoundWorkspace({
                   </div>
                 </div>
                 {l.state === "error" ? (
-                  <div className="flex items-center gap-2 px-5 py-4 text-sm text-red-600">
+                  <div className="flex items-center gap-2 px-5 py-4 text-sm text-red-400">
                     <AlertTriangle className="h-4 w-4" />
                     {l.error ?? "Generation failed."}
                   </div>
@@ -474,7 +474,7 @@ export function RoundWorkspace({
                     onBlur={() => persistEdit(d.id)}
                     spellCheck
                     className={cn(
-                      "block max-h-[28rem] min-h-[20rem] w-full resize-y border-0 bg-white px-6 py-5 font-serif text-sm leading-relaxed text-gray-800 focus:outline-none focus:ring-0",
+                      "block max-h-[28rem] min-h-[20rem] w-full resize-y border-0 bg-[#1a1a2e] px-6 py-5 font-serif text-sm leading-relaxed text-slate-200 focus:outline-none focus:ring-0",
                       style.border
                     )}
                   />
@@ -484,9 +484,9 @@ export function RoundWorkspace({
           })}
 
           {/* Action bar */}
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 backdrop-blur md:pl-64">
+          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-white/95 backdrop-blur md:pl-64">
             <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-8">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-400">
                 {disputes.filter((d) => letters[d.id].finalized).length} of{" "}
                 {disputes.length} finalized
               </p>
@@ -517,12 +517,12 @@ export function RoundWorkspace({
       {/* AWAITING RESPONSE */}
       {showAwaiting && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-[#1a1a2e] p-5 shadow-sm">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm font-semibold text-slate-100">
                 Awaiting bureau responses
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-500">
                 Sent {round.date_sent ? formatDate(round.date_sent) : "—"}. Log
                 the results as responses come in.
               </p>
@@ -587,16 +587,16 @@ export function RoundWorkspace({
         }
       >
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-slate-400">
             Optionally add certified-mail tracking numbers. You can leave these
             blank and add them later.
           </p>
           <div className="space-y-2">
             {disputes.map((d) => (
               <div key={d.id} className="flex items-center gap-3">
-                <span className="w-40 shrink-0 truncate text-sm text-gray-700">
+                <span className="w-40 shrink-0 truncate text-sm text-slate-300">
                   {d.creditor_name}{" "}
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-slate-500">
                     ({getBureauLabel(d.bureau)})
                   </span>
                 </span>
@@ -606,7 +606,7 @@ export function RoundWorkspace({
                     patchLetter(d.id, { tracking: e.target.value })
                   }
                   placeholder="Tracking #"
-                  className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="flex-1 rounded-md border border-white/10 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             ))}
@@ -633,8 +633,8 @@ export function RoundWorkspace({
         }
       >
         <div className="space-y-4">
-          <div className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2">
-            <span className="text-sm text-gray-600">Bulk mark all as:</span>
+          <div className="flex items-center gap-2 rounded-md bg-white/[0.03] px-3 py-2">
+            <span className="text-sm text-slate-400">Bulk mark all as:</span>
             <Select
               aria-label="Bulk result"
               defaultValue=""
@@ -649,14 +649,14 @@ export function RoundWorkspace({
           </div>
 
           {/* Optional score update — snapshots to the client's portal chart. */}
-          <div className="rounded-md border border-gray-200 p-3">
-            <p className="mb-2 text-sm font-medium text-gray-700">
+          <div className="rounded-md border border-white/10 p-3">
+            <p className="mb-2 text-sm font-medium text-slate-300">
               Update credit scores{" "}
-              <span className="font-normal text-gray-400">(optional)</span>
+              <span className="font-normal text-slate-500">(optional)</span>
             </p>
             <div className="grid grid-cols-3 gap-2">
               {(["eq", "exp", "tu"] as const).map((k) => (
-                <label key={k} className="text-xs text-gray-500">
+                <label key={k} className="text-xs text-slate-500">
                   <span className="mb-1 block uppercase">
                     {k === "eq" ? "Equifax" : k === "exp" ? "Experian" : "TransUnion"}
                   </span>
@@ -669,7 +669,7 @@ export function RoundWorkspace({
                       setScoreInputs((s) => ({ ...s, [k]: e.target.value }))
                     }
                     placeholder="—"
-                    className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-md border border-white/10 px-2 py-1.5 text-sm text-slate-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </label>
               ))}
@@ -682,7 +682,7 @@ export function RoundWorkspace({
               return (
                 <div
                   key={d.id}
-                  className="rounded-lg border border-gray-200 p-3"
+                  className="rounded-lg border border-white/10 p-3"
                 >
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <LetterCardHeader dispute={d} />
@@ -711,7 +711,7 @@ export function RoundWorkspace({
                         }))
                       }
                       placeholder="Notes (optional)"
-                      className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="rounded-md border border-white/10 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -739,8 +739,8 @@ export function RoundWorkspace({
         }
       >
         <div className="flex items-start gap-3">
-          <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
-          <p className="text-sm text-gray-600">
+          <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-green-400" />
+          <p className="text-sm text-slate-400">
             This client has no remaining active items. Mark them as completed to
             fire the goal-achieved sync to GHL?
           </p>
@@ -755,11 +755,11 @@ function LetterCardHeader({ dispute }: { dispute: RoundDispute }) {
   return (
     <div className="flex items-center gap-2">
       <span className={cn("h-2 w-2 rounded-full", style.dot)} />
-      <span className="font-medium text-gray-900">{dispute.creditor_name}</span>
+      <span className="font-medium text-slate-100">{dispute.creditor_name}</span>
       <span className={cn("text-xs font-medium", style.text)}>
         {getBureauLabel(dispute.bureau)}
       </span>
-      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+      <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400">
         {getLetterTypeLabel(dispute.letter_type)}
       </span>
     </div>
@@ -769,33 +769,33 @@ function LetterCardHeader({ dispute }: { dispute: RoundDispute }) {
 function LetterStatePill({ state }: { state: LetterState["state"] }) {
   if (state === "generating")
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-blue-600">
+      <span className="inline-flex items-center gap-1.5 text-sm text-blue-400">
         <Loader2 className="h-4 w-4 animate-spin" /> Generating…
       </span>
     );
   if (state === "ready")
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-green-600">
+      <span className="inline-flex items-center gap-1.5 text-sm text-green-400">
         <Check className="h-4 w-4" /> Ready for review
       </span>
     );
   if (state === "error")
     return (
-      <span className="inline-flex items-center gap-1.5 text-sm text-red-600">
+      <span className="inline-flex items-center gap-1.5 text-sm text-red-400">
         <AlertTriangle className="h-4 w-4" /> Failed
       </span>
     );
-  return <span className="text-sm text-gray-400">Not generated</span>;
+  return <span className="text-sm text-slate-500">Not generated</span>;
 }
 
 function DeadlineBadge({ deadline }: { deadline: string }) {
   const days = daysRemaining(deadline);
   const overdue = days < 0;
   const tone = overdue
-    ? "bg-red-50 text-red-700 border-red-200"
+    ? "bg-red-500/10 text-red-400 border-red-500/30"
     : days <= 14
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : "bg-green-50 text-green-700 border-green-200";
+      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+      : "bg-green-500/10 text-green-400 border-green-500/30";
   return (
     <span
       className={cn(
@@ -820,15 +820,15 @@ function SummaryStat({
   tone: "green" | "teal" | "red" | "orange";
 }) {
   const tones = {
-    green: "text-green-600",
-    teal: "text-teal-600",
-    red: "text-red-600",
-    orange: "text-orange-600",
+    green: "text-green-400",
+    teal: "text-teal-400",
+    red: "text-red-400",
+    orange: "text-orange-400",
   };
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-lg border border-white/10 bg-[#1a1a2e] p-4 shadow-sm">
       <p className={cn("text-2xl font-semibold", tones[tone])}>{value}</p>
-      <p className="text-sm text-gray-500">{label}</p>
+      <p className="text-sm text-slate-500">{label}</p>
     </div>
   );
 }
@@ -843,9 +843,9 @@ function DisputeResultTable({
   showResult?: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+    <div className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
+      <table className="min-w-full divide-y divide-white/[0.08] text-sm">
+        <thead className="bg-white/[0.03] text-left text-xs font-medium uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-4 py-3">Creditor</th>
             <th className="px-4 py-3">Bureau</th>
@@ -853,25 +853,25 @@ function DisputeResultTable({
             <th className="px-4 py-3">{showResult ? "Result" : "Status"}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-white/[0.06]">
           {disputes.map((d) => (
-            <tr key={d.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 font-medium text-gray-900">
+            <tr key={d.id} className="hover:bg-white/[0.03]">
+              <td className="px-4 py-3 font-medium text-slate-100">
                 {d.creditor_name}
               </td>
-              <td className="px-4 py-3 text-gray-600">
+              <td className="px-4 py-3 text-slate-400">
                 {getBureauLabel(d.bureau)}
               </td>
-              <td className="px-4 py-3 text-gray-600">
+              <td className="px-4 py-3 text-slate-400">
                 {getLetterTypeLabel(d.letter_type)}
               </td>
               <td className="px-4 py-3">
                 {showResult ? (
                   <Badge status={d.result} />
                 ) : letters[d.id]?.content ? (
-                  <span className="text-gray-500">Awaiting response</span>
+                  <span className="text-slate-500">Awaiting response</span>
                 ) : (
-                  <span className="text-gray-400">—</span>
+                  <span className="text-slate-500">—</span>
                 )}
               </td>
             </tr>

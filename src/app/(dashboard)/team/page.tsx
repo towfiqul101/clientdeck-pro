@@ -125,8 +125,8 @@ export default async function TeamPage() {
         />
         {activeMembers.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-            <Briefcase className="h-8 w-8 text-gray-300" />
-            <p className="mt-3 text-sm text-gray-500">
+            <Briefcase className="h-8 w-8 text-slate-600" />
+            <p className="mt-3 text-sm text-slate-500">
               No active team members to show a caseload for.
             </p>
           </div>
@@ -142,7 +142,7 @@ export default async function TeamPage() {
               return (
                 <div
                   key={m.id}
-                  className="flex flex-col gap-4 rounded-lg border border-gray-200 p-4"
+                  className="flex flex-col gap-4 rounded-lg border border-white/10 p-4"
                 >
                   <div className="flex items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-xs font-medium text-white">
@@ -152,8 +152,8 @@ export default async function TeamPage() {
                       )}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-gray-900">{m.name}</p>
-                      <p className="truncate text-xs text-gray-500 capitalize">
+                      <p className="truncate font-medium text-slate-100">{m.name}</p>
+                      <p className="truncate text-xs text-slate-500 capitalize">
                         {ROLE_LABEL[m.role] ?? m.role}
                       </p>
                     </div>
@@ -161,40 +161,40 @@ export default async function TeamPage() {
 
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-400">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">
                         Active Clients
                       </p>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-slate-100">
                         {stats.activeClients}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-400">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">
                         Due This Week
                       </p>
                       <p
                         className={`font-semibold ${
                           stats.roundsDueThisWeek > 0
-                            ? "text-amber-600"
-                            : "text-gray-900"
+                            ? "text-amber-400"
+                            : "text-slate-100"
                         }`}
                       >
                         {stats.roundsDueThisWeek}
                       </p>
                     </div>
                     <div>
-                      <p className="flex items-center gap-1 text-xs uppercase tracking-wide text-gray-400">
+                      <p className="flex items-center gap-1 text-xs uppercase tracking-wide text-slate-500">
                         <Trash2 className="h-3 w-3" /> Deletions
                       </p>
-                      <p className="font-semibold text-green-600">
+                      <p className="font-semibold text-green-400">
                         {stats.totalDeletions}
                       </p>
                     </div>
                     <div>
-                      <p className="flex items-center gap-1 text-xs uppercase tracking-wide text-gray-400">
+                      <p className="flex items-center gap-1 text-xs uppercase tracking-wide text-slate-500">
                         <Percent className="h-3 w-3" /> Success Rate
                       </p>
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-slate-100">
                         {stats.successRate}%
                       </p>
                     </div>
@@ -202,7 +202,7 @@ export default async function TeamPage() {
 
                   <Link
                     href={`/clients?assigned=${m.id}`}
-                    className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                    className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-blue-400 hover:text-blue-400"
                   >
                     View Caseload
                     <ArrowRight className="h-3.5 w-3.5" />
@@ -219,7 +219,7 @@ export default async function TeamPage() {
           title="Team"
           description="Staff who can access this agency's workspace."
         />
-        <div className="border-b border-gray-100 px-5 py-4">
+        <div className="border-b border-white/[0.06] px-5 py-4">
           <TeamInvite
             current={activeCount}
             max={maxMembers}
@@ -229,11 +229,11 @@ export default async function TeamPage() {
         </div>
         {members.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <Users className="h-8 w-8 text-gray-300" />
-            <p className="mt-3 text-sm text-gray-500">No team members yet.</p>
+            <Users className="h-8 w-8 text-slate-600" />
+            <p className="mt-3 text-sm text-slate-500">No team members yet.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-white/[0.06]">
             {members.map((m) => (
               <li key={m.id} className="flex items-center gap-4 px-5 py-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-800 text-sm font-medium text-white">
@@ -243,14 +243,14 @@ export default async function TeamPage() {
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900">{m.name}</p>
-                  <p className="truncate text-sm text-gray-500">{m.email}</p>
+                  <p className="font-medium text-slate-100">{m.name}</p>
+                  <p className="truncate text-sm text-slate-500">{m.email}</p>
                 </div>
-                <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium capitalize text-gray-700">
+                <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium capitalize text-slate-300">
                   {ROLE_LABEL[m.role] ?? m.role}
                 </span>
                 {!m.is_active && (
-                  <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600">
+                  <span className="rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400">
                     Inactive
                   </span>
                 )}

@@ -140,7 +140,7 @@ export default async function ReportsPage() {
 
   if (totalClients === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
         <EmptyState
           icon={BarChart3}
           title="Data appears as you work"
@@ -196,20 +196,20 @@ export default async function ReportsPage() {
               title="Client Status"
               description={`${completedClients} completed`}
             />
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-white/[0.06]">
               {[...statusCounts.entries()].map(([status, count]) => (
                 <li
                   key={status}
                   className="flex items-center justify-between px-5 py-3 text-sm"
                 >
-                  <span className="capitalize text-gray-600">
+                  <span className="capitalize text-slate-400">
                     {status.replace("_", " ")}
                   </span>
-                  <span className="font-medium text-gray-900">{count}</span>
+                  <span className="font-medium text-slate-100">{count}</span>
                 </li>
               ))}
               {statusCounts.size === 0 && (
-                <li className="px-5 py-8 text-center text-sm text-gray-500">
+                <li className="px-5 py-8 text-center text-sm text-slate-500">
                   No clients yet.
                 </li>
               )}
@@ -224,7 +224,7 @@ export default async function ReportsPage() {
             title="Success Rate by Bureau"
             description="Dispute outcomes across the three bureaus."
           />
-          <div className="grid grid-cols-1 divide-y divide-gray-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <div className="grid grid-cols-1 divide-y divide-white/[0.06] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             {bureauStats.map((stat) => {
               const style = BUREAU_STYLES[stat.bureau];
               return (
@@ -237,15 +237,15 @@ export default async function ReportsPage() {
                   </span>
                   {stat.totalDisputed > 0 ? (
                     <>
-                      <p className="mt-2 text-2xl font-semibold text-gray-900">
+                      <p className="mt-2 text-2xl font-semibold text-slate-100">
                         {stat.successRate}%
                       </p>
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-slate-500">
                         {stat.totalDisputed} disputed &middot; {stat.totalDeleted} deleted
                       </p>
                     </>
                   ) : (
-                    <p className="mt-2 text-sm text-gray-500">No disputes yet.</p>
+                    <p className="mt-2 text-sm text-slate-500">No disputes yet.</p>
                   )}
                 </div>
               );
@@ -262,12 +262,12 @@ export default async function ReportsPage() {
             {typeStats.map((stat) => (
               <div key={stat.type}>
                 <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="text-gray-600">
+                  <span className="text-slate-400">
                     {getNegativeTypeLabel(stat.type)}
                   </span>
-                  <span className="font-medium text-gray-900">{stat.count}</span>
+                  <span className="font-medium text-slate-100">{stat.count}</span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-gray-100">
+                <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
                   <div
                     className="h-1.5 rounded-full bg-blue-600"
                     style={{ width: `${stat.pct}%` }}
@@ -276,7 +276,7 @@ export default async function ReportsPage() {
               </div>
             ))}
             {typeStats.length === 0 && (
-              <p className="py-8 text-center text-sm text-gray-500">
+              <p className="py-8 text-center text-sm text-slate-500">
                 No negative items yet.
               </p>
             )}
@@ -288,22 +288,22 @@ export default async function ReportsPage() {
             title="Client Metrics"
             description="Retention and score progress."
           />
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-white/[0.06]">
             <li className="flex items-center justify-between px-5 py-3 text-sm">
-              <span className="text-gray-600">Retention rate</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-slate-400">Retention rate</span>
+              <span className="font-medium text-slate-100">
                 {retention.retentionRate}%
               </span>
             </li>
             <li className="flex items-center justify-between px-5 py-3 text-sm">
-              <span className="text-gray-600">Cancelled clients</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-slate-400">Cancelled clients</span>
+              <span className="font-medium text-slate-100">
                 {retention.cancelled} / {retention.totalClients}
               </span>
             </li>
             <li className="flex items-center justify-between px-5 py-3 text-sm">
-              <span className="text-gray-600">Avg. score increase</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-slate-400">Avg. score increase</span>
+              <span className="font-medium text-slate-100">
                 {retention.avgScoreIncrease != null
                   ? `+${retention.avgScoreIncrease} pts`
                   : "No score data yet"}
@@ -317,24 +317,24 @@ export default async function ReportsPage() {
         <CardHeader title="Credit Score Analytics" />
         <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-2">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Average Starting Score</p>
-            <p className="mt-1 text-sm text-gray-900">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Average Starting Score</p>
+            <p className="mt-1 text-sm text-slate-100">
               {avgStart.eq ?? "—"} (EQ) / {avgStart.exp ?? "—"} (EXP) / {avgStart.tu ?? "—"} (TU)
             </p>
-            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-gray-500">Average Current Score</p>
-            <p className="mt-1 text-sm text-gray-900">
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500">Average Current Score</p>
+            <p className="mt-1 text-sm text-slate-100">
               {avgCurrent.eq ?? "—"} (EQ) / {avgCurrent.exp ?? "—"} (EXP) / {avgCurrent.tu ?? "—"} (TU)
             </p>
-            <p className="mt-3 text-xs text-gray-500">{pullsThisMonthCount} score pulls this month</p>
+            <p className="mt-3 text-xs text-slate-500">{pullsThisMonthCount} score pulls this month</p>
           </div>
           <div className="space-y-2">
             {distribution.map((d) => (
               <div key={d.bucket} className="flex items-center gap-2 text-xs">
-                <span className="w-16 shrink-0 text-gray-500">{d.bucket}</span>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
+                <span className="w-16 shrink-0 text-slate-500">{d.bucket}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
                   <div className="h-full rounded-full bg-blue-600" style={{ width: `${d.pct}%` }} />
                 </div>
-                <span className="w-20 shrink-0 text-right text-gray-600">{d.pct}% ({d.count})</span>
+                <span className="w-20 shrink-0 text-right text-slate-400">{d.pct}% ({d.count})</span>
               </div>
             ))}
           </div>

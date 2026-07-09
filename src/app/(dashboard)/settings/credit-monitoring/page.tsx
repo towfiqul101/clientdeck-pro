@@ -16,13 +16,13 @@ export default async function CreditMonitoringSettingsPage() {
   if (!isAgencyPlanOrHigher(agency.plan)) {
     return (
       <Card className="p-8 text-center">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-          <Lock className="h-6 w-6 text-gray-400" />
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.06]">
+          <Lock className="h-6 w-6 text-slate-500" />
         </span>
-        <h2 className="mt-4 text-sm font-semibold text-gray-900">
+        <h2 className="mt-4 text-sm font-semibold text-slate-100">
           Credit Monitoring API — Available on Agency plan
         </h2>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-gray-500">
+        <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
           Connect MyFreeScoreNow, IdentityIQ, or SmartCredit to pull scores directly
           from within ClientDeck Pro.
         </p>

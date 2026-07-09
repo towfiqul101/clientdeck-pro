@@ -15,13 +15,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 disabled:bg-blue-300 active:scale-[0.98]",
+    "bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-[0_4px_15px_rgba(139,92,246,0.3)] hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)] focus-visible:ring-violet-500 active:translate-y-0 disabled:opacity-50 disabled:shadow-none",
   secondary:
-    "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus-visible:ring-blue-500 disabled:opacity-60",
+    "bg-white/[0.06] text-slate-200 border border-white/10 hover:bg-white/10 hover:border-white/[0.15] focus-visible:ring-violet-500 disabled:opacity-50",
   danger:
-    "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 disabled:bg-red-300",
+    "bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 focus-visible:ring-red-500 disabled:opacity-50",
   ghost:
-    "bg-transparent text-gray-600 hover:bg-gray-100 focus-visible:ring-gray-400 disabled:opacity-60",
+    "bg-transparent text-slate-400 hover:bg-white/5 hover:text-slate-200 focus-visible:ring-slate-500 disabled:opacity-50",
 };
 
 const sizes: Record<Size, string> = {
@@ -41,8 +41,8 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md font-medium shadow-sm transition-all duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+        "inline-flex items-center justify-center gap-2 rounded-[10px] font-medium transition-all duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f1a]",
         "disabled:cursor-not-allowed",
         variants[variant],
         sizes[size],

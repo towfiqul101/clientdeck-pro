@@ -11,16 +11,16 @@ interface LogoProps {
 export function Logo({ className, variant = "dark" }: LogoProps) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-white">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-[0_2px_10px_rgba(139,92,246,0.35)]">
         <LayoutGrid className="h-5 w-5" />
       </span>
       <span
         className={cn(
           "text-lg font-semibold tracking-tight",
-          variant === "light" ? "text-white" : "text-gray-900"
+          variant === "light" ? "text-white" : "text-slate-900"
         )}
       >
-        ClientDeck<span className="text-blue-500"> Pro</span>
+        ClientDeck<span className="text-violet-400"> Pro</span>
       </span>
     </span>
   );

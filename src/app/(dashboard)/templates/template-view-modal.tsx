@@ -51,13 +51,13 @@ export function TemplateViewModal({
         <div className="space-y-4">
           {variables.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs font-medium text-gray-500">Variables (click to copy):</p>
+              <p className="mb-1.5 text-xs font-medium text-slate-500">Variables (click to copy):</p>
               <div className="flex flex-wrap gap-1.5">
                 {variables.map((v) => (
                   <button
                     key={v}
                     onClick={() => copyVar(v)}
-                    className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700 hover:bg-gray-200"
+                    className="inline-flex items-center gap-1 rounded bg-white/[0.06] px-2 py-1 font-mono text-xs text-slate-300 hover:bg-white/[0.08]"
                   >
                     {copiedVar === v ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                     {v}
@@ -70,7 +70,7 @@ export function TemplateViewModal({
             readOnly
             value={template.prompt_template}
             rows={16}
-            className="w-full resize-none rounded-md border border-gray-200 bg-gray-50 p-3 font-mono text-xs text-gray-700"
+            className="w-full resize-none rounded-md border border-white/10 bg-white/[0.03] p-3 font-mono text-xs text-slate-300"
           />
         </div>
       )}

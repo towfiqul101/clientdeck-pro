@@ -31,15 +31,15 @@ function DeadlineCell({
   deadline: string | null;
 }) {
   if (!deadline || status === "complete") {
-    return <span className="text-gray-400">—</span>;
+    return <span className="text-slate-500">—</span>;
   }
   const days = daysRemaining(deadline);
   const tone =
     days < 0
-      ? "text-red-600"
+      ? "text-red-400"
       : days <= 14
-        ? "text-amber-600"
-        : "text-green-600";
+        ? "text-amber-400"
+        : "text-green-400";
   return (
     <span className={cn("font-medium", tone)}>
       {days < 0
@@ -106,7 +106,7 @@ export default async function AllRoundsPage({
 
   const pipelineView =
     rounds.length === 0 ? (
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
         {emptyState}
       </div>
     ) : (
@@ -114,13 +114,13 @@ export default async function AllRoundsPage({
     );
 
   const listView = (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
       {rounds.length === 0 ? (
         emptyState
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+          <table className="min-w-full divide-y divide-white/[0.08] text-sm">
+            <thead className="bg-white/[0.03] text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Client</th>
                 <th className="px-4 py-3">Round</th>
@@ -130,20 +130,20 @@ export default async function AllRoundsPage({
                 <th className="px-4 py-3">Items</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/[0.06]">
               {rounds.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
+                <tr key={r.id} className="hover:bg-white/[0.03]">
                   <td className="px-4 py-3">
                     <Link
                       href={`/clients/${r.client_id}/rounds/${r.id}`}
-                      className="font-medium text-gray-900 hover:text-blue-600"
+                      className="font-medium text-slate-100 hover:text-blue-400"
                     >
                       {r.client
                         ? `${r.client.first_name} ${r.client.last_name}`
                         : "Unknown client"}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-slate-300">
                     <Link
                       href={`/clients/${r.client_id}/rounds/${r.id}`}
                       className="block"
@@ -159,7 +159,7 @@ export default async function AllRoundsPage({
                       <Badge status={r.status} />
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-slate-500">
                     {r.date_sent ? formatDate(r.date_sent) : "—"}
                   </td>
                   <td className="px-4 py-3">
@@ -168,7 +168,7 @@ export default async function AllRoundsPage({
                       deadline={r.response_deadline}
                     />
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-slate-300">
                     {r.total_items_disputed}
                   </td>
                 </tr>
@@ -184,8 +184,8 @@ export default async function AllRoundsPage({
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-gray-900">Rounds</h2>
-          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600">
+          <h2 className="text-lg font-semibold text-slate-100">Rounds</h2>
+          <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-sm font-medium text-slate-400">
             {rounds.length}
           </span>
         </div>

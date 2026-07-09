@@ -42,7 +42,7 @@ function ScoreCell({ value }: { value: number | null }) {
     <span
       className={cn(
         "inline-flex min-w-[2.5rem] justify-center rounded px-1.5 py-0.5 text-xs font-medium tabular-nums",
-        value ? "bg-gray-100 text-gray-700" : "bg-gray-50 text-gray-300"
+        value ? "bg-white/[0.06] text-slate-200" : "bg-white/[0.03] text-slate-600"
       )}
     >
       {value ?? "—"}
@@ -62,7 +62,7 @@ function ScoreCellWithChange({
     <span className="flex items-center gap-0.5">
       <ScoreCell value={current} />
       {change.direction === "up" && (
-        <ArrowUp className="h-3 w-3 text-green-600" />
+        <ArrowUp className="h-3 w-3 text-emerald-400" />
       )}
     </span>
   );
@@ -153,14 +153,14 @@ export default async function ClientsPage({
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-gray-900">Clients</h2>
-          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600">
+          <h2 className="text-lg font-semibold text-slate-100">Clients</h2>
+          <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-sm font-medium text-slate-400 ring-1 ring-white/10">
             {total}
           </span>
         </div>
         <Link
           href="/clients/new"
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700"
+          className="inline-flex items-center gap-2 rounded-[10px] bg-gradient-to-br from-violet-500 to-violet-700 px-4 py-2 text-sm font-medium text-white shadow-[0_4px_15px_rgba(139,92,246,0.3)] transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)]"
         >
           <Plus className="h-4 w-4" />
           Add Client
@@ -171,7 +171,7 @@ export default async function ClientsPage({
 
       {/* Client list */}
       {clients.length === 0 ? (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="glass-panel overflow-hidden">
           <EmptyState
             icon={hasFilters ? Users : UserPlus}
             title={hasFilters ? "No matching clients" : "No clients yet"}
@@ -184,7 +184,7 @@ export default async function ClientsPage({
               !hasFilters && (
                 <Link
                   href="/clients/new"
-                  className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 rounded-[10px] bg-gradient-to-br from-violet-500 to-violet-700 px-4 py-2 text-sm font-medium text-white shadow-[0_4px_15px_rgba(139,92,246,0.3)] hover:-translate-y-px"
                 >
                   <Plus className="h-4 w-4" />
                   Add Client
@@ -196,10 +196,10 @@ export default async function ClientsPage({
       ) : view === "cards" ? (
         <ClientCardsView clients={clients} />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="glass-panel overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="sticky top-0 z-10 bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+            <table className="min-w-full divide-y divide-white/[0.06] text-sm">
+              <thead className="sticky top-0 z-10 bg-white/[0.03] text-left text-xs font-medium uppercase tracking-wide text-slate-500 backdrop-blur-xl">
                 <tr>
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Status</th>
@@ -218,7 +218,7 @@ export default async function ClientsPage({
                 {clients.map((c) => (
                   <tr
                     key={c.id}
-                    className="group border-b border-gray-100 bg-white transition-colors duration-150 last:border-b-0 hover:bg-gray-50 cursor-pointer"
+                    className="group border-b border-white/[0.05] transition-colors duration-150 last:border-b-0 hover:bg-white/[0.03] cursor-pointer"
                   >
                     <td className="px-4 py-3">
                       <Link
@@ -226,15 +226,15 @@ export default async function ClientsPage({
                         className="flex items-center gap-3"
                         // Stretch the link across the row visually.
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-sm font-medium text-violet-300">
                           {getInitials(c.first_name, c.last_name)}
                         </span>
                         <div className="min-w-0">
-                          <p className="flex items-center gap-1.5 truncate font-medium text-gray-900 group-hover:text-blue-600">
+                          <p className="flex items-center gap-1.5 truncate font-medium text-slate-100 group-hover:text-violet-300">
                             {c.first_name} {c.last_name}
                             <SignatureDot status={c.signature_status} />
                           </p>
-                          <p className="truncate text-xs text-gray-500">
+                          <p className="truncate text-xs text-slate-500">
                             {c.email || "No email"}
                             {c.phone ? ` · ${formatPhone(c.phone)}` : ""}
                           </p>
@@ -265,14 +265,14 @@ export default async function ClientsPage({
                         />
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-700">
+                    <td className="px-4 py-3 text-slate-300">
                       <Link href={`/clients/${c.id}`} className="block">
                         {c.current_round > 0 ? `Round ${c.current_round}` : "—"}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-700">
+                    <td className="px-4 py-3 text-slate-300">
                       <Link href={`/clients/${c.id}`} className="block">
-                        <span className="font-medium text-green-600">
+                        <span className="font-medium text-emerald-400">
                           {c.total_items_deleted}
                         </span>{" "}
                         / {c.total_items_current}
@@ -288,7 +288,7 @@ export default async function ClientsPage({
                         <span
                           className={cn(
                             "text-sm",
-                            c.assigned_to ? "text-gray-700" : "text-gray-400"
+                            c.assigned_to ? "text-slate-300" : "text-slate-500"
                           )}
                         >
                           {c.assigned_to
@@ -297,7 +297,7 @@ export default async function ClientsPage({
                         </span>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="px-4 py-3 text-slate-500">
                       <Link href={`/clients/${c.id}`} className="block">
                         {formatDate(c.created_at)}
                       </Link>
@@ -306,14 +306,14 @@ export default async function ClientsPage({
                       <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                         <Link
                           href={`/clients/${c.id}`}
-                          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200"
                           aria-label="View"
                         >
                           <Eye className="h-4 w-4" />
                         </Link>
                         <Link
                           href={`/clients/${c.id}/edit`}
-                          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                          className="rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200"
                           aria-label="Edit"
                         >
                           <Pencil className="h-4 w-4" />
@@ -331,7 +331,7 @@ export default async function ClientsPage({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             Page {page} of {totalPages} · {total} clients
           </p>
           <div className="flex items-center gap-1">
@@ -342,8 +342,8 @@ export default async function ClientsPage({
                 className={cn(
                   "min-w-[2rem] rounded-md px-2.5 py-1.5 text-center text-sm font-medium transition-colors",
                   p === page
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-violet-500/20 text-violet-300 ring-1 ring-violet-500/30"
+                    : "text-slate-400 hover:bg-white/5"
                 )}
               >
                 {p}

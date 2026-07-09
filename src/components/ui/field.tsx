@@ -7,7 +7,7 @@ import type {
 } from "react";
 
 const controlBase =
-  "block w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+  "block w-full rounded-[10px] border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none focus:ring-[3px] focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-50 [&>option]:bg-[#1a1a2e] [&>option]:text-slate-100";
 
 interface FieldProps {
   label: string;
@@ -31,15 +31,15 @@ export function Field({
     <div className={cn("space-y-1.5", className)}>
       <label
         htmlFor={htmlFor}
-        className="block text-sm font-medium text-gray-700"
+        className="block text-sm font-medium text-slate-300"
       >
         {label}
       </label>
       {children}
       {error ? (
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-red-400">{error}</p>
       ) : hint ? (
-        <p className="text-sm text-gray-500">{hint}</p>
+        <p className="text-sm text-slate-500">{hint}</p>
       ) : null}
     </div>
   );

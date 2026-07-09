@@ -28,25 +28,25 @@ export function PlanCards({ billingEnabled = true }: { billingEnabled?: boolean 
         <div
           key={plan.id}
           className={cn(
-            "flex flex-col rounded-lg border bg-white p-6 shadow-sm",
-            plan.highlight ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-200"
+            "flex flex-col rounded-lg border bg-[#1a1a2e] p-6 shadow-sm",
+            plan.highlight ? "border-blue-500 ring-1 ring-blue-500" : "border-white/10"
           )}
         >
           {plan.highlight && (
-            <span className="mb-2 self-start rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+            <span className="mb-2 self-start rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
               Most popular
             </span>
           )}
-          <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-slate-100">{plan.name}</h3>
+          <p className="mt-1 text-2xl font-semibold text-slate-100">
             {plan.priceLabel}
-            <span className="text-sm font-normal text-gray-500">/mo</span>
+            <span className="text-sm font-normal text-slate-500">/mo</span>
           </p>
-          <p className="mt-1 text-sm text-gray-500">{plan.clientsLabel}</p>
+          <p className="mt-1 text-sm text-slate-500">{plan.clientsLabel}</p>
           <ul className="mt-4 flex-1 space-y-2">
             {plan.features.map((f) => (
-              <li key={f} className="flex items-start gap-2 text-sm text-gray-600">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+              <li key={f} className="flex items-start gap-2 text-sm text-slate-400">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-400" />
                 {f}
               </li>
             ))}
@@ -59,7 +59,7 @@ export function PlanCards({ billingEnabled = true }: { billingEnabled?: boolean 
               "mt-5 w-full rounded-md px-4 py-2 text-sm font-medium",
               plan.highlight
                 ? "bg-blue-600 text-white hover:bg-blue-700"
-                : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
+                : "border border-white/10 bg-[#1a1a2e] text-slate-300 hover:bg-white/[0.03]",
               "disabled:cursor-not-allowed disabled:opacity-60"
             )}
           >

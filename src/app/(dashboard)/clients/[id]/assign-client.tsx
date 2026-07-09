@@ -46,7 +46,7 @@ export function AssignClient({ clientId, assignedTo, members }: AssignClientProp
         options={members.map((m) => ({ value: m.id, label: m.name }))}
         className="w-auto py-1.5 pr-7 text-xs"
       />
-      {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />}
+      {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />}
     </div>
   );
 }

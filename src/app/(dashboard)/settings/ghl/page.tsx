@@ -26,7 +26,7 @@ export default async function GHLSettingsPage() {
     <div className="space-y-6">
       <Link
         href="/onboarding/ghl-setup"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-400"
       >
         <BookOpen className="h-4 w-4" /> View the full GHL workflow setup guide
       </Link>

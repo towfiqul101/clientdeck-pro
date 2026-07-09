@@ -53,8 +53,8 @@ export function GhlFieldMapping({ initial }: { initial: GhlFieldKeys }) {
     <Card>
       <div className="space-y-4 p-6">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">GHL Field Mapping</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="text-base font-semibold text-slate-100">GHL Field Mapping</h3>
+          <p className="mt-1 text-sm text-slate-500">
             Map your GHL custom-field keys to ClientDeck Pro data. Find keys in GHL
             → Settings → Custom Fields → click a field → copy &quot;Key&quot;. Or
             click Auto-detect to match them by name.
@@ -63,13 +63,13 @@ export function GhlFieldMapping({ initial }: { initial: GhlFieldKeys }) {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {FIELDS.map((f) => (
-            <label key={f.key} className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+            <label key={f.key} className="flex flex-col gap-1 text-xs font-medium text-slate-400">
               {f.label}
               <input
                 value={keys[f.key] ?? ""}
                 onChange={(e) => set(f.key, e.target.value)}
                 placeholder="field key…"
-                className="rounded-md border border-gray-300 px-3 py-2 font-mono text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="rounded-md border border-white/10 px-3 py-2 font-mono text-sm text-slate-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </label>
           ))}

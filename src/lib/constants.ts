@@ -136,21 +136,21 @@ export const BUREAU_STYLES: Record<
   { dot: string; text: string; bg: string; border: string }
 > = {
   equifax: {
-    dot: "bg-blue-500",
-    text: "text-blue-700",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
+    dot: "bg-violet-500",
+    text: "text-violet-400",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/50",
   },
   experian: {
     dot: "bg-orange-500",
-    text: "text-orange-700",
-    bg: "bg-orange-50",
-    border: "border-orange-200",
+    text: "text-orange-400",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/50",
   },
   transunion: {
-    dot: "bg-green-500",
-    text: "text-green-700",
-    bg: "bg-green-50",
-    border: "border-green-200",
+    dot: "bg-emerald-500",
+    text: "text-emerald-400",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/50",
   },
 };

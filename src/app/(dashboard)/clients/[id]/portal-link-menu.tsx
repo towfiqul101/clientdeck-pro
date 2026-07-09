@@ -67,27 +67,27 @@ export function PortalLinkMenu({ clientId }: { clientId: string }) {
   return (
     <div className="relative" ref={menuRef}>
       <Button variant="secondary" onClick={() => setOpen((o) => !o)} loading={busy !== null}>
-        {copied ? <Check className="h-4 w-4 text-green-600" /> : <Link2 className="h-4 w-4" />}
+        {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Link2 className="h-4 w-4" />}
         Share Portal Link
         <ChevronDown className="h-3.5 w-3.5" />
       </Button>
       {open && (
-        <div className="absolute right-0 z-10 mt-1 w-56 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+        <div className="absolute right-0 z-10 mt-1 w-56 rounded-xl border border-white/10 bg-[#1a1a2e] py-1 shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
           <button
             onClick={handleGHL}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
           >
             <MessageSquare className="h-4 w-4" /> Send via GHL SMS
           </button>
           <button
             onClick={handleEmail}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
           >
             <Mail className="h-4 w-4" /> Send via Email
           </button>
           <button
             onClick={handleCopy}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
           >
             <Link2 className="h-4 w-4" /> Copy Link
           </button>

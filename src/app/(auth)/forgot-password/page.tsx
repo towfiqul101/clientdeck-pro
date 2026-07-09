@@ -35,12 +35,12 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <div className="space-y-4 text-center">
-        <CheckCircle2 className="mx-auto h-8 w-8 text-green-600" />
-        <h1 className="text-xl font-semibold text-gray-900">Check your email</h1>
-        <p className="text-sm text-gray-500">
+        <CheckCircle2 className="mx-auto h-8 w-8 text-green-400" />
+        <h1 className="text-xl font-semibold text-slate-100">Check your email</h1>
+        <p className="text-sm text-slate-500">
           If an account exists for {email}, we&apos;ve sent a link to reset your password.
         </p>
-        <Link href="/login" className="inline-block text-sm font-medium text-blue-600 hover:text-blue-700">
+        <Link href="/login" className="inline-block text-sm font-medium text-blue-400 hover:text-blue-400">
           Back to sign in
         </Link>
       </div>
@@ -50,14 +50,14 @@ export default function ForgotPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-gray-900">Reset your password</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-slate-100">Reset your password</h1>
+        <p className="text-sm text-slate-500">
           Enter your email and we&apos;ll send you a link to set a new password.
         </p>
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -81,8 +81,8 @@ export default function ForgotPasswordPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500">
-        <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700">
+      <p className="text-center text-sm text-slate-500">
+        <Link href="/login" className="font-medium text-blue-400 hover:text-blue-400">
           Back to sign in
         </Link>
       </p>

@@ -43,13 +43,13 @@ export default async function AdminAgenciesPage({
           action={
             <div className="flex items-center gap-3">
               <form method="GET" className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
                   name="q"
                   defaultValue={query}
                   placeholder="Search name or email…"
-                  className="w-56 rounded-md border border-gray-300 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-56 rounded-md border border-white/10 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </form>
               <CreateAgencyButton />

@@ -60,14 +60,14 @@ export function TemplatesList({ templates }: { templates: LetterTemplate[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[#1a1a2e] p-1">
           {(["all", "system", "custom"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors",
-                filter === f ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50"
+                filter === f ? "bg-blue-600 text-white" : "text-slate-400 hover:bg-white/[0.03]"
               )}
             >
               {f}
@@ -76,12 +76,12 @@ export function TemplatesList({ templates }: { templates: LetterTemplate[] }) {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search templates…"
-              className="w-56 rounded-md border border-gray-300 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-56 rounded-md border border-white/10 py-1.5 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
           <Link
@@ -95,53 +95,53 @@ export function TemplatesList({ templates }: { templates: LetterTemplate[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-16 text-center">
-          <FileText className="h-8 w-8 text-gray-300" />
-          <p className="mt-3 text-sm text-gray-500">No templates found.</p>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-[#1a1a2e] px-6 py-16 text-center">
+          <FileText className="h-8 w-8 text-slate-600" />
+          <p className="mt-3 text-sm text-slate-500">No templates found.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((t) => (
-            <div key={t.id} className="flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div key={t.id} className="flex flex-col rounded-lg border border-white/10 bg-[#1a1a2e] p-4 shadow-sm">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-gray-900">{t.name}</p>
+                  <p className="truncate font-medium text-slate-100">{t.name}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400">
                       {LETTER_TYPE_LABEL.get(t.letter_type) ?? t.letter_type}
                     </span>
                     {t.is_system ? (
-                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                      <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
                         System
                       </span>
                     ) : (
-                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
                         Custom
                       </span>
                     )}
                     {!t.is_active && (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-400">
+                      <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-500">
                         Inactive
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-              {t.description && <p className="mt-2 line-clamp-2 text-sm text-gray-500">{t.description}</p>}
-              <div className="mt-3 flex items-center gap-1 border-t border-gray-100 pt-3">
+              {t.description && <p className="mt-2 line-clamp-2 text-sm text-slate-500">{t.description}</p>}
+              <div className="mt-3 flex items-center gap-1 border-t border-white/[0.06] pt-3">
                 <button
                   onClick={() => setViewing(t)}
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 hover:bg-white/[0.03]"
                 >
                   <Eye className="h-3.5 w-3.5" /> View
                 </button>
                 {!t.is_system && (
                   <Link
                     href={`/templates/${t.id}/edit`}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 hover:bg-white/[0.03]"
                   >
                     <Pencil className="h-3.5 w-3.5" /> Edit
                   </Link>
@@ -149,7 +149,7 @@ export function TemplatesList({ templates }: { templates: LetterTemplate[] }) {
                 <button
                   disabled={busyId === t.id}
                   onClick={() => handleDuplicate(t)}
-                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 hover:bg-white/[0.03] disabled:opacity-50"
                 >
                   <Copy className="h-3.5 w-3.5" /> Duplicate
                 </button>
@@ -157,7 +157,7 @@ export function TemplatesList({ templates }: { templates: LetterTemplate[] }) {
                   <button
                     disabled={busyId === t.id}
                     onClick={() => handleDelete(t)}
-                    className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Delete
                   </button>

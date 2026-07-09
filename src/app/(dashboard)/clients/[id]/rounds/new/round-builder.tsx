@@ -108,7 +108,7 @@ export function RoundBuilder({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
         <EmptyState
           icon={FileWarning}
           title="No items available to dispute"
@@ -129,13 +129,13 @@ export function RoundBuilder({
   return (
     <div className="space-y-6 pb-24">
       {/* Round number banner */}
-      <div className="flex items-center gap-4 rounded-lg border border-blue-200 bg-blue-50 px-5 py-4">
+      <div className="flex items-center gap-4 rounded-lg border border-blue-500/30 bg-blue-500/10 px-5 py-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600 text-lg font-semibold text-white">
           {roundNumber}
         </div>
         <div>
-          <h3 className="font-semibold text-gray-900">Round {roundNumber}</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="font-semibold text-slate-100">Round {roundNumber}</h3>
+          <p className="text-sm text-slate-400">
             Select the items to dispute this round. The round number is assigned
             automatically.
           </p>
@@ -144,18 +144,18 @@ export function RoundBuilder({
 
       {/* Global select all */}
       <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+        <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
           <input
             type="checkbox"
             checked={allSelected}
             onChange={(e) => toggleAll(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="h-4 w-4 rounded border-white/10 text-blue-400 focus:ring-blue-500"
           />
           Select all ({items.length})
         </label>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           Round {roundNumber} suggestion:{" "}
-          <span className="font-medium text-gray-700">
+          <span className="font-medium text-slate-300">
             {roundNumber === 1
               ? "Initial Dispute for all items"
               : "Method of Verification / Escalation based on prior results"}
@@ -171,7 +171,7 @@ export function RoundBuilder({
           return (
             <div
               key={group.bureau}
-              className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+              className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm"
             >
               <div
                 className={cn(
@@ -185,24 +185,24 @@ export function RoundBuilder({
                   <span className={cn("text-sm font-semibold", style.text)}>
                     {group.label}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-slate-500">
                     ({group.items.length})
                   </span>
                 </span>
-                <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-400">
                   <input
                     type="checkbox"
                     checked={groupSelected}
                     onChange={(e) =>
                       toggleGroup(group.bureau, e.target.checked)
                     }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-white/10 text-blue-400 focus:ring-blue-500"
                   />
                   Select all
                 </label>
               </div>
 
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-white/[0.06]">
                 {group.items.map((item) => {
                   const isSelected = !!selected[item.id];
                   return (
@@ -220,23 +220,23 @@ export function RoundBuilder({
                           onChange={(e) =>
                             toggleItem(item.id, e.target.checked)
                           }
-                          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="mt-0.5 h-4 w-4 rounded border-white/10 text-blue-400 focus:ring-blue-500"
                         />
                         <span className="min-w-0">
                           <span className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium text-gray-900">
+                            <span className="font-medium text-slate-100">
                               {item.creditor_name}
                             </span>
                             <Badge status={item.dispute_status} />
                             {item.previous_result === "verified" &&
                               item.previous_round && (
-                                <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                                <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
                                   Previously Verified — Round{" "}
                                   {item.previous_round}
                                 </span>
                               )}
                           </span>
-                          <span className="mt-0.5 block text-xs text-gray-500">
+                          <span className="mt-0.5 block text-xs text-slate-500">
                             {getNegativeTypeLabel(item.negative_type)}
                             {item.balance != null
                               ? ` · ${formatCurrency(item.balance)}`
@@ -270,16 +270,16 @@ export function RoundBuilder({
       </div>
 
       {/* Sticky review / submit bar */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-200 bg-white/95 backdrop-blur md:pl-64">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-white/95 backdrop-blur md:pl-64">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
           <div className="flex items-center gap-2 text-sm">
-            <Layers className="h-4 w-4 text-gray-400" />
-            <span className="text-gray-700">
+            <Layers className="h-4 w-4 text-slate-500" />
+            <span className="text-slate-300">
               {selectedCount === 0 ? (
                 "No items selected"
               ) : (
                 <>
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-slate-100">
                     Round {roundNumber}
                   </span>{" "}
                   — {selectedCount} item{selectedCount === 1 ? "" : "s"} across{" "}

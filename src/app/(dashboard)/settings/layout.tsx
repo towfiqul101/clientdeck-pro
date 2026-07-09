@@ -8,8 +8,8 @@ export default function SettingsLayout({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-gray-900">Settings</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-base font-semibold text-slate-100">Settings</h2>
+        <p className="text-sm text-slate-500">
           Manage your agency profile, integrations, branding, and billing.
         </p>
       </div>

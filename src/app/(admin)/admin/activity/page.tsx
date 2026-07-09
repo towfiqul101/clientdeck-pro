@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 const ACTORS: ActorType[] = ["system", "staff", "client", "ghl", "stripe"];
 
 const field =
-  "rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "rounded-md border border-white/10 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
 const ACTOR_COLOR: Record<string, string> = {
-  system: "bg-gray-100 text-gray-700",
-  staff: "bg-blue-100 text-blue-700",
-  client: "bg-green-100 text-green-700",
-  ghl: "bg-purple-100 text-purple-700",
-  stripe: "bg-indigo-100 text-indigo-700",
+  system: "bg-white/[0.06] text-slate-300",
+  staff: "bg-blue-500/15 text-blue-400",
+  client: "bg-green-500/15 text-green-400",
+  ghl: "bg-purple-500/15 text-purple-400",
+  stripe: "bg-indigo-500/15 text-indigo-400",
 };
 
 function HealthDot({
@@ -36,8 +36,8 @@ function HealthDot({
   return (
     <div className="flex items-center gap-2">
       <span className={cn("h-2.5 w-2.5 rounded-full", dot)} />
-      <span className="text-sm text-gray-600">
-        <span className="font-medium text-gray-900">{label}:</span> {ok ? okText : badText}
+      <span className="text-sm text-slate-400">
+        <span className="font-medium text-slate-100">{label}:</span> {ok ? okText : badText}
       </span>
     </div>
   );
@@ -131,16 +131,16 @@ export default async function AdminActivityPage({
           />
         </div>
         {ghlFailures > 0 && (
-          <div className="border-t border-amber-100 bg-amber-50/60 px-5 py-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+          <div className="border-t border-amber-500/20 bg-amber-50/60 px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
               <AlertTriangle className="h-4 w-4" />
               {ghlFailures} GHL sync failure{ghlFailures === 1 ? "" : "s"} in the last 24 hours
             </div>
-            <ul className="mt-2 space-y-1 text-xs text-amber-700">
+            <ul className="mt-2 space-y-1 text-xs text-amber-400">
               {failedSyncs.map((f, i) => (
                 <li key={i} className="flex flex-wrap gap-x-2">
                   <span className="font-medium">{agencyName.get(f.agency_id) ?? "Unknown agency"}</span>
-                  <span className="text-amber-600">{f.sync_action}</span>
+                  <span className="text-amber-400">{f.sync_action}</span>
                   {f.error_message && <span className="text-amber-500">— {f.error_message}</span>}
                   <span className="ml-auto text-amber-400">
                     {new Date(f.attempted_at).toLocaleString("en-US", {
@@ -162,7 +162,7 @@ export default async function AdminActivityPage({
           title="System Activity"
           description={`${entries.length} recent entries across all agencies.`}
         />
-        <form method="GET" className="flex flex-wrap items-center gap-3 border-b border-gray-100 px-5 py-3">
+        <form method="GET" className="flex flex-wrap items-center gap-3 border-b border-white/[0.06] px-5 py-3">
           <select name="agency" defaultValue={agencyFilter} className={field}>
             <option value="">All agencies</option>
             {(agencyRows ?? []).map((a) => (
@@ -195,11 +195,11 @@ export default async function AdminActivityPage({
         </form>
 
         {entries.length === 0 ? (
-          <div className="px-5 py-10 text-center text-sm text-gray-500">
+          <div className="px-5 py-10 text-center text-sm text-slate-500">
             No activity matches these filters.
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-white/[0.06]">
             {entries.map((e) => (
               <li key={e.id} className="px-5 py-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -207,20 +207,20 @@ export default async function AdminActivityPage({
                     <span
                       className={cn(
                         "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase",
-                        ACTOR_COLOR[e.actor_type] ?? "bg-gray-100 text-gray-600"
+                        ACTOR_COLOR[e.actor_type] ?? "bg-white/[0.06] text-slate-400"
                       )}
                     >
                       {e.actor_type}
                     </span>
                   )}
-                  <span className="text-sm font-medium text-gray-900">{e.action}</span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-sm font-medium text-slate-100">{e.action}</span>
+                  <span className="text-xs text-slate-500">
                     · {agencyName.get(e.agency_id) ?? "—"}
                     {e.client_id && clientName.get(e.client_id)
                       ? ` · ${clientName.get(e.client_id)}`
                       : ""}
                   </span>
-                  <span className="ml-auto text-xs text-gray-400">
+                  <span className="ml-auto text-xs text-slate-500">
                     {new Date(e.created_at).toLocaleString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -230,7 +230,7 @@ export default async function AdminActivityPage({
                   </span>
                 </div>
                 {e.description && (
-                  <p className="mt-0.5 text-sm text-gray-500">{e.description}</p>
+                  <p className="mt-0.5 text-sm text-slate-500">{e.description}</p>
                 )}
               </li>
             ))}

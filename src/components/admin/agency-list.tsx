@@ -27,17 +27,17 @@ export function AgencyList({
   const [selected, setSelected] = useState<string | null>(null);
 
   if (agencies.length === 0) {
-    return <div className="px-5 py-10 text-center text-sm text-gray-500">{emptyLabel}</div>;
+    return <div className="px-5 py-10 text-center text-sm text-slate-500">{emptyLabel}</div>;
   }
 
   return (
     <>
-      <ul className="divide-y divide-gray-100">
+      <ul className="divide-y divide-white/[0.06]">
         {agencies.map((a) => (
           <li key={a.id}>
             <button
               onClick={() => setSelected(a.id)}
-              className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-gray-50"
+              className="flex w-full items-center gap-3 px-5 py-3 text-left transition-colors hover:bg-white/[0.03]"
             >
               <span
                 className={cn(
@@ -48,15 +48,15 @@ export function AgencyList({
                 {initials(a.name)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-gray-900">{a.name}</p>
-                <p className="truncate text-xs text-gray-500">
+                <p className="truncate text-sm font-semibold text-slate-100">{a.name}</p>
+                <p className="truncate text-xs text-slate-500">
                   {a.owner_email} · {formatDate(a.created_at)}
                 </p>
               </div>
-              <span className="hidden shrink-0 text-xs capitalize text-gray-500 sm:block">
+              <span className="hidden shrink-0 text-xs capitalize text-slate-500 sm:block">
                 {a.plan}
               </span>
-              <span className="flex shrink-0 items-center gap-1.5 text-xs capitalize text-gray-600">
+              <span className="flex shrink-0 items-center gap-1.5 text-xs capitalize text-slate-400">
                 <span className={cn("h-2 w-2 rounded-full", statusDotClass(a.plan_status))} />
                 {a.plan_status.replace("_", " ")}
               </span>

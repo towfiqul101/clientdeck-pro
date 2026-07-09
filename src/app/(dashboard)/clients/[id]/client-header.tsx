@@ -23,37 +23,37 @@ function BureauScore({
   label,
   start,
   current,
-  borderTopClass,
+  tint,
 }: {
   label: string;
   start: number | null;
   current: number | null;
-  borderTopClass: string;
+  tint: string;
 }) {
   const change = scoreChange(start, current);
   return (
     <div
       className={cn(
-        "rounded-lg border border-t-2 border-gray-200 bg-gray-50 px-3 py-2",
-        borderTopClass
+        "rounded-xl border border-t-2 px-3 py-2 backdrop-blur-sm",
+        tint
       )}
     >
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
         {label}
       </p>
       <div className="mt-1 flex items-center gap-1.5">
-        <span className="text-sm text-gray-400 tabular-nums">
+        <span className="text-sm text-slate-500 tabular-nums">
           {start ?? "—"}
         </span>
-        <ArrowRight className="h-3 w-3 text-gray-300" />
-        <span className="text-lg font-semibold text-gray-900 tabular-nums">
+        <ArrowRight className="h-3 w-3 text-slate-600" />
+        <span className="text-lg font-semibold text-white tabular-nums">
           {current ?? "—"}
         </span>
         {change.direction !== "same" && (
           <span
             className={cn(
               "ml-0.5 inline-flex items-center gap-0.5 text-xs font-medium",
-              change.direction === "up" ? "text-green-600" : "text-red-600"
+              change.direction === "up" ? "text-emerald-400" : "text-red-400"
             )}
           >
             {change.direction === "up" ? (
@@ -97,26 +97,26 @@ export function ClientHeader({
     <div className="space-y-5">
       <Link
         href="/clients"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
+        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-300"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to clients
       </Link>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-blue-500/[0.05] p-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <h1 className="text-2xl font-semibold text-white">
               {client.first_name} {client.last_name}
             </h1>
             <Badge status={client.status} />
           </div>
           {(client.email || client.phone) && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-slate-400">
               {[client.email, client.phone].filter(Boolean).join(" · ")}
             </p>
           )}
-          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+          <div className="flex items-center gap-1.5 text-sm text-slate-400">
             <span>Assigned to:</span>
             <AssignClient
               clientId={client.id}
@@ -148,10 +148,10 @@ export function ClientHeader({
       {(client.payment_status === "failed" || client.payment_status === "paused") && (
         <div
           className={cn(
-            "flex items-start gap-3 rounded-lg border p-4 text-sm",
+            "flex items-start gap-3 rounded-xl border p-4 text-sm",
             client.payment_status === "failed"
-              ? "border-red-200 bg-red-50 text-red-800"
-              : "border-amber-200 bg-amber-50 text-amber-800"
+              ? "border-red-500/30 bg-red-500/10 text-red-300"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-300"
           )}
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -176,12 +176,12 @@ export function ClientHeader({
       )}
 
       {client.status === "completed" && (
-        <div className="flex flex-col gap-3 rounded-lg border border-green-200 bg-green-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
-            <div className="text-sm text-green-900">
+            <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+            <div className="text-sm text-emerald-300">
               <p className="font-medium">Case completed — goal reached!</p>
-              <p className="mt-0.5 text-green-800">
+              <p className="mt-0.5 text-emerald-400/80">
                 {client.total_items_deleted} of {totalItems} items resolved.
                 Ask them for a Google review while the win is fresh.
               </p>
@@ -197,37 +197,37 @@ export function ClientHeader({
           label="Equifax"
           start={client.score_eq_start}
           current={client.score_eq_current}
-          borderTopClass="border-t-blue-500"
+          tint="border-violet-500/20 border-t-violet-500 bg-violet-500/10"
         />
         <BureauScore
           label="Experian"
           start={client.score_exp_start}
           current={client.score_exp_current}
-          borderTopClass="border-t-orange-500"
+          tint="border-orange-500/20 border-t-orange-500 bg-orange-500/10"
         />
         <BureauScore
           label="TransUnion"
           start={client.score_tu_start}
           current={client.score_tu_current}
-          borderTopClass="border-t-green-500"
+          tint="border-emerald-500/20 border-t-emerald-500 bg-emerald-500/10"
         />
       </div>
 
       {/* Progress */}
       <div>
         <div className="mb-1.5 flex items-center justify-between text-sm">
-          <span className="text-gray-600">
+          <span className="text-slate-400">
             {client.total_items_deleted} of {totalItems} items resolved
           </span>
-          <span className="font-medium text-gray-900">{deletedPct}%</span>
+          <span className="font-medium text-white">{deletedPct}%</span>
         </div>
-        <div className="flex h-2 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="flex h-2 w-full overflow-hidden rounded-full bg-white/10">
           <div
-            className="h-full bg-green-500 transition-all duration-150 ease-in-out"
+            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-150 ease-in-out"
             style={{ width: `${deletedPct}%` }}
           />
           <div
-            className="h-full bg-gray-300 transition-all duration-150 ease-in-out"
+            className="h-full bg-white/5 transition-all duration-150 ease-in-out"
             style={{ width: `${remainingPct}%` }}
           />
         </div>

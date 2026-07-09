@@ -21,10 +21,10 @@ export default async function PortalBillingPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
+      <h1 className="text-2xl font-bold text-slate-100">Billing</h1>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             {error === "no_customer"
@@ -35,31 +35,31 @@ export default async function PortalBillingPage({
       )}
 
       {/* Plan card */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-white/10 bg-[#1a1a2e] p-5 shadow-sm">
         <div className="flex items-center gap-3">
           <span
             className="flex h-10 w-10 items-center justify-center rounded-lg"
             style={{
-              backgroundColor: "color-mix(in srgb, var(--brand) 12%, white)",
+              backgroundColor: "color-mix(in srgb, var(--brand) 22%, #1a1a2e)",
             }}
           >
             <CreditCard className="h-5 w-5" style={{ color: "var(--brand)" }} />
           </span>
           <div>
-            <p className="font-semibold text-gray-900">Credit Repair Service</p>
-            <p className="text-sm text-gray-500">
+            <p className="font-semibold text-slate-100">Credit Repair Service</p>
+            <p className="text-sm text-slate-500">
               {formatCurrency(client.monthly_fee)}/month
             </p>
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4 text-sm">
-          <span className="text-gray-500">Payment status</span>
+        <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-4 text-sm">
+          <span className="text-slate-500">Payment status</span>
           <Badge status={client.payment_status} />
         </div>
         <div className="mt-2 flex items-center justify-between text-sm">
-          <span className="text-gray-500">Member since</span>
-          <span className="font-medium text-gray-900">
+          <span className="text-slate-500">Member since</span>
+          <span className="font-medium text-slate-100">
             {formatDate(client.service_start_date)}
           </span>
         </div>
@@ -76,10 +76,10 @@ export default async function PortalBillingPage({
           Manage Payment Method
         </a>
       ) : (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
+        <div className="rounded-xl border border-white/10 bg-[#1a1a2e] p-4 text-sm text-slate-400">
           To update your billing, contact your credit specialist:
           <br />
-          <span className="font-medium text-gray-900">{contact}</span>
+          <span className="font-medium text-slate-100">{contact}</span>
         </div>
       )}
     </div>

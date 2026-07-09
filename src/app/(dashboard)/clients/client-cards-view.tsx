@@ -35,11 +35,11 @@ function BureauCell({
   const change = scoreChange(start, current);
   return (
     <div className="text-center">
-      <p className="font-mono text-sm font-semibold text-gray-900">
+      <p className="font-mono text-sm font-semibold text-slate-100">
         {current ?? "—"}
       </p>
       {change.direction === "up" && (
-        <p className="flex items-center justify-center gap-0.5 text-xs text-green-600">
+        <p className="flex items-center justify-center gap-0.5 text-xs text-emerald-400">
           <ArrowUp className="h-3 w-3" />+{change.value}
         </p>
       )}
@@ -61,17 +61,17 @@ export function ClientCardsView({ clients }: ClientCardsViewProps) {
           <Link
             key={client.id}
             href={`/clients/${client.id}`}
-            className="block rounded-xl border border-gray-200 bg-white shadow-[var(--shadow-card)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)]"
+            className="glass-card block"
           >
-            <div className="flex items-center gap-3 border-b border-gray-100 p-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-medium text-blue-700">
+            <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-sm font-medium text-violet-300">
                 {getInitials(client.first_name, client.last_name)}
               </span>
               <div className="min-w-0">
-                <p className="truncate font-medium text-gray-900">
+                <p className="truncate font-medium text-slate-100">
                   {client.first_name} {client.last_name}
                 </p>
-                <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                <p className="flex items-center gap-1.5 text-xs text-slate-500">
                   <Badge status={client.status} size="sm" />
                   <span>
                     ·{" "}
@@ -82,18 +82,18 @@ export function ClientCardsView({ clients }: ClientCardsViewProps) {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 border-b border-gray-100 p-4">
+            <div className="grid grid-cols-3 gap-2 border-b border-white/[0.06] p-4">
               <BureauCell start={client.score_eq_start} current={client.score_eq_current} />
               <BureauCell start={client.score_exp_start} current={client.score_exp_current} />
               <BureauCell start={client.score_tu_start} current={client.score_tu_current} />
             </div>
             <div className="p-4">
-              <p className="mb-1.5 text-xs text-gray-500">
+              <p className="mb-1.5 text-xs text-slate-500">
                 {client.total_items_deleted} of {client.total_items_current} items done
               </p>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                 <div
-                  className="h-full rounded-full bg-blue-600"
+                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-violet-700"
                   style={{ width: `${resolved}%` }}
                 />
               </div>

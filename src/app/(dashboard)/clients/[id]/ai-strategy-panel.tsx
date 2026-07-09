@@ -76,16 +76,16 @@ export function AIStrategyPanel({ clientId }: { clientId: string }) {
         size="lg"
       >
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin" />
             Analyzing dispute history and generating recommendations…
           </div>
         )}
         {!loading && error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-400">{error}</p>
         )}
         {!loading && !error && strategy && (
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-900">
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-100">
             {strategy}
           </p>
         )}

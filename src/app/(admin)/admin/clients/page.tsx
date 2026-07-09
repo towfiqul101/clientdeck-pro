@@ -6,7 +6,7 @@ import { CLIENT_STATUSES } from "@/lib/constants";
 import type { Client } from "@/types";
 
 const field =
-  "rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "rounded-md border border-white/10 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
 export default async function AdminClientsPage({
   searchParams,
@@ -48,7 +48,7 @@ export default async function AdminClientsPage({
           title="All Clients"
           description={`${clients.length} across all agencies`}
         />
-        <form method="GET" className="flex flex-wrap items-center gap-3 border-b border-gray-100 px-5 py-3">
+        <form method="GET" className="flex flex-wrap items-center gap-3 border-b border-white/[0.06] px-5 py-3">
           <select name="agency" defaultValue={agencyFilter} className={field}>
             <option value="">All agencies</option>
             {(agencyRows ?? []).map((a) => (
@@ -82,7 +82,7 @@ export default async function AdminClientsPage({
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-sm">
-            <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+            <thead className="border-b border-white/10 text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-5 py-3 font-medium">Client</th>
                 <th className="px-5 py-3 font-medium">Agency</th>
@@ -93,23 +93,23 @@ export default async function AdminClientsPage({
                 <th className="px-5 py-3 font-medium">Created</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/[0.06]">
               {clients.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-gray-500">
+                  <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
                     No clients found.
                   </td>
                 </tr>
               ) : (
                 clients.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-medium text-gray-900">
+                  <tr key={c.id} className="hover:bg-white/[0.03]">
+                    <td className="px-5 py-3 font-medium text-slate-100">
                       {c.first_name} {c.last_name}
                     </td>
                     <td className="px-5 py-3">
                       <Link
                         href={`/admin/agencies?open=${c.agency_id}`}
-                        className="text-gray-600 hover:text-blue-600"
+                        className="text-slate-400 hover:text-blue-400"
                       >
                         {agencyName.get(c.agency_id as string) ?? "—"}
                       </Link>
@@ -124,15 +124,15 @@ export default async function AdminClientsPage({
                         {(c.status as string)?.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-5 py-3 font-mono text-xs text-gray-600">
+                    <td className="px-5 py-3 font-mono text-xs text-slate-400">
                       {c.score_eq_current ?? "—"}/{c.score_exp_current ?? "—"}/
                       {c.score_tu_current ?? "—"}
                     </td>
-                    <td className="px-5 py-3 text-gray-600">{c.current_round ?? 0}</td>
-                    <td className="px-5 py-3 text-gray-600">
+                    <td className="px-5 py-3 text-slate-400">{c.current_round ?? 0}</td>
+                    <td className="px-5 py-3 text-slate-400">
                       {c.total_items_deleted ?? 0}
                     </td>
-                    <td className="px-5 py-3 text-gray-500">
+                    <td className="px-5 py-3 text-slate-500">
                       {c.created_at ? formatDate(c.created_at) : "—"}
                     </td>
                   </tr>

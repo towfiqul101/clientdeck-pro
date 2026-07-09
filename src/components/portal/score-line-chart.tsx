@@ -21,7 +21,7 @@ export interface ScorePoint {
 export function ScoreLineChart({ data }: { data: ScorePoint[] }) {
   if (data.length < 2) {
     return (
-      <p className="py-8 text-center text-sm text-gray-500">
+      <p className="py-8 text-center text-sm text-slate-500">
         Your score chart will appear after your first round update.
       </p>
     );
@@ -31,36 +31,39 @@ export function ScoreLineChart({ data }: { data: ScorePoint[] }) {
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.06)" />
           <XAxis
             dataKey="label"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: "#6b7280" }}
+            tick={{ fontSize: 11, fill: "#94a3b8" }}
           />
           <YAxis
             domain={[300, 850]}
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: "#6b7280" }}
+            tick={{ fontSize: 11, fill: "#94a3b8" }}
             width={40}
           />
           <Tooltip
             contentStyle={{
               borderRadius: 8,
-              border: "1px solid #e5e7eb",
+              border: "1px solid rgba(255,255,255,0.1)",
+              background: "#1a1a2e",
+              color: "#f1f5f9",
               fontSize: 13,
             }}
+            labelStyle={{ color: "#94a3b8" }}
           />
           <Legend
             verticalAlign="bottom"
             height={28}
-            wrapperStyle={{ fontSize: 12 }}
+            wrapperStyle={{ fontSize: 12, color: "#94a3b8" }}
           />
           <Line
             type="monotone"
             dataKey="Equifax"
-            stroke="#3b82f6"
+            stroke="#8b5cf6"
             strokeWidth={2}
             dot={{ r: 3 }}
             connectNulls

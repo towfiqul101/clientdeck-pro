@@ -38,12 +38,12 @@ export function DocumentsPanel() {
     <Card>
       <div className="space-y-3 p-6">
         <div className="flex items-center gap-2">
-          <Upload className="h-5 w-5 text-blue-600" />
-          <h3 className="text-base font-semibold text-gray-900">
+          <Upload className="h-5 w-5 text-blue-400" />
+          <h3 className="text-base font-semibold text-slate-100">
             Backfill Existing Documents
           </h3>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           Sync all existing client documents to Drive. This may take a few
           minutes for large libraries — you can run it again if it doesn&apos;t
           finish in one pass.
@@ -56,7 +56,7 @@ export function DocumentsPanel() {
           {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           {running ? "Syncing…" : "Start Backfill"}
         </button>
-        {result && <p className="text-sm font-medium text-gray-700">{result}</p>}
+        {result && <p className="text-sm font-medium text-slate-300">{result}</p>}
       </div>
     </Card>
   );

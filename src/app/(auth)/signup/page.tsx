@@ -56,16 +56,16 @@ export default function SignupPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-slate-100">
           Create your agency account
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           Start managing disputes in minutes. 14-day free trial.
         </p>
       </div>
 
       {errorMessage && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             {errorMessage}
@@ -143,11 +143,11 @@ export default function SignupPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-sm text-slate-500">
         Already have an account?{" "}
         <Link
           href="/login"
-          className="font-medium text-blue-600 hover:text-blue-700"
+          className="font-medium text-blue-400 hover:text-blue-400"
         >
           Sign in
         </Link>

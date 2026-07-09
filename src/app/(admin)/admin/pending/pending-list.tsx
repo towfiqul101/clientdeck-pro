@@ -43,7 +43,7 @@ export function PendingList({ rows }: { rows: PendingRow[] }) {
 
   if (rows.length === 0) {
     return (
-      <div className="px-5 py-12 text-center text-sm text-gray-500">
+      <div className="px-5 py-12 text-center text-sm text-slate-500">
         🎉 Nobody is stuck in setup right now.
       </div>
     );
@@ -53,7 +53,7 @@ export function PendingList({ rows }: { rows: PendingRow[] }) {
     <>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
-          <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+          <thead className="border-b border-white/10 text-left text-xs uppercase text-slate-500">
             <tr>
               <th className="px-5 py-3 font-medium">Agency</th>
               <th className="px-5 py-3 font-medium">Signup</th>
@@ -63,9 +63,9 @@ export function PendingList({ rows }: { rows: PendingRow[] }) {
               <th className="px-5 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-white/[0.06]">
             {rows.map((r) => (
-              <tr key={r.id} className="hover:bg-gray-50">
+              <tr key={r.id} className="hover:bg-white/[0.03]">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2.5">
                     <span
@@ -77,14 +77,14 @@ export function PendingList({ rows }: { rows: PendingRow[] }) {
                       {initials(r.name)}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-gray-900">{r.name}</p>
-                      <p className="truncate text-xs text-gray-500">{r.owner_email}</p>
+                      <p className="truncate font-medium text-slate-100">{r.name}</p>
+                      <p className="truncate text-xs text-slate-500">{r.owner_email}</p>
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-3 text-gray-500">{formatDate(r.created_at)}</td>
+                <td className="px-5 py-3 text-slate-500">{formatDate(r.created_at)}</td>
                 <td className="px-5 py-3">
-                  <span className={cn("font-medium", r.daysSince > 4 ? "text-red-600" : "text-gray-700")}>
+                  <span className={cn("font-medium", r.daysSince > 4 ? "text-red-400" : "text-slate-300")}>
                     {r.daysSince}d
                   </span>
                 </td>
@@ -92,19 +92,19 @@ export function PendingList({ rows }: { rows: PendingRow[] }) {
                   <span
                     className={cn(
                       "rounded-full px-2 py-0.5 text-xs font-medium",
-                      r.ghlConnected ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+                      r.ghlConnected ? "bg-green-500/10 text-green-400" : "bg-amber-500/10 text-amber-400"
                     )}
                   >
                     {r.ghlConnected ? "Yes" : "No"}
                   </span>
                 </td>
-                <td className="px-5 py-3 text-gray-600">{r.clientCount}</td>
+                <td className="px-5 py-3 text-slate-400">{r.clientCount}</td>
                 <td className="px-5 py-3">
                   <div className="flex items-center justify-end gap-2">
                     <button
                       disabled={sending === r.id}
                       onClick={() => sendReminder(r.id)}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-[#1a1a2e] px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/[0.03] disabled:opacity-50"
                     >
                       {sending === r.id ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />

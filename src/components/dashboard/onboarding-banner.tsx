@@ -71,13 +71,13 @@ export function OnboardingBanner({
 
   if (showCongrats) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
-        <PartyPopper className="h-5 w-5 text-green-600" />
+      <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+        <PartyPopper className="h-5 w-5 text-emerald-400" />
         <div>
-          <p className="text-sm font-semibold text-green-900">
+          <p className="text-sm font-semibold text-emerald-300">
             You&apos;re all set up! 🎉
           </p>
-          <p className="text-sm text-green-700">
+          <p className="text-sm text-emerald-400/80">
             ClientDeck Pro is fully configured. This message disappears
             automatically.
           </p>
@@ -87,10 +87,17 @@ export function OnboardingBanner({
   }
 
   return (
-    <div className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-violet-700 to-blue-800 shadow-[0_8px_30px_rgba(139,92,246,0.25)]">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          background:
+            "radial-gradient(ellipse at 85% 15%, rgba(37,99,235,0.6) 0%, transparent 55%)",
+        }}
+      />
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left"
+        className="relative z-10 flex w-full items-center justify-between gap-3 p-4 text-left"
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-white">
           <Rocket className="h-4 w-4 text-white" />
@@ -108,8 +115,8 @@ export function OnboardingBanner({
         </span>
       </button>
 
-      <div className="px-4">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-white/30">
+      <div className="relative z-10 px-4">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-white/20">
           <div
             className="h-full rounded-full bg-white transition-all"
             style={{ width: `${pct}%` }}
@@ -118,7 +125,7 @@ export function OnboardingBanner({
       </div>
 
       {open && (
-        <ul className="space-y-1 p-4">
+        <ul className="relative z-10 space-y-1 p-4">
           {rows.map((row) => (
             <li
               key={row.key}
@@ -153,7 +160,7 @@ export function OnboardingBanner({
       )}
 
       {open && allComplete && (
-        <div className="border-t border-white/20 p-3 text-right">
+        <div className="relative z-10 border-t border-white/20 p-3 text-right">
           <button
             onClick={() => router.refresh()}
             className="text-xs font-medium text-white hover:text-blue-100"

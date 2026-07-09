@@ -198,7 +198,7 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           />
           <button
             onClick={() => setGrouped((g) => !g)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300 hover:bg-white/10"
           >
             {grouped ? (
               <List className="h-4 w-4" />
@@ -213,10 +213,10 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           <button
             onClick={() => setQuickAdd((q) => !q)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium",
+              "inline-flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-sm font-medium",
               quickAdd
-                ? "border-blue-600 bg-blue-50 text-blue-700"
-                : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                ? "border-violet-500/40 bg-violet-500/15 text-violet-300"
+                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
             )}
           >
             <Zap className="h-4 w-4" />
@@ -224,7 +224,7 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           </button>
           <button
             onClick={() => setParserOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-blue-600 bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-blue-500/40 bg-blue-500/15 px-3 py-2 text-sm font-medium text-blue-300 hover:bg-blue-500/25"
           >
             <Bot className="h-4 w-4" />
             Parse Credit Report with AI
@@ -237,22 +237,22 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
       </div>
 
       {/* Totals summary */}
-      <div className="flex flex-wrap gap-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
-        <span className="font-medium text-gray-900">
+      <div className="flex flex-wrap gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm">
+        <span className="font-medium text-slate-100">
           {totals.total} item{totals.total === 1 ? "" : "s"} total
         </span>
-        <span className="text-green-600">{totals.deleted} deleted</span>
-        <span className="text-blue-600">{totals.inDispute} in dispute</span>
-        <span className="text-gray-500">
+        <span className="text-emerald-400">{totals.deleted} deleted</span>
+        <span className="text-blue-400">{totals.inDispute} in dispute</span>
+        <span className="text-slate-500">
           {totals.notDisputed} not yet disputed
         </span>
       </div>
 
       {/* Quick add grid */}
       {quickAdd && (
-        <div className="overflow-x-auto rounded-lg border border-blue-200 bg-blue-50/40 p-3">
+        <div className="overflow-x-auto rounded-xl border border-violet-500/30 bg-violet-500/[0.06] p-3">
           <table className="min-w-full text-xs">
-            <thead className="text-left text-gray-500">
+            <thead className="text-left text-slate-500">
               <tr>
                 <th className="px-1 py-1 font-medium">Bureau</th>
                 <th className="px-1 py-1 font-medium">Creditor</th>
@@ -321,7 +321,7 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
       )}
 
       {/* Items table */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="glass-panel overflow-hidden">
         {filtered.length === 0 ? (
           <EmptyState
             icon={FileWarning}
@@ -342,8 +342,8 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+            <table className="min-w-full divide-y divide-white/[0.06] text-sm">
+              <thead className="bg-white/[0.03] text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Bureau</th>
                   <th className="px-4 py-3">Creditor</th>
@@ -354,7 +354,7 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-white/[0.06]">
                 {rows
                   ? rows.map((group) => (
                       <GroupRows
@@ -482,7 +482,7 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
               }
             />
             <label className="block text-sm">
-              <span className="mb-1 block font-medium text-gray-700">
+              <span className="mb-1 block font-medium text-slate-300">
                 Dispute status
               </span>
               <Select
@@ -518,9 +518,9 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           </>
         }
       >
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-slate-400">
           This permanently removes{" "}
-          <span className="font-medium text-gray-900">
+          <span className="font-medium text-slate-100">
             {deleting?.creditor_name}
           </span>{" "}
           ({deleting && getBureauLabel(deleting.bureau)}). This cannot be undone.
@@ -548,7 +548,7 @@ function ItemRow({
   const style = BUREAU_STYLES[item.bureau];
   const StatusIcon = STATUS_ICONS[item.dispute_status];
   return (
-    <tr className={cn("border-l-4 hover:bg-gray-50", style.border)}>
+    <tr className={cn("border-l-4 hover:bg-white/[0.03]", style.border)}>
       <td className="px-4 py-3">
         <span className="inline-flex items-center gap-1.5">
           <span className={cn("h-2 w-2 rounded-full", style.dot)} />
@@ -558,40 +558,40 @@ function ItemRow({
         </span>
       </td>
       <td className="px-4 py-3">
-        <p className="font-medium text-gray-900">{item.creditor_name}</p>
+        <p className="font-medium text-slate-100">{item.creditor_name}</p>
         {item.account_number_last4 && (
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-slate-500">
             ••••{item.account_number_last4}
           </p>
         )}
       </td>
-      <td className="px-4 py-3 text-gray-600">
+      <td className="px-4 py-3 text-slate-400">
         {getNegativeTypeLabel(item.negative_type)}
       </td>
-      <td className="px-4 py-3 text-gray-700">
+      <td className="px-4 py-3 text-slate-300">
         {item.balance != null ? formatCurrency(item.balance) : "—"}
       </td>
       <td className="px-4 py-3">
-        <span className="inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-1 text-slate-400">
           {StatusIcon && <StatusIcon className="h-3 w-3" />}
           <Badge status={item.dispute_status} />
         </span>
       </td>
-      <td className="px-4 py-3 text-gray-600">
+      <td className="px-4 py-3 text-slate-400">
         {item.round_disputed ? `R${item.round_disputed}` : "—"}
       </td>
       <td className="px-4 py-3">
         <div className="flex justify-end gap-1">
           <button
             onClick={onEdit}
-            className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+            className="rounded p-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200"
             aria-label="Edit"
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button
             onClick={onDelete}
-            className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+            className="rounded p-1.5 text-slate-400 hover:bg-white/5 hover:text-red-400"
             aria-label="Delete"
           >
             <Trash2 className="h-4 w-4" />

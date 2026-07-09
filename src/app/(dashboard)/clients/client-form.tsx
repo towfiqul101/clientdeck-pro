@@ -53,8 +53,8 @@ function Section({
 }) {
   return (
     <Card>
-      <div className="border-b border-gray-200 px-6 py-4">
-        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      <div className="border-b border-white/10 px-6 py-4">
+        <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
       </div>
       <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">{children}</div>
     </Card>
@@ -143,7 +143,7 @@ export function ClientForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -293,7 +293,7 @@ export function ClientForm({
       <Section title="Service">
         <Field label="Monthly fee" htmlFor="monthly_fee">
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">
               $
             </span>
             <Input
@@ -331,8 +331,8 @@ export function ClientForm({
         <label
           className={`flex items-start gap-3 rounded-lg border p-4 text-sm ${
             ghlConfigured
-              ? "border-gray-200 bg-white"
-              : "border-gray-200 bg-gray-50"
+              ? "border-white/10 bg-[#1a1a2e]"
+              : "border-white/10 bg-white/[0.03]"
           }`}
         >
           <input
@@ -340,13 +340,13 @@ export function ClientForm({
             checked={createInGhl}
             disabled={!ghlConfigured}
             onChange={(e) => setCreateInGhl(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 h-4 w-4 rounded border-white/10 text-blue-400 focus:ring-blue-500"
           />
           <span>
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-slate-100">
               Also create this contact in GoHighLevel
             </span>
-            <span className="block text-gray-500">
+            <span className="block text-slate-500">
               {ghlConfigured
                 ? "Syncs the contact to your connected GHL sub-account."
                 : "Connect GHL in Settings to enable this."}

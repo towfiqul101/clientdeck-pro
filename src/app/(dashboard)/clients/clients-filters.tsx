@@ -21,7 +21,7 @@ const STATUS_PILLS = [
 ];
 
 const selectClass =
-  "rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "input-dark px-3 py-2 text-sm [&>option]:bg-[#1a1a2e]";
 
 export function ClientsFilters({
   members = [],
@@ -70,10 +70,10 @@ export function ClientsFilters({
             type="button"
             onClick={() => pushParams({ status: pill.value })}
             className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150",
+              "rounded-full border px-3 py-1 text-xs font-medium transition-colors duration-150",
               currentStatus === pill.value
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "border-violet-500/30 bg-violet-500/20 text-violet-300"
+                : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
             )}
           >
             {pill.label}
@@ -83,15 +83,15 @@ export function ClientsFilters({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="relative flex-1 sm:min-w-[240px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           {isPending && (
-            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />
+            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-500" />
           )}
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name, email, or phone…"
-            className="w-full rounded-md border border-gray-300 bg-white py-2 pl-9 pr-9 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="input-dark w-full py-2 pl-9 pr-9 text-sm"
           />
         </div>
 
@@ -149,15 +149,15 @@ export function ClientsFilters({
           ))}
         </select>
 
-        <div className="flex items-center gap-1 rounded-md border border-gray-200 p-0.5">
+        <div className="flex items-center gap-1 rounded-[10px] border border-white/10 bg-white/5 p-0.5">
           <button
             type="button"
             onClick={() => pushParams({ view: "" })}
             className={cn(
-              "rounded p-1.5 transition-colors duration-150",
+              "rounded-md p-1.5 transition-colors duration-150",
               currentView !== "cards"
-                ? "bg-gray-100 text-gray-700"
-                : "text-gray-400 hover:text-gray-600"
+                ? "bg-white/10 text-slate-200"
+                : "text-slate-500 hover:text-slate-300"
             )}
             aria-label="Table view"
           >
@@ -167,10 +167,10 @@ export function ClientsFilters({
             type="button"
             onClick={() => pushParams({ view: "cards" })}
             className={cn(
-              "rounded p-1.5 transition-colors duration-150",
+              "rounded-md p-1.5 transition-colors duration-150",
               currentView === "cards"
-                ? "bg-gray-100 text-gray-700"
-                : "text-gray-400 hover:text-gray-600"
+                ? "bg-white/10 text-slate-200"
+                : "text-slate-500 hover:text-slate-300"
             )}
             aria-label="Card view"
           >

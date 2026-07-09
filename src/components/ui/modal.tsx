@@ -48,25 +48,25 @@ export function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6">
-      <div className="fixed inset-0 bg-gray-900/50" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
-          "relative z-10 my-8 w-full rounded-lg bg-white shadow-xl",
+          "relative z-10 my-8 w-full rounded-2xl border border-white/10 bg-[#1a1a2e] shadow-[0_24px_64px_rgba(0,0,0,0.6)]",
           sizes[size]
         )}
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-white/[0.08] px-6 py-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+            <h2 className="text-base font-semibold text-slate-100">{title}</h2>
             {description && (
-              <p className="mt-0.5 text-sm text-gray-500">{description}</p>
+              <p className="mt-0.5 text-sm text-slate-400">{description}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-md p-1 text-slate-400 hover:bg-white/5 hover:text-slate-200"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -74,7 +74,7 @@ export function Modal({
         </div>
         <div className="px-6 py-5">{children}</div>
         {footer && (
-          <div className="flex justify-end gap-2 border-t border-gray-200 px-6 py-4">
+          <div className="flex justify-end gap-2 border-t border-white/[0.08] px-6 py-4">
             {footer}
           </div>
         )}

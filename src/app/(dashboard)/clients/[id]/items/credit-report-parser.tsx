@@ -211,7 +211,7 @@ export function CreditReportParser({
       {phase === "upload" && (
         <div className="space-y-4">
           <label className="block text-sm">
-            <span className="mb-1.5 block font-medium text-gray-700">
+            <span className="mb-1.5 block font-medium text-slate-300">
               Credit bureau
             </span>
             <Select
@@ -236,8 +236,8 @@ export function CreditReportParser({
             className={cn(
               "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors",
               dragOver
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                ? "border-blue-500 bg-blue-500/10"
+                : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
             )}
           >
             <input
@@ -249,19 +249,19 @@ export function CreditReportParser({
             />
             {file ? (
               <>
-                <FileText className="h-8 w-8 text-blue-600" />
-                <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                <p className="text-xs text-gray-500">
+                <FileText className="h-8 w-8 text-blue-400" />
+                <p className="text-sm font-medium text-slate-100">{file.name}</p>
+                <p className="text-xs text-slate-500">
                   {(file.size / (1024 * 1024)).toFixed(1)} MB — click to replace
                 </p>
               </>
             ) : (
               <>
-                <UploadCloud className="h-8 w-8 text-gray-400" />
-                <p className="text-sm font-medium text-gray-700">
+                <UploadCloud className="h-8 w-8 text-slate-500" />
+                <p className="text-sm font-medium text-slate-300">
                   Click to upload or drag a PDF here
                 </p>
-                <p className="text-xs text-gray-500">PDF only, up to 10MB</p>
+                <p className="text-xs text-slate-500">PDF only, up to 10MB</p>
               </>
             )}
           </div>
@@ -270,18 +270,18 @@ export function CreditReportParser({
 
       {phase === "analyzing" && (
         <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <p className="text-sm font-medium text-gray-900">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+          <p className="text-sm font-medium text-slate-100">
             Analyzing the credit report…
           </p>
-          <p className="text-xs text-gray-500">This takes 10–20 seconds.</p>
+          <p className="text-xs text-slate-500">This takes 10–20 seconds.</p>
         </div>
       )}
 
       {phase === "review" && (
         <div className="space-y-3">
-          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-300">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
             <p>
               Review each item — AI may miss or misread items. Always verify
               against the original report.
@@ -289,31 +289,31 @@ export function CreditReportParser({
           </div>
 
           {items.length === 0 ? (
-            <p className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+            <p className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-6 text-center text-sm text-slate-500">
               No negative items detected in this report.
             </p>
           ) : (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-500">
                   {items.length} item{items.length === 1 ? "" : "s"} found ·{" "}
                   {getBureauLabel(bureau)}
                 </p>
                 <button
                   onClick={toggleAll}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-400"
                 >
                   <Check className="h-3.5 w-3.5" />
                   {allChecked ? "Uncheck All" : "Check All"}
                 </button>
               </div>
 
-              <div className="max-h-96 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200">
+              <div className="max-h-96 divide-y divide-white/[0.06] overflow-y-auto rounded-lg border border-white/10">
                 {items.map((item, idx) => (
                   <label
                     key={idx}
                     className={cn(
-                      "flex cursor-pointer items-start gap-3 px-4 py-3 text-sm hover:bg-gray-50",
+                      "flex cursor-pointer items-start gap-3 px-4 py-3 text-sm hover:bg-white/[0.03]",
                       checked.has(idx) && "bg-blue-50/50"
                     )}
                   >
@@ -321,24 +321,24 @@ export function CreditReportParser({
                       type="checkbox"
                       checked={checked.has(idx)}
                       onChange={() => toggleOne(idx)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="mt-0.5 h-4 w-4 rounded border-white/10 text-blue-400 focus:ring-blue-500"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-slate-100">
                         {item.creditor_name}
                         {item.account_number_last4 && (
-                          <span className="ml-1.5 font-normal text-gray-400">
+                          <span className="ml-1.5 font-normal text-slate-500">
                             ••••{item.account_number_last4}
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-500">
                         {getNegativeTypeLabel(item.negative_type)}
                         {item.date_of_first_delinquency &&
                           ` · DOFD ${item.date_of_first_delinquency}`}
                       </p>
                     </div>
-                    <p className="shrink-0 font-medium text-gray-700">
+                    <p className="shrink-0 font-medium text-slate-300">
                       {item.balance != null ? formatCurrency(item.balance) : "—"}
                     </p>
                   </label>

@@ -20,11 +20,11 @@ export default async function PortalClientLayout({
   return (
     <ToastProvider>
       <div
-        className="min-h-screen bg-gray-50"
+        className="min-h-screen bg-[#0f0f1a]"
         style={{ ["--brand" as keyof CSSProperties]: brand } as CSSProperties}
       >
         {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
+      <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1a1a2e]">
         <div className="mx-auto flex h-14 max-w-lg items-center px-4">
           {agency.logo_url ? (
             <Image
@@ -50,7 +50,7 @@ export default async function PortalClientLayout({
       <main className="mx-auto max-w-lg px-4 pb-28 pt-5">{children}</main>
 
       {showPoweredBy && (
-        <p className="pb-20 text-center text-xs text-gray-400">
+        <p className="pb-20 text-center text-xs text-slate-500">
           Powered by ClientDeck Pro
         </p>
       )}

@@ -9,17 +9,17 @@ const ACTOR_META: Record<
   ActorType,
   { icon: typeof Activity; className: string; label: string }
 > = {
-  staff: { icon: User, className: "bg-blue-50 text-blue-600", label: "Staff" },
-  ghl: { icon: Webhook, className: "bg-purple-50 text-purple-600", label: "GHL" },
+  staff: { icon: User, className: "bg-blue-500/10 text-blue-400", label: "Staff" },
+  ghl: { icon: Webhook, className: "bg-purple-500/10 text-purple-400", label: "GHL" },
   stripe: {
     icon: CreditCard,
-    className: "bg-emerald-50 text-emerald-600",
+    className: "bg-emerald-500/10 text-emerald-400",
     label: "Stripe",
   },
-  system: { icon: Cpu, className: "bg-gray-100 text-gray-500", label: "System" },
+  system: { icon: Cpu, className: "bg-white/[0.06] text-slate-500", label: "System" },
   client: {
     icon: UserCircle,
-    className: "bg-amber-50 text-amber-600",
+    className: "bg-amber-500/10 text-amber-400",
     label: "Client",
   },
 };
@@ -37,14 +37,14 @@ function formatTimestamp(iso: string): string {
 function NotificationMethodBadge({ method }: { method?: string }) {
   if (method === "ghl_tag" || method === "ghl") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-medium text-green-400">
         ✓ GHL
       </span>
     );
   }
   if (method === "resend") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-400">
         ⚠ Email fallback
       </span>
     );
@@ -79,12 +79,12 @@ export default async function ClientTimelinePage({
   const scorePullHistory = creditPulls && creditPulls.length > 0 && (
     <Card>
       <CardHeader title="Score Pull History" />
-      <ul className="divide-y divide-gray-100">
+      <ul className="divide-y divide-white/[0.06]">
         {creditPulls.map((pull) => (
           <li key={pull.id} className="flex items-center justify-between px-5 py-3 text-sm">
-            <span className="text-gray-500">{formatDate(pull.pulled_at)}</span>
-            <span className="capitalize text-gray-700">{pull.service.replace(/_/g, " ")}</span>
-            <span className="font-mono text-gray-900">
+            <span className="text-slate-500">{formatDate(pull.pulled_at)}</span>
+            <span className="capitalize text-slate-300">{pull.service.replace(/_/g, " ")}</span>
+            <span className="font-mono text-slate-100">
               {pull.status === "success"
                 ? `EQ:${pull.score_eq ?? "—"} EXP:${pull.score_exp ?? "—"} TU:${pull.score_tu ?? "—"}`
                 : "—"}
@@ -100,7 +100,7 @@ export default async function ClientTimelinePage({
     return (
       <div className="space-y-6">
         {scorePullHistory}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
           <EmptyState
             icon={Clock}
             title="No activity yet"
@@ -114,8 +114,8 @@ export default async function ClientTimelinePage({
   return (
     <div className="space-y-6">
       {scorePullHistory}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <ol className="relative space-y-6 border-l border-gray-200 pl-6">
+      <div className="rounded-lg border border-white/10 bg-[#1a1a2e] p-6 shadow-sm">
+        <ol className="relative space-y-6 border-l border-white/10 pl-6">
           {entries.map((entry) => {
             const meta = ACTOR_META[entry.actor_type ?? "system"];
             const Icon = meta.icon;
@@ -130,20 +130,20 @@ export default async function ClientTimelinePage({
                   <Icon className="h-3.5 w-3.5" />
                 </span>
                 <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-slate-100">
                     {entry.action}
                   </p>
-                  <time className="shrink-0 text-xs text-gray-400">
+                  <time className="shrink-0 text-xs text-slate-500">
                     {formatTimestamp(entry.created_at)}
                   </time>
                 </div>
                 {entry.description && (
-                  <p className="mt-0.5 text-sm text-gray-500">
+                  <p className="mt-0.5 text-sm text-slate-500">
                     {entry.description}
                   </p>
                 )}
                 <div className="mt-1 flex items-center gap-2">
-                  <span className="inline-block text-xs text-gray-400">
+                  <span className="inline-block text-xs text-slate-500">
                     {meta.label}
                   </span>
                   {entry.action === "notification_sent" && (

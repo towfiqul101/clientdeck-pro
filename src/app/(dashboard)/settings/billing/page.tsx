@@ -33,7 +33,7 @@ export default async function BillingSettingsPage() {
   return (
     <div className="space-y-6">
       {!billingEnabled && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
           Billing is not yet configured — plan changes are managed manually.
           Contact support to upgrade or change your plan.
         </div>
@@ -47,7 +47,7 @@ export default async function BillingSettingsPage() {
         />
         <div className="space-y-5 p-6">
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-semibold capitalize text-gray-900">
+            <span className="text-2xl font-semibold capitalize text-slate-100">
               {agency.plan}
             </span>
             <span
@@ -62,12 +62,12 @@ export default async function BillingSettingsPage() {
 
           <div>
             <div className="mb-1.5 flex items-center justify-between text-sm">
-              <span className="text-gray-600">Client usage</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-slate-400">Client usage</span>
+              <span className="font-medium text-slate-100">
                 {currentClients} / {agency.max_clients}
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
               <div
                 className={cn(
                   "h-full rounded-full",
@@ -82,7 +82,7 @@ export default async function BillingSettingsPage() {
 
       {/* Plan comparison */}
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-gray-900">Plans</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-100">Plans</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {PLANS.map((plan) => {
             const current = plan.id === agency.plan;
@@ -90,28 +90,28 @@ export default async function BillingSettingsPage() {
               <div
                 key={plan.id}
                 className={cn(
-                  "rounded-lg border bg-white p-5 shadow-sm",
-                  current ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-200"
+                  "rounded-lg border bg-[#1a1a2e] p-5 shadow-sm",
+                  current ? "border-blue-500 ring-1 ring-blue-500" : "border-white/10"
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-gray-900">{plan.name}</h4>
+                  <h4 className="font-semibold text-slate-100">{plan.name}</h4>
                   {current && (
-                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                    <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
                       Current
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-xl font-semibold text-gray-900">
+                <p className="mt-2 text-xl font-semibold text-slate-100">
                   {plan.priceLabel}
                 </p>
                 <ul className="mt-4 space-y-2">
                   {plan.features.map((feature) => (
                     <li
                       key={feature}
-                      className="flex items-start gap-2 text-sm text-gray-600"
+                      className="flex items-start gap-2 text-sm text-slate-400"
                     >
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-400" />
                       {feature}
                     </li>
                   ))}

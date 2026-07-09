@@ -60,13 +60,13 @@ export function RoundsViewSwitcher({
   return (
     <div>
       <div className="mb-4 flex justify-end">
-        <div className="flex items-center gap-1 rounded-md border border-gray-200 p-0.5">
+        <div className="flex items-center gap-1 rounded-md border border-white/10 p-0.5">
           <button
             type="button"
             onClick={() => choose("list")}
             className={cn(
               "flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors duration-150",
-              view === "list" ? "bg-gray-100 text-gray-700" : "text-gray-400 hover:text-gray-600"
+              view === "list" ? "bg-white/[0.06] text-slate-300" : "text-slate-500 hover:text-slate-400"
             )}
           >
             <List className="h-3.5 w-3.5" /> List
@@ -76,7 +76,7 @@ export function RoundsViewSwitcher({
             onClick={() => choose("pipeline")}
             className={cn(
               "flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors duration-150",
-              view === "pipeline" ? "bg-gray-100 text-gray-700" : "text-gray-400 hover:text-gray-600"
+              view === "pipeline" ? "bg-white/[0.06] text-slate-300" : "text-slate-500 hover:text-slate-400"
             )}
           >
             <LayoutGrid className="h-3.5 w-3.5" /> Pipeline

@@ -43,11 +43,11 @@ export default async function MarketingLayout({
   const loggedIn = Boolean(session);
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-[#13131f]">
       <MarketingNav loggedIn={loggedIn} />
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-gray-800 bg-gray-950 text-gray-400">
+      <footer className="border-t border-gray-800 bg-gray-950 text-slate-500">
         <div className="mx-auto max-w-6xl px-4 py-12">
           <div className="flex flex-col justify-between gap-8 md:flex-row">
             <div className="max-w-sm space-y-3">
@@ -80,7 +80,7 @@ export default async function MarketingLayout({
               </div>
             </div>
           </div>
-          <p className="mt-10 border-t border-gray-800 pt-6 text-xs text-gray-500">
+          <p className="mt-10 border-t border-gray-800 pt-6 text-xs text-slate-500">
             © {new Date().getFullYear()} ClientDeck Pro. All rights reserved. Not
             affiliated with HighLevel, Inc.
           </p>

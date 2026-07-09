@@ -1,14 +1,72 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ */
+/* Design tokens — premium dark theme (RevenueOS-style)               */
+/* ------------------------------------------------------------------ */
 :root {
-  --background: #f9fafb;
-  --foreground: #111827;
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --radius-card: 12px;
-  --radius-button: 8px;
-  --radius-input: 8px;
+  /* App surface (used by body + shell) */
+  --background: #0f0f1a;
+  --foreground: #f1f5f9;
+
+  /* Dark backgrounds */
+  --bg-primary: #0f0f1a;
+  --bg-secondary: #13131f;
+  --bg-card: #1a1a2e;
+  --bg-card-hover: #1e1e35;
+  --bg-elevated: #22223a;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-focus: rgba(139, 92, 246, 0.5);
+
+  /* Text */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Accents */
+  --accent-purple: #8b5cf6;
+  --accent-blue: #2563eb;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-teal: #14b8a6;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.06);
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.6);
+  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.15);
+  --shadow-glow-blue: 0 0 20px rgba(37, 99, 235, 0.15);
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(
+    135deg,
+    #0f0f1a 0%,
+    #1a0533 40%,
+    #0a1628 70%,
+    #0f0f1a 100%
+  );
+  --gradient-card: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.1) 0%,
+    rgba(37, 99, 235, 0.05) 100%
+  );
+  --gradient-purple: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  --gradient-blue: linear-gradient(135deg, #2563eb, #1d4ed8);
+  --gradient-green: linear-gradient(135deg, #10b981, #059669);
+  --gradient-amber: linear-gradient(135deg, #f59e0b, #d97706);
+
+  /* Radii / transitions */
+  --radius-card: 16px;
+  --radius-button: 10px;
+  --radius-input: 10px;
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
 }
@@ -20,8 +78,8 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -30,6 +88,209 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Dark, subtle scrollbars fit the theme better than default light ones */
+* {
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ------------------------------------------------------------------ */
+/* Glassmorphism surfaces                                             */
+/* ------------------------------------------------------------------ */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-card);
+  transition: all 200ms ease;
+}
+
+.glass-card:hover {
+  background: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
+}
+
+/* Non-interactive glass panel (no hover lift) */
+.glass-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-card);
+}
+
+.glow-purple {
+  box-shadow: var(--shadow-glow-purple);
+}
+.glow-blue {
+  box-shadow: var(--shadow-glow-blue);
+}
+
+/* ------------------------------------------------------------------ */
+/* Buttons (available as plain classes for non-primitive callsites)   */
+/* ------------------------------------------------------------------ */
+.btn-primary {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  color: white;
+  border-radius: var(--radius-button);
+  font-weight: 500;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  transition: all 150ms ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border-radius: var(--radius-button);
+  transition: all 150ms ease;
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  border-radius: var(--radius-button);
+  transition: all 150ms ease;
+}
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+/* ------------------------------------------------------------------ */
+/* Dark form controls                                                 */
+/* ------------------------------------------------------------------ */
+.input-dark {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  border-radius: var(--radius-input);
+  transition: all 150ms ease;
+}
+.input-dark:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  outline: none;
+}
+.input-dark::placeholder {
+  color: #475569;
+}
+/* Native select/option popups render on their own surface; keep them dark */
+.input-dark option {
+  background: #1a1a2e;
+  color: #f1f5f9;
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations                                                         */
+/* ------------------------------------------------------------------ */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.hero-gradient {
+  background: var(--gradient-hero);
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 250ms ease forwards;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 400ms ease forwards;
+}
+
+/* Staggered children (used on dashboard stat cards) */
+.stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 80ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 160ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 240ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 320ms;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.live-indicator {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/* Landing-page animations (retained)                                 */
+/* ------------------------------------------------------------------ */
 .reveal {
   opacity: 0;
   transform: translateY(16px);
@@ -59,10 +320,10 @@ html {
 @keyframes pulse-ring {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(37 99 235 / 0.35);
+    box-shadow: 0 0 0 0 rgb(139 92 246 / 0.35);
   }
   50% {
-    box-shadow: 0 0 0 10px rgb(37 99 235 / 0);
+    box-shadow: 0 0 0 10px rgb(139 92 246 / 0);
   }
 }
 
@@ -80,7 +341,14 @@ html {
     transition: none;
   }
   .float-card,
-  .pulse-ring {
+  .pulse-ring,
+  .hero-gradient,
+  .animate-fade-up,
+  .animate-slide-in-right,
+  .live-indicator {
     animation: none;
+  }
+  .glass-card:hover {
+    transform: none;
   }
 }

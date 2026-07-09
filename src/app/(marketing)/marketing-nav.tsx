@@ -51,7 +51,7 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
               href={`/#${l.id}`}
               className={cn(
                 "text-sm transition-colors duration-150",
-                active === l.id ? "text-white" : "text-gray-400 hover:text-white"
+                active === l.id ? "text-white" : "text-slate-500 hover:text-white"
               )}
             >
               {l.label}
@@ -69,7 +69,7 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="text-sm text-gray-300 hover:text-white">
+              <Link href="/login" className="text-sm text-slate-600 hover:text-white">
                 Log In
               </Link>
               <Link
@@ -83,7 +83,7 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
         </div>
 
         <button
-          className="text-gray-300 md:hidden"
+          className="text-slate-600 md:hidden"
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle menu"
         >
@@ -97,7 +97,7 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
             <Link
               key={l.id}
               href={`/#${l.id}`}
-              className="block py-2 text-sm text-gray-300"
+              className="block py-2 text-sm text-slate-600"
               onClick={() => setOpen(false)}
             >
               {l.label}
@@ -109,7 +109,7 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="block py-2 text-sm text-gray-300">
+              <Link href="/login" className="block py-2 text-sm text-slate-600">
                 Log In
               </Link>
               <Link href="/signup" className="block py-2 text-sm font-medium text-blue-400">

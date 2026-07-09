@@ -18,9 +18,9 @@ export interface MonthlyDeletion {
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-gray-100 bg-white px-3 py-2 shadow-[var(--shadow-elevated)]">
-      <p className="text-xs font-medium text-gray-500">{label}</p>
-      <p className="text-sm font-semibold text-gray-900">{payload[0].value} deletions</p>
+    <div className="rounded-lg border border-white/10 bg-[#1a1a2e]/95 px-3 py-2 shadow-[0_12px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+      <p className="text-xs font-medium text-slate-400">{label}</p>
+      <p className="text-sm font-semibold text-white">{payload[0].value} deletions</p>
     </div>
   );
 }
@@ -30,7 +30,7 @@ export function DeletionsChart({ data }: { data: MonthlyDeletion[] }) {
 
   if (!hasData) {
     return (
-      <div className="flex h-56 items-center justify-center text-sm text-gray-400">
+      <div className="flex h-56 items-center justify-center text-sm text-slate-500">
         No deletions recorded yet — they&apos;ll chart here as rounds resolve.
       </div>
     );
@@ -42,19 +42,19 @@ export function DeletionsChart({ data }: { data: MonthlyDeletion[] }) {
         <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
           <defs>
             <linearGradient id="deletionsGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563eb" stopOpacity={0.8} />
-              <stop offset="100%" stopColor="#2563eb" stopOpacity={0.05} />
+              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#6d28d9" stopOpacity={0.15} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
           <XAxis
             dataKey="label"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 12, fill: "#9ca3af" }}
+            tick={{ fontSize: 12, fill: "#94a3b8" }}
           />
           <YAxis hide />
-          <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f3f4f6" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
           <Bar
             dataKey="deletions"
             fill="url(#deletionsGradient)"

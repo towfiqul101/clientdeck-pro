@@ -27,7 +27,7 @@ export function RoundsFilter() {
     <select
       value={searchParams.get("status") ?? ""}
       onChange={(e) => update(e.target.value)}
-      className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      className="rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm text-slate-300 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
     >
       {STATUS_OPTIONS.map((o) => (
         <option key={o.value} value={o.value}>

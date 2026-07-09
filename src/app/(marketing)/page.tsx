@@ -103,7 +103,7 @@ const TESTIMONIALS = [
 
 function Kicker({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-blue-600">
+    <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-blue-400">
       {children}
     </p>
   );
@@ -145,7 +145,7 @@ function KanbanMockup() {
         <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6">
           {columns.map((col) => (
             <div key={col.label} className="space-y-2">
-              <div className="rounded bg-gray-800 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-gray-400">
+              <div className="rounded bg-gray-800 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
                 {col.label}
               </div>
               {col.cards.map((card) => (
@@ -157,7 +157,7 @@ function KanbanMockup() {
                     {card.initials}
                   </div>
                   <p className="text-xs font-medium text-gray-200">{card.name}</p>
-                  <p className="text-[10px] text-gray-500">{card.meta}</p>
+                  <p className="text-[10px] text-slate-500">{card.meta}</p>
                 </div>
               ))}
               <div className="h-10 rounded-lg border border-dashed border-gray-800/80" />
@@ -171,7 +171,7 @@ function KanbanMockup() {
           <Bell className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
           <div>
             <p className="text-xs font-semibold text-white">🎉 Deletion Win!</p>
-            <p className="mt-0.5 text-[11px] text-gray-400">
+            <p className="mt-0.5 text-[11px] text-slate-500">
               Marcus J. — Capital One deleted
             </p>
             <p className="mt-1 text-[11px] font-medium text-green-400">
@@ -187,7 +187,7 @@ function KanbanMockup() {
 function LetterMockup() {
   return (
     <div className="rounded-xl border border-gray-700 bg-gray-900 p-5 shadow-xl">
-      <div className="mb-4 flex items-center gap-2 text-gray-500">
+      <div className="mb-4 flex items-center gap-2 text-slate-500">
         <FileText className="h-4 w-4" />
         <span className="text-xs font-medium uppercase tracking-wide">
           Round 2 · Experian · 611 Letter
@@ -206,7 +206,7 @@ function LetterMockup() {
         <div className="h-2.5 w-2/3 rounded bg-gray-700" />
       </div>
       <div className="mt-4 flex justify-end gap-2">
-        <span className="rounded-md border border-gray-700 px-3 py-1.5 text-[11px] font-medium text-gray-300">
+        <span className="rounded-md border border-gray-700 px-3 py-1.5 text-[11px] font-medium text-slate-600">
           Edit
         </span>
         <span className="rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white">
@@ -220,12 +220,12 @@ function LetterMockup() {
 function PortalMockup() {
   const bars = [58, 64, 63, 71, 78, 82];
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-lg">
+    <div className="rounded-xl border border-white/10 bg-[#1a1a2e] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           Your Progress
         </span>
-        <TrendingUp className="h-4 w-4 text-green-600" />
+        <TrendingUp className="h-4 w-4 text-green-400" />
       </div>
       <div className="flex items-end gap-2">
         {bars.map((h, i) => (
@@ -236,12 +236,12 @@ function PortalMockup() {
           />
         ))}
       </div>
-      <p className="mt-2 text-center text-[11px] text-gray-400">
+      <p className="mt-2 text-center text-[11px] text-slate-500">
         Experian score, last 6 rounds
       </p>
-      <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+      <div className="mt-4 space-y-2 border-t border-white/[0.06] pt-4">
         {["Round 1 sent", "3 items deleted", "Round 2 in progress"].map((step, i) => (
-          <div key={step} className="flex items-center gap-2 text-xs text-gray-600">
+          <div key={step} className="flex items-center gap-2 text-xs text-slate-400">
             <span
               className={cn(
                 "h-1.5 w-1.5 rounded-full",
@@ -267,7 +267,7 @@ function GhlFieldsMockup() {
     <div className="rounded-xl border border-gray-700 bg-gray-900 p-5 shadow-xl">
       <div className="mb-4 flex items-center gap-2">
         <Workflow className="h-4 w-4 text-blue-400" />
-        <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
           GHL Contact · Marcus J.
         </span>
         <span className="ml-auto rounded-full bg-blue-600/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
@@ -280,7 +280,7 @@ function GhlFieldsMockup() {
             key={k}
             className="flex items-center justify-between rounded-md bg-gray-800/60 px-2.5 py-2"
           >
-            <span className="text-[11px] text-gray-500">{k}</span>
+            <span className="text-[11px] text-slate-500">{k}</span>
             <span className="text-[11px] font-medium text-gray-200">{v}</span>
           </div>
         ))}
@@ -339,7 +339,7 @@ export default async function LandingPage() {
         />
         <div className="pointer-events-none absolute left-1/2 -top-20 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-600/20 blur-3xl" />
         <div className="relative mx-auto max-w-4xl px-4 pb-28 pt-10 text-center sm:pt-14">
-          <span className="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900/80 px-4 py-1.5 text-xs font-medium text-gray-300">
+          <span className="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900/80 px-4 py-1.5 text-xs font-medium text-slate-600">
             🚀 Now with AI dispute letter generation — try it free for 14 days
           </span>
 
@@ -348,7 +348,7 @@ export default async function LandingPage() {
             <br />
             Deserves Better Than Spreadsheets.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-400">
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
             ClientDeck Pro runs your entire credit repair operation inside GoHighLevel —
             AI-generated dispute letters, automatic client updates, and a beautiful portal
             your clients will actually check. No spreadsheets. No copy-paste. No chaos.
@@ -369,7 +369,7 @@ export default async function LandingPage() {
             </Link>
           </div>
 
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-400">
+          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
             {TRUST_BADGES.map((badge) => (
               <li key={badge} className="flex items-center gap-1.5">
                 <Check className="h-3.5 w-3.5 text-blue-500" />
@@ -385,25 +385,25 @@ export default async function LandingPage() {
       </section>
 
       {/* Pain points */}
-      <section className="bg-white">
+      <section className="bg-[#13131f]">
         <div className="mx-auto max-w-5xl px-4 py-20">
           <Reveal>
-            <h2 className="text-center text-2xl font-semibold text-gray-900 sm:text-3xl">
+            <h2 className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
               Sound familiar?
             </h2>
           </Reveal>
           <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
             {PAIN_POINTS.map((p, i) => (
               <Reveal key={p.title} delay={i * 80}>
-                <div className="h-full rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="h-full rounded-lg border border-white/10 bg-[#1a1a2e] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
                   <span className="text-2xl">{p.emoji}</span>
-                  <h3 className="mt-3 font-semibold text-gray-900">{p.title}</h3>
-                  <p className="mt-2 text-sm text-gray-600">{p.body}</p>
+                  <h3 className="mt-3 font-semibold text-slate-100">{p.title}</h3>
+                  <p className="mt-2 text-sm text-slate-400">{p.body}</p>
                 </div>
               </Reveal>
             ))}
           </div>
-          <p className="mt-10 text-center text-sm font-medium text-blue-600">
+          <p className="mt-10 text-center text-sm font-medium text-blue-400">
             There&apos;s a better way. →
           </p>
         </div>
@@ -416,7 +416,7 @@ export default async function LandingPage() {
             <h2 className="text-center text-2xl font-semibold sm:text-3xl">
               One Platform. Everything Handled.
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-center text-gray-400">
+            <p className="mx-auto mt-3 max-w-xl text-center text-slate-500">
               ClientDeck Pro lives inside your GoHighLevel. When you work in ClientDeck,
               GHL updates automatically. Your clients get notified. Your team stays organized.
             </p>
@@ -427,7 +427,7 @@ export default async function LandingPage() {
                 <div className="h-full rounded-lg border border-gray-800 bg-gray-900 p-6">
                   <f.icon className="h-8 w-8 text-blue-400" />
                   <h3 className="mt-4 font-semibold text-white">{f.title}</h3>
-                  <p className="mt-2 text-sm text-gray-400">{f.body}</p>
+                  <p className="mt-2 text-sm text-slate-500">{f.body}</p>
                 </div>
               </Reveal>
             ))}
@@ -436,10 +436,10 @@ export default async function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="scroll-mt-20 bg-white">
+      <section id="how-it-works" className="scroll-mt-20 bg-[#13131f]">
         <div className="mx-auto max-w-6xl px-4 py-20">
           <Reveal>
-            <h2 className="text-center text-2xl font-semibold text-gray-900 sm:text-3xl">
+            <h2 className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
               Up and Running in 15 Minutes
             </h2>
           </Reveal>
@@ -448,8 +448,8 @@ export default async function LandingPage() {
               <Reveal key={s.n} delay={i * 80}>
                 <div className="relative">
                   <span className="text-4xl font-bold text-blue-100">{s.n}</span>
-                  <h3 className="mt-2 font-semibold text-gray-900">{s.title}</h3>
-                  <p className="mt-2 text-sm text-gray-600">{s.body}</p>
+                  <h3 className="mt-2 font-semibold text-slate-100">{s.title}</h3>
+                  <p className="mt-2 text-sm text-slate-400">{s.body}</p>
                 </div>
               </Reveal>
             ))}
@@ -465,7 +465,7 @@ export default async function LandingPage() {
             <h2 className="text-2xl font-semibold sm:text-3xl">
               Stop Writing Dispute Letters By Hand
             </h2>
-            <p className="mt-4 text-gray-400">
+            <p className="mt-4 text-slate-500">
               Our AI knows the difference between a Round 1 initial dispute, a Round 2
               Method of Verification request, and a Round 3 escalation. It writes the
               right letter for every situation — citing the exact FCRA sections that
@@ -479,7 +479,7 @@ export default async function LandingPage() {
                 "Identity theft affidavits",
                 "You review before anything is sent — always",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-gray-300">
+                <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
                   {item}
                 </li>
@@ -493,17 +493,17 @@ export default async function LandingPage() {
       </section>
 
       {/* Feature deep dive 2 — Portal */}
-      <section className="bg-gray-50">
+      <section className="bg-[#13131f]">
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-20 md:grid-cols-2 md:gap-16">
           <Reveal delay={120} className="order-2 md:order-1">
             <PortalMockup />
           </Reveal>
           <Reveal className="order-1 md:order-2">
             <Kicker>Client Portal</Kicker>
-            <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+            <h2 className="text-2xl font-semibold text-slate-100 sm:text-3xl">
               Give Clients a Portal They&apos;ll Actually Use
             </h2>
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-slate-400">
               Clients get a magic link via text — one tap, they&apos;re in their portal.
               No app download. No password. They see their score going up, their deleted
               accounts, and exactly what&apos;s happening with their case.
@@ -516,8 +516,8 @@ export default async function LandingPage() {
                 "Looks like your brand, not ours",
                 "Auto-updates when you log results — zero extra work",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-gray-700">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                <li key={item} className="flex items-start gap-2.5 text-sm text-slate-300">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
                   {item}
                 </li>
               ))}
@@ -534,7 +534,7 @@ export default async function LandingPage() {
             <h2 className="text-2xl font-semibold sm:text-3xl">
               The Only Dispute Software Built for GHL
             </h2>
-            <p className="mt-4 text-gray-400">
+            <p className="mt-4 text-slate-500">
               Every other dispute tool is an island. You work in one app, then copy-paste
               into GHL, then manually text the client. With ClientDeck Pro, one action
               in the app triggers everything in GHL automatically.
@@ -547,7 +547,7 @@ export default async function LandingPage() {
                 "No Zapier. No webhooks to maintain. No extra fees.",
                 "Uses your existing GHL — doesn't replace it",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-gray-300">
+                <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
                   {item}
                 </li>
@@ -561,39 +561,39 @@ export default async function LandingPage() {
       </section>
 
       {/* Social proof */}
-      <section className="bg-white">
+      <section className="bg-[#13131f]">
         <div className="mx-auto max-w-6xl px-4 py-20">
           <Reveal>
-            <h2 className="text-center text-2xl font-semibold text-gray-900 sm:text-3xl">
+            <h2 className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
               Credit Repair Professionals Love ClientDeck Pro
             </h2>
           </Reveal>
           <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
             {TESTIMONIALS.map((t, i) => (
               <Reveal key={t.name} delay={i * 80}>
-                <div className="flex h-full flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <div className="flex h-full flex-col rounded-lg border border-white/10 bg-[#1a1a2e] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
                   <div className="flex gap-0.5 text-amber-400">
                     {Array.from({ length: 5 }).map((_, idx) => (
                       <Star key={idx} className="h-4 w-4 fill-current" />
                     ))}
                   </div>
-                  <p className="mt-3 flex-1 text-sm text-gray-700">&ldquo;{t.quote}&rdquo;</p>
-                  <p className="mt-4 text-xs font-medium text-gray-500">— {t.name}</p>
+                  <p className="mt-3 flex-1 text-sm text-slate-300">&ldquo;{t.quote}&rdquo;</p>
+                  <p className="mt-4 text-xs font-medium text-slate-500">— {t.name}</p>
                 </div>
               </Reveal>
             ))}
           </div>
-          <p className="mt-6 text-center text-xs text-gray-400">
+          <p className="mt-6 text-center text-xs text-slate-500">
             Example quotes shown while we collect our first agency reviews — replace with
             real testimonials as they come in.
           </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t border-gray-100 pt-8 text-sm text-gray-500">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t border-white/[0.06] pt-8 text-sm text-slate-500">
             <span>Built for GHL agencies</span>
-            <span className="text-gray-300">·</span>
+            <span className="text-slate-600">·</span>
             <span>AI-powered letters</span>
-            <span className="text-gray-300">·</span>
+            <span className="text-slate-600">·</span>
             <span>Auto client updates</span>
-            <span className="text-gray-300">·</span>
+            <span className="text-slate-600">·</span>
             <span>14-day free trial</span>
           </div>
         </div>
@@ -606,7 +606,7 @@ export default async function LandingPage() {
             <h2 className="text-center text-2xl font-semibold sm:text-3xl">
               Simple Pricing. No Surprises.
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-400">
+            <p className="mt-2 text-center text-sm text-slate-500">
               14-day free trial on all plans. No credit card required to start.
             </p>
           </Reveal>
@@ -633,14 +633,14 @@ export default async function LandingPage() {
                     <h3 className="font-semibold text-white">{plan.name}</h3>
                     <p className="mt-2 text-3xl font-bold text-white">
                       {plan.priceLabel}
-                      <span className="text-sm font-normal text-gray-400">/mo</span>
+                      <span className="text-sm font-normal text-slate-500">/mo</span>
                     </p>
-                    <p className="mt-1 text-sm text-gray-400">{plan.clientsLabel}</p>
+                    <p className="mt-1 text-sm text-slate-500">{plan.clientsLabel}</p>
                   </div>
                   <div className="flex flex-1 flex-col px-6 pb-6">
                     <ul className="mt-4 flex-1 space-y-2">
                       {plan.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2 text-sm text-gray-300">
+                        <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
                           <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
                           {f}
                         </li>
@@ -662,7 +662,7 @@ export default async function LandingPage() {
               </Reveal>
             ))}
           </div>
-          <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center text-xs text-gray-500">
+          <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center text-xs text-slate-500">
             <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> 14-day free trial</span>
             <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Cancel anytime</span>
             <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Setup support included</span>
@@ -672,10 +672,10 @@ export default async function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="scroll-mt-20 bg-gray-50">
+      <section id="faq" className="scroll-mt-20 bg-[#13131f]">
         <div className="mx-auto max-w-3xl px-4 py-20">
           <Reveal>
-            <h2 className="mb-10 text-center text-2xl font-semibold text-gray-900 sm:text-3xl">
+            <h2 className="mb-10 text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
               Common Questions
             </h2>
           </Reveal>
@@ -690,7 +690,7 @@ export default async function LandingPage() {
             <h2 className="text-2xl font-bold sm:text-3xl">
               Ready to Stop Running Your Credit Repair Business on Spreadsheets?
             </h2>
-            <p className="mt-3 text-gray-400">
+            <p className="mt-3 text-slate-500">
               Join credit repair professionals who&apos;ve automated their disputes,
               client communication, and GHL workflow — all from one platform.
             </p>
@@ -701,7 +701,7 @@ export default async function LandingPage() {
               {session ? primaryCta.label : "Start Your Free 14-Day Trial"}
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-gray-500">
+            <p className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
               <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> No credit card required</span>
               <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Setup support included</span>
               <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Cancel anytime</span>
@@ -712,10 +712,10 @@ export default async function LandingPage() {
       </section>
 
       {/* SEO text block — small, for search engines */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-4xl space-y-6 px-4 py-16 text-xs leading-relaxed text-gray-400">
+      <section className="bg-[#13131f]">
+        <div className="mx-auto max-w-4xl space-y-6 px-4 py-16 text-xs leading-relaxed text-slate-500">
           <div>
-            <h2 className="font-semibold text-gray-500">What is ClientDeck Pro?</h2>
+            <h2 className="font-semibold text-slate-500">What is ClientDeck Pro?</h2>
             <p className="mt-1">
               ClientDeck Pro is dispute management software for credit repair agencies
               built natively for GoHighLevel (GHL). It provides AI-powered dispute
@@ -725,7 +725,7 @@ export default async function LandingPage() {
             </p>
           </div>
           <div>
-            <h2 className="font-semibold text-gray-500">Who uses ClientDeck Pro?</h2>
+            <h2 className="font-semibold text-slate-500">Who uses ClientDeck Pro?</h2>
             <p className="mt-1">
               Credit repair business owners, dispute specialists, and credit repair
               agencies who use GoHighLevel as their CRM. Supports solo operators and
@@ -733,7 +733,7 @@ export default async function LandingPage() {
             </p>
           </div>
           <div>
-            <h2 className="font-semibold text-gray-500">
+            <h2 className="font-semibold text-slate-500">
               How does ClientDeck Pro compare to CDM, DisputeFox, and DisputeBee?
             </h2>
             <p className="mt-1">

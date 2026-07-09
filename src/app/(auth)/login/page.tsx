@@ -20,10 +20,10 @@ function LoginFormSkeleton() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <div className="h-6 w-32 animate-pulse rounded bg-gray-100" />
-        <div className="h-4 w-56 animate-pulse rounded bg-gray-100" />
+        <div className="h-6 w-32 animate-pulse rounded bg-white/[0.06]" />
+        <div className="h-4 w-56 animate-pulse rounded bg-white/[0.06]" />
       </div>
-      <div className="h-40 animate-pulse rounded bg-gray-50" />
+      <div className="h-40 animate-pulse rounded bg-[#13131f]" />
     </div>
   );
 }
@@ -77,14 +77,14 @@ function LoginForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-gray-900">Welcome back</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-slate-100">Welcome back</h1>
+        <p className="text-sm text-slate-500">
           Sign in to your ClientDeck Pro account.
         </p>
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
@@ -118,7 +118,7 @@ function LoginForm() {
         </Field>
 
         <p className="text-right text-sm">
-          <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-700">
+          <Link href="/forgot-password" className="font-medium text-blue-400 hover:text-blue-400">
             Forgot password?
           </Link>
         </p>
@@ -128,11 +128,11 @@ function LoginForm() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-sm text-slate-500">
         Don&apos;t have an account?{" "}
         <Link
           href="/signup"
-          className="font-medium text-blue-600 hover:text-blue-700"
+          className="font-medium text-blue-400 hover:text-blue-400"
         >
           Create one
         </Link>

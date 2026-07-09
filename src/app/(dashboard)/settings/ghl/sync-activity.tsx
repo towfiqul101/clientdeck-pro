@@ -37,12 +37,12 @@ export async function GHLSyncActivity() {
         description="The last 20 outbound syncs to GoHighLevel."
       />
       {logs.length === 0 ? (
-        <p className="px-6 py-8 text-center text-sm text-gray-500">
+        <p className="px-6 py-8 text-center text-sm text-slate-500">
           No syncs yet. Sync events fire when you send a round, log deletions, or
           complete a client.
         </p>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-white/[0.06]">
           {logs.map((log) => {
             const failed = log.status === "failed";
             const retrying = log.status === "retrying";
@@ -58,11 +58,11 @@ export async function GHLSyncActivity() {
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-slate-100">
                     {ACTION_LABELS[log.sync_action] ?? log.sync_action}
                   </p>
                   {failed && log.error_message && (
-                    <p className="truncate text-xs text-red-600">
+                    <p className="truncate text-xs text-red-400">
                       {log.error_message}
                     </p>
                   )}
@@ -72,15 +72,15 @@ export async function GHLSyncActivity() {
                     className={cn(
                       "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
                       failed
-                        ? "bg-red-50 text-red-700"
+                        ? "bg-red-500/10 text-red-400"
                         : retrying
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-green-50 text-green-700"
+                          ? "bg-amber-500/10 text-amber-400"
+                          : "bg-green-500/10 text-green-400"
                     )}
                   >
                     {log.status}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-slate-500">
                     {timestamp(log.attempted_at)}
                   </span>
                 </div>

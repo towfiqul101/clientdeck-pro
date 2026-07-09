@@ -81,8 +81,8 @@ export default function ResetPasswordPage() {
   if (stage === "checking") {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-        <p className="text-sm text-gray-500">Checking your link…</p>
+        <Loader2 className="h-6 w-6 animate-spin text-blue-400" />
+        <p className="text-sm text-slate-500">Checking your link…</p>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function ResetPasswordPage() {
   if (stage === "expired") {
     return (
       <div className="space-y-4 text-center">
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-left text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-left text-sm text-red-400">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             This link may have expired. Ask your agency admin to resend the
@@ -105,8 +105,8 @@ export default function ResetPasswordPage() {
     return (
       <div className="space-y-6 text-center">
         <div className="flex flex-col items-center gap-2">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-          <p className="text-sm text-gray-700">
+          <CheckCircle className="h-8 w-8 text-green-400" />
+          <p className="text-sm text-slate-300">
             Your password has been set.
           </p>
         </div>
@@ -123,16 +123,16 @@ export default function ResetPasswordPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold text-gray-900">
+        <h1 className="text-xl font-semibold text-slate-100">
           Set your password
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           Choose a password for your ClientDeck Pro account.
         </p>
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>

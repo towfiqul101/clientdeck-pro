@@ -64,7 +64,7 @@ export default async function AdminPaymentsPage({
                     "rounded-md px-2.5 py-1 text-xs font-medium capitalize",
                     filter === f
                       ? "bg-blue-600 text-white"
-                      : "border border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                      : "border border-white/10 bg-[#1a1a2e] text-slate-400 hover:bg-white/[0.03]"
                   )}
                 >
                   {f.replace("_", " ")}
@@ -75,7 +75,7 @@ export default async function AdminPaymentsPage({
         />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-sm">
-            <thead className="border-b border-gray-200 text-left text-xs uppercase text-gray-500">
+            <thead className="border-b border-white/10 text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-5 py-3 font-medium">Agency</th>
                 <th className="px-5 py-3 font-medium">Plan</th>
@@ -85,22 +85,22 @@ export default async function AdminPaymentsPage({
                 <th className="px-5 py-3 font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-white/[0.06]">
               {agencies.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-gray-500">
+                  <td colSpan={6} className="px-5 py-10 text-center text-slate-500">
                     No agencies in this filter.
                   </td>
                 </tr>
               ) : (
                 agencies.map((a) => (
-                  <tr key={a.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-medium text-gray-900">
-                      <Link href={`/admin/agencies?open=${a.id}`} className="hover:text-blue-600">
+                  <tr key={a.id} className="hover:bg-white/[0.03]">
+                    <td className="px-5 py-3 font-medium text-slate-100">
+                      <Link href={`/admin/agencies?open=${a.id}`} className="hover:text-blue-400">
                         {a.name}
                       </Link>
                     </td>
-                    <td className="px-5 py-3 capitalize text-gray-600">{a.plan}</td>
+                    <td className="px-5 py-3 capitalize text-slate-400">{a.plan}</td>
                     <td className="px-5 py-3">
                       <span
                         className={cn(
@@ -111,10 +111,10 @@ export default async function AdminPaymentsPage({
                         {a.plan_status.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-gray-600">
+                    <td className="px-5 py-3 text-slate-400">
                       {formatCurrency(planMonthly(a.plan))}
                     </td>
-                    <td className="px-5 py-3 text-gray-500">
+                    <td className="px-5 py-3 text-slate-500">
                       {lastPayment.has(a.id)
                         ? formatDate(lastPayment.get(a.id)!)
                         : "—"}

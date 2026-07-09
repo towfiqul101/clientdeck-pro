@@ -59,37 +59,37 @@ export function PullScoresButton({ client }: PullScoresButtonProps) {
       <Modal open={open} onClose={handleClose} title="Pull Credit Scores" size="md">
         {result ? (
           <div className="space-y-3">
-            <p className="text-sm font-medium text-green-700">✅ Scores Retrieved</p>
+            <p className="text-sm font-medium text-green-400">✅ Scores Retrieved</p>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
-                <p className="text-xs text-gray-500">Equifax</p>
-                <p className="text-lg font-semibold text-gray-900">{result.score_eq ?? "—"}</p>
+                <p className="text-xs text-slate-500">Equifax</p>
+                <p className="text-lg font-semibold text-slate-100">{result.score_eq ?? "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Experian</p>
-                <p className="text-lg font-semibold text-gray-900">{result.score_exp ?? "—"}</p>
+                <p className="text-xs text-slate-500">Experian</p>
+                <p className="text-lg font-semibold text-slate-100">{result.score_exp ?? "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">TransUnion</p>
-                <p className="text-lg font-semibold text-gray-900">{result.score_tu ?? "—"}</p>
+                <p className="text-xs text-slate-500">TransUnion</p>
+                <p className="text-lg font-semibold text-slate-100">{result.score_tu ?? "—"}</p>
               </div>
             </div>
-            <p className="text-xs text-gray-500">Scores updated in client profile and score history.</p>
+            <p className="text-xs text-slate-500">Scores updated in client profile and score history.</p>
             <div className="flex justify-end">
               <Button onClick={handleClose}>Close</Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-400">
               This will pull current 3-bureau scores for {client.first_name} {client.last_name}.
             </p>
             {missing.length > 0 ? (
-              <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+              <p className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-400">
                 Missing required fields: {missing.join(", ")}. Complete the client profile before pulling scores.
               </p>
             ) : (
-              <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+              <p className="rounded-md border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
                 All required fields are present.
               </p>
             )}

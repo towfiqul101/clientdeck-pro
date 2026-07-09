@@ -146,7 +146,7 @@ export default async function AdminOverviewPage() {
           action={
             <Link
               href="/admin/agencies"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="text-sm font-medium text-blue-400 hover:text-blue-400"
             >
               View all
             </Link>

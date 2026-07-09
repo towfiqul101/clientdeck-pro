@@ -7,7 +7,7 @@ import type { SnapshotRequestStatus } from "@/types";
 import { updateSnapshotRequestStatus, sendSnapshot } from "./request-actions";
 
 const btn =
-  "rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40";
+  "rounded-md border border-white/10 bg-[#1a1a2e] px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-white/[0.03] disabled:opacity-40";
 
 export function StatusButtons({
   id,

@@ -17,7 +17,9 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown,
+  ChevronRight,
+  Zap,
+  Plug,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -35,6 +37,11 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Reports", href: "/reports", icon: BarChart3 },
   { label: "Team", href: "/team", icon: UserPlus },
   { label: "Settings", href: "/settings", icon: Settings },
+];
+
+const AUTOMATION_ITEMS: NavItem[] = [
+  { label: "Workflows", href: "/onboarding/ghl-setup", icon: Zap },
+  { label: "Integrations", href: "/settings/ghl", icon: Plug },
 ];
 
 // Derive a page title from the first path segment.
@@ -55,13 +62,55 @@ function isActive(pathname: string, href: string): boolean {
 
 interface DashboardShellProps {
   agencyName: string;
+  agencyPlan?: string;
   userName: string;
   userEmail: string;
   children: React.ReactNode;
 }
 
+function NavLink({
+  item,
+  pathname,
+  onNavigate,
+}: {
+  item: NavItem;
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  const active = isActive(pathname, item.href);
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={cn(
+        "flex items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-sm font-medium transition-all duration-150",
+        active
+          ? "border-violet-500 bg-violet-500/15 text-violet-300"
+          : "border-transparent text-slate-400 hover:bg-white/[0.04] hover:text-slate-200"
+      )}
+    >
+      <Icon
+        className={cn(
+          "h-[18px] w-[18px] shrink-0",
+          active ? "text-violet-400" : "text-slate-500"
+        )}
+      />
+      {item.label}
+    </Link>
+  );
+}
+
+const PLAN_LABELS: Record<string, string> = {
+  solo: "Starter Plan",
+  pro: "Pro Plan",
+  agency: "Agency Plan",
+  enterprise: "Enterprise",
+};
+
 export function DashboardShell({
   agencyName,
+  agencyPlan,
   userName,
   userEmail,
   children,
@@ -72,6 +121,7 @@ export function DashboardShell({
 
   const segment = pathname.split("/")[1] ?? "";
   const pageTitle = TITLES[segment] ?? "Dashboard";
+  const planLabel = agencyPlan ? PLAN_LABELS[agencyPlan] ?? "" : "";
 
   async function handleLogout() {
     const supabase = createClient();
@@ -80,91 +130,87 @@ export function DashboardShell({
     router.refresh();
   }
 
+  const closeMobile = () => setMobileOpen(false);
+
   const sidebar = (
-    <div className="flex h-full flex-col border-r border-gray-800 bg-gray-900">
+    <div className="flex h-full flex-col border-r border-white/[0.06] bg-[#13131f]">
       {/* Brand */}
       <div className="flex h-16 items-center justify-between px-4">
         <Logo variant="light" />
         <button
-          onClick={() => setMobileOpen(false)}
-          className="rounded-md p-1 text-gray-400 hover:bg-gray-800 hover:text-white md:hidden"
+          onClick={closeMobile}
+          className="rounded-md p-1 text-slate-400 hover:bg-white/5 hover:text-white md:hidden"
           aria-label="Close menu"
         >
           <X className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Agency name */}
-      <div className="px-4 pb-2">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left transition-colors duration-150 hover:bg-gray-800"
-        >
-          <p className="truncate text-xs font-medium uppercase tracking-wide text-gray-500">
-            {agencyName}
-          </p>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-500" />
-        </button>
-      </div>
-
       {/* Nav */}
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(pathname, item.href);
-          const Icon = item.icon;
-          return (
-            <Link
+      <nav className="flex-1 overflow-y-auto px-3 py-2">
+        <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+          Navigation
+        </p>
+        <div className="space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
               key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-3 rounded-md border-l-2 px-3 py-2 text-sm font-medium transition-colors duration-150",
-                active
-                  ? "border-blue-500 bg-blue-500/15 text-white"
-                  : "border-transparent text-gray-300 hover:bg-gray-800 hover:text-white"
-              )}
-            >
-              <Icon
-                className={cn(
-                  "h-5 w-5 shrink-0",
-                  active ? "text-blue-400" : "text-gray-400"
-                )}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
+              item={item}
+              pathname={pathname}
+              onNavigate={closeMobile}
+            />
+          ))}
+        </div>
+
+        <p className="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+          Automation
+        </p>
+        <div className="space-y-1">
+          {AUTOMATION_ITEMS.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              onNavigate={closeMobile}
+            />
+          ))}
+        </div>
       </nav>
 
-      {/* User + logout */}
-      <div className="border-t border-gray-800 p-3">
-        <div className="flex items-center gap-2 px-1 py-2">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white">
-            {getInitials(
-              userName.split(" ")[0] ?? userName,
-              userName.split(" ")[1] ?? userName.slice(1)
-            )}
+      {/* Workspace switcher */}
+      <div className="border-t border-white/[0.06] p-3">
+        <Link
+          href="/settings"
+          onClick={closeMobile}
+          className="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-white/[0.04]"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 text-sm font-semibold text-white">
+            {(agencyName.charAt(0) || "A").toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-white">
-              {userName}
+            <p className="truncate text-sm font-medium text-slate-100">
+              {agencyName}
             </p>
-            <p className="truncate text-xs text-gray-400">{userEmail}</p>
+            {planLabel && (
+              <p className="truncate text-xs text-slate-500">{planLabel}</p>
+            )}
           </div>
-          <button
-            onClick={handleLogout}
-            aria-label="Log out"
-            className="shrink-0 rounded-md p-2 text-gray-400 transition-colors duration-150 hover:bg-gray-800 hover:text-white"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-400" />
+        </Link>
+
+        <button
+          onClick={handleLogout}
+          className="mt-1 flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-slate-400 transition-colors duration-150 hover:bg-white/[0.04] hover:text-slate-200"
+        >
+          <LogOut className="h-[18px] w-[18px] shrink-0 text-slate-500" />
+          Log out
+        </button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0f0f1a]">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 md:block">
         {sidebar}
@@ -174,8 +220,8 @@ export function DashboardShell({
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div
-            className="absolute inset-0 bg-gray-900/60"
-            onClick={() => setMobileOpen(false)}
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={closeMobile}
           />
           <aside className="absolute inset-y-0 left-0 w-64">{sidebar}</aside>
         </div>
@@ -184,15 +230,29 @@ export function DashboardShell({
       {/* Main column */}
       <div className="md:pl-64">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 md:px-8">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/[0.06] bg-[#0f0f1a]/80 px-4 backdrop-blur-xl md:px-8">
           <button
             onClick={() => setMobileOpen(true)}
-            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 md:hidden"
+            className="rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200 md:hidden"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">{pageTitle}</h1>
+          <h1 className="text-lg font-semibold text-slate-100">{pageTitle}</h1>
+          <div className="ml-auto flex items-center gap-3">
+            <span
+              className="hidden text-sm text-slate-400 sm:block"
+              title={userEmail}
+            >
+              {userName}
+            </span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs font-medium text-slate-200 ring-1 ring-white/10">
+              {getInitials(
+                userName.split(" ")[0] ?? userName,
+                userName.split(" ")[1] ?? userName.slice(1)
+              )}
+            </span>
+          </div>
         </header>
 
         {/* Content */}

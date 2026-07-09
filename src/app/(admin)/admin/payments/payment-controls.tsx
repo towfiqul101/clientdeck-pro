@@ -12,7 +12,7 @@ import {
 } from "./actions";
 
 const field =
-  "rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+  "rounded-md border border-white/10 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
 
 const METHODS = ["Bank Transfer", "Cash", "Check", "Card Manual", "Other"];
 
@@ -53,9 +53,9 @@ export function PaymentForm({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-      <h3 className="text-sm font-semibold text-gray-900">Record a manual payment</h3>
-      <p className="mt-0.5 text-sm text-gray-500">
+    <div className="rounded-lg border border-white/10 bg-[#1a1a2e] p-5 shadow-sm">
+      <h3 className="text-sm font-semibold text-slate-100">Record a manual payment</h3>
+      <p className="mt-0.5 text-sm text-slate-500">
         Logs the payment and sets the agency to <strong>active</strong>.
       </p>
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,7 +135,7 @@ export function RowActions({ agencyId }: { agencyId: string }) {
   }
 
   const btn =
-    "rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40";
+    "rounded-md border border-white/10 bg-[#1a1a2e] px-2 py-1 text-xs font-medium text-slate-300 hover:bg-white/[0.03] disabled:opacity-40";
 
   return (
     <div className="flex flex-col items-start gap-1.5">
@@ -152,7 +152,7 @@ export function RowActions({ agencyId }: { agencyId: string }) {
         <button
           disabled={pending}
           onClick={() => run(() => cancelAgency(agencyId), "Cancelled.")}
-          className="rounded-md border border-red-300 bg-white px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40"
+          className="rounded-md border border-red-300 bg-[#1a1a2e] px-2 py-1 text-xs font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-40"
         >
           Cancel
         </button>
@@ -164,7 +164,7 @@ export function RowActions({ agencyId }: { agencyId: string }) {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Payment note…"
-            className="rounded-md border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none"
+            className="rounded-md border border-white/10 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none"
           />
           <button
             disabled={pending || !note.trim()}

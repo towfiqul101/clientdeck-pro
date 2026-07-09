@@ -19,7 +19,7 @@ export function SettingsNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-1 overflow-x-auto border-b border-gray-200">
+    <nav className="flex gap-1 overflow-x-auto border-b border-white/10">
       {TABS.map((tab) => {
         const active = pathname === tab.href;
         const Icon = tab.icon;
@@ -30,8 +30,8 @@ export function SettingsNav() {
             className={cn(
               "flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
               active
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                ? "border-blue-600 text-blue-400"
+                : "border-transparent text-slate-500 hover:border-white/10 hover:text-slate-300"
             )}
           >
             <Icon className="h-4 w-4" />

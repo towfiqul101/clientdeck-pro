@@ -31,10 +31,10 @@ export function SnapshotRequestForm() {
 
   if (done) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-8 text-center">
-        <CheckCircle2 className="h-8 w-8 text-green-600" />
-        <h3 className="font-semibold text-green-900">Request received</h3>
-        <p className="text-sm text-green-700">
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-8 text-center">
+        <CheckCircle2 className="h-8 w-8 text-green-400" />
+        <h3 className="font-semibold text-green-300">Request received</h3>
+        <p className="text-sm text-green-400">
           We&apos;ll email you the snapshot import link shortly.
         </p>
       </div>
@@ -42,9 +42,9 @@ export function SnapshotRequestForm() {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <form action={handleSubmit} className="space-y-4 rounded-lg border border-white/10 bg-[#13131f] p-6 shadow-sm">
       {error && (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <p className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           {error}
         </p>
       )}
