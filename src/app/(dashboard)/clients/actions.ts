@@ -336,11 +336,17 @@ export async function deleteClient(
   const supabase = await createServerSupabaseClient();
 
   // RLS scopes this to the caller's agency.
-  const { data: client } = await supabase
+  const { data: client, error: lookupError } = await supabase
     .from("clients")
     .select("id, first_name, last_name")
     .eq("id", clientId)
     .single();
+  // PGRST116 = no row matched (not found / not in this agency). Any other error
+  // is a real DB failure and shouldn't masquerade as "not found".
+  if (lookupError && lookupError.code !== "PGRST116") {
+    console.error("[deleteClient] Client lookup failed:", lookupError);
+    return { success: false, error: "Could not load the client. Try again." };
+  }
   if (!client) return { success: false, error: "Client not found." };
 
   const fullName = `${client.first_name} ${client.last_name}`;
@@ -349,10 +355,15 @@ export async function deleteClient(
   }
 
   // Collect storage paths BEFORE deleting (the documents rows cascade away).
-  const { data: docs } = await supabase
+  const { data: docs, error: docsError } = await supabase
     .from("documents")
     .select("storage_path")
     .eq("client_id", clientId);
+  // Non-fatal: if this read fails we proceed with the delete, but log it so an
+  // orphaned-file leak in the storage bucket is at least traceable.
+  if (docsError) {
+    console.error("[deleteClient] Could not list documents for storage cleanup:", docsError);
+  }
   const storagePaths = (docs ?? [])
     .map((d) => d.storage_path)
     .filter((p): p is string => Boolean(p));
