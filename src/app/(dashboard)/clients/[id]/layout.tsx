@@ -30,6 +30,11 @@ export default async function ClientDetailLayout({
         client={client}
         members={members}
         showCreditMonitoring={session ? isAgencyPlanOrHigher(session.agency.plan) : false}
+        canDelete={
+          session
+            ? session.teamMember.role === "owner" || session.teamMember.role === "admin"
+            : false
+        }
       />
       <ClientTabs clientId={client.id} />
       <div>{children}</div>

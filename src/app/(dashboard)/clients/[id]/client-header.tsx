@@ -7,6 +7,7 @@ import { AIStrategyPanel } from "./ai-strategy-panel";
 import { SendReviewRequestButton } from "./send-review-request-button";
 import { PullScoresButton } from "./pull-scores-button";
 import { ForceSyncButton } from "./force-sync-button";
+import { DeleteClientButton } from "./delete-client-button";
 import { cn, scoreChange } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
 import {
@@ -74,10 +75,12 @@ export function ClientHeader({
   client,
   members,
   showCreditMonitoring,
+  canDelete,
 }: {
   client: Client;
   members: { id: string; name: string }[];
   showCreditMonitoring: boolean;
+  canDelete: boolean;
 }) {
   // total_items_current tracks all items on file; total_items_deleted is the
   // subset resolved by deletion.
@@ -144,6 +147,12 @@ export function ClientHeader({
           <PortalLinkMenu clientId={client.id} />
           {showCreditMonitoring && <PullScoresButton client={client} />}
           {client.ghl_contact_id && <ForceSyncButton clientId={client.id} />}
+          {canDelete && (
+            <DeleteClientButton
+              clientId={client.id}
+              clientName={`${client.first_name} ${client.last_name}`}
+            />
+          )}
         </div>
       </div>
 
