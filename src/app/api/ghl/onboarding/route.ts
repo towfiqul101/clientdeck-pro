@@ -5,6 +5,7 @@ import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
+import { moveClientPipelineStage } from "@/lib/ghl/pipeline";
 import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
 import type { Agency, GHLContact, GHLContactCustomField } from "@/types";
 
@@ -257,6 +258,17 @@ export async function POST(req: Request) {
           };
           await notifyStaffNewClient(agency, notifClient);
         })().catch((err) => console.error("[Onboarding] Staff notification error:", err)),
+        (async () => {
+          // Put newly onboarded clients into the pipeline's Analysis stage so
+          // they appear as an opportunity immediately (best-effort; no-ops if
+          // the agency hasn't mapped a pipeline/Analysis stage).
+          if (!isNewClient) return;
+          await moveClientPipelineStage(
+            agency,
+            { id: clientId, ghl_contact_id: contactId, ghl_opportunity_id: null },
+            "analysis"
+          );
+        })().catch((err) => console.error("[Onboarding] Pipeline opportunity error:", err)),
         (async () => {
           if (!isNewClient) return;
           if (!agency.settings?.auto_pull_scores) return;

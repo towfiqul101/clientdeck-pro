@@ -12,7 +12,11 @@ import {
   syncClientCompleted,
 } from "@/lib/ghl/api";
 import { runGhlSync } from "@/lib/ghl/sync";
-import { moveClientPipelineStage } from "@/lib/ghl/pipeline";
+import {
+  moveClientPipelineStage,
+  stageForRoundSent,
+  stageForRoundResults,
+} from "@/lib/ghl/pipeline";
 import { syncRoundLettersToDrive } from "@/lib/google-drive/letter-sync";
 import {
   notifyRoundSent,
@@ -315,7 +319,7 @@ export async function markRoundSent(
         await moveClientPipelineStage(
           session.agency,
           notifClient,
-          round.round_number === 1 ? "round_1_sent" : "round_2_plus"
+          stageForRoundSent(round.round_number)
         );
       }
     })(),
@@ -579,6 +583,15 @@ export async function logResults(
           total_verified: tally.verified,
           total_no_response: tally.no_response,
         });
+      }
+    })(),
+    (async () => {
+      if (notifClient) {
+        await moveClientPipelineStage(
+          session.agency,
+          notifClient,
+          stageForRoundResults(round.round_number)
+        );
       }
     })(),
   ]);

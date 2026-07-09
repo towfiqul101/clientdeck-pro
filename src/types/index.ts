@@ -114,10 +114,17 @@ export interface AgencySettings {
   referral_link?: string;
   // Owner's own GHL contact id — staff alert tags land on this contact (Session 6)
   owner_ghl_contact_id?: string;
-  // Pipeline sync (Session 6, Phase B)
+  // Pipeline sync (Session 6, Phase B; expanded to the granular 8-stage model in Session 8)
   ghl_pipeline_id?: string;
   ghl_pipeline_stages?: Partial<Record<
-    "round_1_sent" | "round_2_plus" | "goal_achieved",
+    | "analysis"
+    | "ready_to_dispute"
+    | "round_1_sent"
+    | "round_1_results"
+    | "round_2_sent"
+    | "round_2_results"
+    | "round_3_plus"
+    | "goal_achieved",
     string
   >>;
   // Credit monitoring (Session 7)

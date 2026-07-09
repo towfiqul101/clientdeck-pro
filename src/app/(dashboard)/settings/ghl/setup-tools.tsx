@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Wrench, Database, RefreshCw, Stethoscope, Check, AlertTriangle, X } from "lucide-react";
+import { Wrench, Database, RefreshCw, GitBranch, Stethoscope, Check, AlertTriangle, X } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils/helpers";
@@ -35,6 +35,13 @@ const TOOLS = [
     title: "Sync All Clients to GHL",
     desc: "Pushes all your ClientDeck clients to GHL as contacts with all custom fields.",
     path: "/api/ghl/setup/sync-clients",
+  },
+  {
+    key: "opportunities",
+    icon: GitBranch,
+    title: "Create Opportunities for All Clients",
+    desc: "Adds each client to your Active Client pipeline as an opportunity, placed in the stage that matches their progress. Run after syncing contacts and connecting the pipeline.",
+    path: "/api/ghl/setup/create-opportunities",
   },
 ];
 

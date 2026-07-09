@@ -3,15 +3,35 @@ import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getGHLPipelines } from "@/lib/ghl/api";
 import type { AgencySettings } from "@/types";
-import type { PipelineStageKey } from "@/lib/ghl/pipeline";
+import {
+  PIPELINE_STAGE_KEYS,
+  type PipelineStageKey,
+} from "@/lib/ghl/pipeline";
 
 export const dynamic = "force-dynamic";
 
-const STAGE_NAME_MAP: Record<PipelineStageKey, string> = {
-  round_1_sent: "round 1 sent",
-  round_2_plus: "round 2+",
-  goal_achieved: "goal achieved",
-};
+/**
+ * Heuristically maps a GHL pipeline stage name onto one of our 8 stage keys.
+ * Tolerant of separators/casing: "Round 1 - Sent", "Round 1 Sent", "R1 Results",
+ * "Analysis", "Ready to Dispute", "Round 3+ Active", "Goal Achieved", etc.
+ */
+function mapStageNameToKey(stageName: string): PipelineStageKey | null {
+  const name = stageName.toLowerCase();
+  if (name.includes("analysis") || name.includes("review credit")) return "analysis";
+  if (name.includes("ready") && name.includes("dispute")) return "ready_to_dispute";
+  if (name.includes("goal") || name.includes("achieved") || name.includes("complete"))
+    return "goal_achieved";
+
+  const isResults =
+    name.includes("result") || name.includes("response") || name.includes("back");
+  if (/round\s*[3-9]/.test(name) || name.includes("round 3+") || name.includes("3+"))
+    return "round_3_plus";
+  if (/round\s*2/.test(name) || /\br2\b/.test(name))
+    return isResults ? "round_2_results" : "round_2_sent";
+  if (/round\s*1/.test(name) || /\br1\b/.test(name))
+    return isResults ? "round_1_results" : "round_1_sent";
+  return null;
+}
 
 /** Auto-detects the agency's "Active Client" GHL pipeline and maps its 3 stage ids by name. */
 export async function POST() {
@@ -39,9 +59,10 @@ export async function POST() {
   }
 
   const stages: Partial<Record<PipelineStageKey, string>> = {};
-  for (const [key, wantedName] of Object.entries(STAGE_NAME_MAP) as [PipelineStageKey, string][]) {
-    const stage = match.stages?.find((s) => s.name.toLowerCase() === wantedName);
-    if (stage) stages[key] = stage.id;
+  for (const stage of match.stages ?? []) {
+    const key = mapStageNameToKey(stage.name);
+    // First match wins so an earlier "Round 1 - Sent" isn't clobbered by a later stage.
+    if (key && !stages[key]) stages[key] = stage.id;
   }
 
   const supabase = await createServerSupabaseClient();
@@ -57,8 +78,13 @@ export async function POST() {
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
 
   const mappedCount = Object.keys(stages).length;
+  const totalStages = PIPELINE_STAGE_KEYS.length;
   return NextResponse.json({
     ok: true,
-    message: `Connected pipeline "${match.name}" — mapped ${mappedCount} of 3 stages by name.`,
+    message:
+      `Connected pipeline "${match.name}" — mapped ${mappedCount} of ${totalStages} stages by name.` +
+      (mappedCount < totalStages
+        ? " Add any missing stage ids manually in Pipeline Configuration below."
+        : ""),
   });
 }
