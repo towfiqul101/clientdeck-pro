@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
             return;
           }
 
-          const contactId = await createGHLContact(
+          const ghlRes = await createGHLContact(
             {
               firstName: client.first_name,
               lastName: client.last_name,
@@ -72,10 +72,11 @@ export async function POST(request: NextRequest) {
             opts
           );
 
-          if (!contactId) {
-            errors.push(`${client.first_name} ${client.last_name}: create failed`);
+          if (!ghlRes.ok) {
+            errors.push(`${client.first_name} ${client.last_name}: ${ghlRes.error}`);
             return;
           }
+          const contactId = ghlRes.id;
 
           await admin
             .from("clients")

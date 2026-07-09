@@ -100,17 +100,29 @@ interface CreateGHLContactInput {
   postalCode?: string | null;
 }
 
+export type CreateGHLContactResult =
+  | { ok: true; id: string; duplicate: boolean }
+  | { ok: false; error: string };
+
 /**
- * Creates a contact in GHL. Returns the new contact id, or null on failure
- * (callers should treat GHL sync as best-effort and not block the app write).
+ * Creates a contact in GHL, returning a typed result so callers can surface the
+ * real failure instead of a silent no-op. Handles GHL's duplicate-contact case
+ * (HTTP 400 with the existing id in `meta.contactId`) by reusing that contact,
+ * and maps auth failures to an actionable message.
  */
 export async function createGHLContact(
   input: CreateGHLContactInput,
   opts: GHLRequestOptions
-): Promise<string | null> {
+): Promise<CreateGHLContactResult> {
+  let response: Response;
   try {
-    const data = await ghlFetch(`/contacts/`, opts, {
+    response = await fetch(`${GHL_BASE_URL}/contacts/`, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${opts.apiKey}`,
+        "Content-Type": "application/json",
+        Version: "2021-07-28",
+      },
       body: JSON.stringify({
         locationId: opts.locationId,
         firstName: input.firstName,
@@ -123,11 +135,44 @@ export async function createGHLContact(
         postalCode: input.postalCode || undefined,
       }),
     });
-    return data?.contact?.id ?? null;
-  } catch (error) {
-    console.error("Failed to create GHL contact:", error);
-    return null;
+  } catch {
+    return { ok: false, error: "Could not reach GoHighLevel. Check your connection and try again." };
   }
+
+  const text = await response.text();
+  let body: unknown = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    /* non-JSON response */
+  }
+  const b = (body ?? {}) as {
+    contact?: { id?: string };
+    meta?: { contactId?: string };
+    message?: string | string[];
+  };
+
+  if (response.ok) {
+    const id = b.contact?.id;
+    if (id) return { ok: true, id, duplicate: false };
+    return { ok: false, error: "GoHighLevel accepted the request but returned no contact id." };
+  }
+
+  // Duplicate contact — GHL returns 400 with the existing id in meta.contactId.
+  const dupId = b.meta?.contactId;
+  if (dupId) return { ok: true, id: dupId, duplicate: true };
+
+  if (response.status === 401 || response.status === 403) {
+    console.error(`createGHLContact auth failure [${response.status}]:`, text);
+    return {
+      ok: false,
+      error: "GoHighLevel rejected the API key. Re-check the API key (PIT) and Location ID in Settings → GHL.",
+    };
+  }
+
+  const msg = Array.isArray(b.message) ? b.message.join(", ") : b.message;
+  console.error(`createGHLContact failed [${response.status}]:`, text);
+  return { ok: false, error: msg || `GoHighLevel returned status ${response.status}.` };
 }
 
 export async function updateGHLContactFields(

@@ -122,6 +122,7 @@ export function ClientForm({
       const result = await createClientAction(payload, createInGhl);
       if (result.success) {
         toast("Client created.", "success");
+        if (result.ghlWarning) toast(result.ghlWarning, "info");
         router.push(`/clients/${result.clientId}`);
         return;
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { X, Copy, Loader2, Wrench, Database, RefreshCw, Mail } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { cn, formatCurrency, formatDate } from "@/lib/utils/helpers";
@@ -55,6 +56,12 @@ export function AgencySlideover({
   const [data, setData] = useState<{ id: string; payload: AgencyPanelData } | null>(null);
   const [tab, setTab] = useState<Tab>("Status");
   const [pending, start] = useTransition();
+  // Portal to <body>: ancestors of this component (the agencies Card) use
+  // backdrop-filter, which establishes a containing block for position:fixed —
+  // so a fixed drawer rendered inline gets clipped to the Card instead of the
+  // viewport. Portaling escapes that. Mounted-guard avoids an SSR/hydration gap.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const reload = useCallback(async () => {
     if (!agencyId) return;
@@ -106,7 +113,9 @@ export function AgencySlideover({
   const loading = open && current === null;
   const agency = current?.agency;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {/* Overlay */}
       <div
@@ -221,7 +230,8 @@ export function AgencySlideover({
           </>
         )}
       </aside>
-    </>
+    </>,
+    document.body
   );
 }
 

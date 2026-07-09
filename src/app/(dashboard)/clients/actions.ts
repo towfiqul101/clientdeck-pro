@@ -31,7 +31,7 @@ export interface ClientFormValues {
 }
 
 export type CreateClientResult =
-  | { success: true; clientId: string }
+  | { success: true; clientId: string; ghlWarning?: string }
   | { success: false; error: string; limitReached?: boolean };
 
 const nullable = (v: string) => (v.trim() ? v.trim() : null);
@@ -106,28 +106,39 @@ export async function createClient(
   const supabase = await createServerSupabaseClient();
 
   // Best-effort GHL contact creation before insert so we can store the id.
+  // A failure must not block the client write, but we DO surface it so the user
+  // isn't left thinking the contact synced when it didn't.
   let ghlContactId: string | null = null;
-  if (
-    createInGhl &&
-    session.agency.ghl_api_key &&
-    session.agency.ghl_location_id
-  ) {
-    ghlContactId = await createGHLContact(
-      {
-        firstName: values.first_name.trim(),
-        lastName: values.last_name.trim(),
-        email: nullable(values.email),
-        phone: nullable(values.phone),
-        address1: nullable(values.address_line1),
-        city: nullable(values.city),
-        state: nullable(values.state),
-        postalCode: nullable(values.zip),
-      },
-      {
-        apiKey: session.agency.ghl_api_key,
-        locationId: session.agency.ghl_location_id,
+  let ghlWarning: string | undefined;
+  if (createInGhl) {
+    if (!session.agency.ghl_api_key || !session.agency.ghl_location_id) {
+      ghlWarning = "Client saved, but GoHighLevel isn't connected — add your GHL API key and Location ID in Settings → GHL.";
+    } else {
+      const ghlRes = await createGHLContact(
+        {
+          firstName: values.first_name.trim(),
+          lastName: values.last_name.trim(),
+          email: nullable(values.email),
+          phone: nullable(values.phone),
+          address1: nullable(values.address_line1),
+          city: nullable(values.city),
+          state: nullable(values.state),
+          postalCode: nullable(values.zip),
+        },
+        {
+          apiKey: session.agency.ghl_api_key,
+          locationId: session.agency.ghl_location_id,
+        }
+      );
+      if (ghlRes.ok) {
+        ghlContactId = ghlRes.id;
+        if (ghlRes.duplicate) {
+          ghlWarning = "A GoHighLevel contact with this email/phone already existed — linked to it instead of creating a duplicate.";
+        }
+      } else {
+        ghlWarning = `Client saved, but the GoHighLevel contact wasn't created: ${ghlRes.error}`;
       }
-    );
+    }
   }
 
   // Auto-assign: sole active member gets everything; otherwise fall back to
@@ -228,7 +239,7 @@ export async function createClient(
   await markOnboardingStep(session.agency.id, "first_client_added", true);
 
   revalidatePath("/clients");
-  return { success: true, clientId: data.id };
+  return { success: true, clientId: data.id, ghlWarning };
 }
 
 export async function updateClient(
