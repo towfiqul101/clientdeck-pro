@@ -51,30 +51,53 @@ export function Modal({
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
-          "relative z-10 my-8 w-full rounded-2xl border border-white/10 bg-[#1a1a2e] shadow-[0_24px_64px_rgba(0,0,0,0.6)]",
+          "app-content relative z-10 my-8 w-full rounded-2xl border shadow-[0_24px_64px_rgba(0,0,0,0.6)]",
           sizes[size]
         )}
+        style={{
+          background: "var(--overlay-surface)",
+          borderColor: "var(--overlay-border)",
+        }}
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-white/[0.08] px-6 py-4">
+        <div
+          className="flex items-start justify-between gap-4 border-b px-6 py-4"
+          style={{ borderColor: "var(--overlay-divide)" }}
+        >
           <div>
-            <h2 className="text-base font-semibold text-slate-100">{title}</h2>
+            <h2
+              className="text-base font-semibold"
+              style={{ color: "var(--overlay-text)" }}
+            >
+              {title}
+            </h2>
             {description && (
-              <p className="mt-0.5 text-sm text-slate-400">{description}</p>
+              <p
+                className="mt-0.5 text-sm"
+                style={{ color: "var(--overlay-text-muted)" }}
+              >
+                {description}
+              </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-slate-400 hover:bg-white/5 hover:text-slate-200"
+            className="rounded-md p-1 hover:bg-black/5"
+            style={{ color: "var(--overlay-text-muted)" }}
             aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-6 py-5" style={{ color: "var(--overlay-text)" }}>
+          {children}
+        </div>
         {footer && (
-          <div className="flex justify-end gap-2 border-t border-white/[0.08] px-6 py-4">
+          <div
+            className="flex justify-end gap-2 border-t px-6 py-4"
+            style={{ borderColor: "var(--overlay-divide)" }}
+          >
             {footer}
           </div>
         )}

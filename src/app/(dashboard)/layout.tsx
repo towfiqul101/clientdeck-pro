@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/auth/session";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ToastProvider } from "@/components/ui/toast";
+import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme/theme-context";
 
 export default async function DashboardLayout({
   children,
@@ -20,15 +21,19 @@ export default async function DashboardLayout({
   const { teamMember, agency } = session;
 
   return (
-    <ToastProvider>
-      <DashboardShell
-        agencyName={agency.name}
-        agencyPlan={agency.plan}
-        userName={teamMember.name}
-        userEmail={teamMember.email}
-      >
-        {children}
-      </DashboardShell>
-    </ToastProvider>
+    <ThemeProvider>
+      {/* Set the theme class before paint to avoid a flash of the wrong theme. */}
+      <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      <ToastProvider>
+        <DashboardShell
+          agencyName={agency.name}
+          agencyPlan={agency.plan}
+          userName={teamMember.name}
+          userEmail={teamMember.email}
+        >
+          {children}
+        </DashboardShell>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

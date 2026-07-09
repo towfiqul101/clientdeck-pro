@@ -352,3 +352,154 @@ html {
     transform: none;
   }
 }
+
+/* ================================================================== */
+/* THEME: dark (default) + light. Only the dashboard opts in to light  */
+/* via `html.light`; the toggle is scoped to `.app-content`, so the    */
+/* sidebar, admin, portal, and marketing keep their fixed looks.       */
+/* ================================================================== */
+
+/* Overlay tokens (Modal/other body-portaled surfaces) — global so they
+   work even when rendered outside .app-content. */
+:root {
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --input-placeholder: #475569;
+  --overlay-surface: #1a1a2e;
+  --overlay-border: rgba(255, 255, 255, 0.1);
+  --overlay-divide: rgba(255, 255, 255, 0.08);
+  --overlay-text: #f1f5f9;
+  --overlay-text-muted: #94a3b8;
+}
+
+html.light {
+  --overlay-surface: #ffffff;
+  --overlay-border: #e2e8f0;
+  --overlay-divide: #e2e8f0;
+  --overlay-text: #0f172a;
+  --overlay-text-muted: #64748b;
+}
+
+/* input-dark now token-driven so it flips with the theme */
+.input-dark {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+}
+.input-dark::placeholder {
+  color: var(--input-placeholder);
+}
+.input-dark option {
+  background: var(--overlay-surface);
+  color: var(--overlay-text);
+}
+
+/* App shell background flips (outer wrapper, includes the dark sidebar). */
+html.light .app-shell {
+  background: #f8fafc;
+}
+
+/* -------- Light tokens, scoped to dashboard content only -------- */
+html.light .app-content {
+  color: #0f172a;
+  --glass-bg: #ffffff;
+  --glass-border: #e2e8f0;
+  --glass-hover: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --input-placeholder: #94a3b8;
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* -------- Utility override layer (light). Unlayered → wins over
+   Tailwind's layered utilities regardless of specificity. -------- */
+html.light .app-content .bg-\[\#1a1a2e\],
+html.light .app-content .bg-\[\#13131f\],
+html.light .app-content .bg-white\/\[0\.03\] {
+  background-color: #ffffff;
+}
+html.light .app-content .bg-white\/\[0\.02\] {
+  background-color: #f8fafc;
+}
+html.light .app-content .bg-white\/\[0\.06\],
+html.light .app-content .bg-white\/5 {
+  background-color: #f1f5f9;
+}
+html.light .app-content .bg-white\/\[0\.08\] {
+  background-color: #e9eef4;
+}
+html.light .app-content .bg-white\/10 {
+  background-color: #e2e8f0;
+}
+html.light .app-content .bg-\[\#0f0f1a\]\/80 {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+html.light .app-content .text-slate-100 {
+  color: #0f172a;
+}
+html.light .app-content .text-slate-200 {
+  color: #1e293b;
+}
+html.light .app-content .text-slate-300 {
+  color: #334155;
+}
+html.light .app-content .text-slate-400 {
+  color: #475569;
+}
+html.light .app-content .text-slate-500 {
+  color: #64748b;
+}
+html.light .app-content .text-slate-600 {
+  color: #94a3b8;
+}
+
+html.light .app-content .border-white\/10,
+html.light .app-content .border-white\/\[0\.08\] {
+  border-color: #e2e8f0;
+}
+html.light .app-content .border-white\/\[0\.06\] {
+  border-color: #eef2f6;
+}
+html.light .app-content .border-white\/20 {
+  border-color: #cbd5e1;
+}
+
+html.light .app-content .hover\:bg-white\/5:hover,
+html.light .app-content .hover\:bg-white\/\[0\.03\]:hover,
+html.light .app-content .hover\:bg-white\/\[0\.05\]:hover {
+  background-color: #f1f5f9;
+}
+html.light .app-content .hover\:bg-white\/10:hover {
+  background-color: #e2e8f0;
+}
+
+html.light .app-content .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]),
+html.light .app-content .divide-white\/\[0\.08\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0;
+}
+
+/* -------- .always-dark: regions that stay dark even in light mode
+   (gradient banners/cards). Re-assert dark palette after the overrides. */
+html.light .app-content .always-dark .text-slate-100 {
+  color: #f1f5f9;
+}
+html.light .app-content .always-dark .text-slate-200 {
+  color: #e2e8f0;
+}
+html.light .app-content .always-dark .text-slate-300 {
+  color: #cbd5e1;
+}
+html.light .app-content .always-dark .text-slate-400 {
+  color: #94a3b8;
+}
+html.light .app-content .always-dark .text-slate-500 {
+  color: #64748b;
+}
+html.light .app-content .always-dark .border-white\/10,
+html.light .app-content .always-dark .border-white\/\[0\.08\] {
+  border-color: rgba(255, 255, 255, 0.1);
+}

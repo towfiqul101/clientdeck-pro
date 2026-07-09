@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn, getInitials } from "@/lib/utils/helpers";
 import { Logo } from "@/components/ui/logo";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import {
   LayoutDashboard,
   Users,
@@ -210,7 +211,7 @@ export function DashboardShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#0f0f1a]">
+    <div className="app-shell min-h-screen bg-[#0f0f1a]">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 md:block">
         {sidebar}
@@ -228,7 +229,7 @@ export function DashboardShell({
       )}
 
       {/* Main column */}
-      <div className="md:pl-64">
+      <div className="app-content md:pl-64">
         {/* Top bar */}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/[0.06] bg-[#0f0f1a]/80 px-4 backdrop-blur-xl md:px-8">
           <button
@@ -240,6 +241,7 @@ export function DashboardShell({
           </button>
           <h1 className="text-lg font-semibold text-slate-100">{pageTitle}</h1>
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             <span
               className="hidden text-sm text-slate-400 sm:block"
               title={userEmail}

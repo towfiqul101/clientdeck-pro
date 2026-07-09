@@ -339,7 +339,7 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Hero banner */}
       <div
-        className="relative overflow-hidden rounded-2xl"
+        className="always-dark relative overflow-hidden rounded-2xl"
         style={{
           background:
             "linear-gradient(135deg, #1a0533 0%, #0a1628 50%, #0f1a2e 100%)",
@@ -528,7 +528,7 @@ export default async function DashboardPage() {
                   <p className="text-xs font-medium text-slate-400">
                     {stage.label}
                   </p>
-                  <p className="text-2xl font-bold text-white">{count}</p>
+                  <p className="text-2xl font-bold text-slate-100">{count}</p>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                     <div
                       className={cn("h-full rounded-full", stage.color)}

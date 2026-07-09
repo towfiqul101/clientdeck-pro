@@ -46,7 +46,7 @@ function BureauScore({
           {start ?? "—"}
         </span>
         <ArrowRight className="h-3 w-3 text-slate-600" />
-        <span className="text-lg font-semibold text-white tabular-nums">
+        <span className="text-lg font-semibold text-slate-100 tabular-nums">
           {current ?? "—"}
         </span>
         {change.direction !== "same" && (
@@ -106,7 +106,7 @@ export function ClientHeader({
       <div className="flex flex-col gap-4 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-blue-500/[0.05] p-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-white">
+            <h1 className="text-2xl font-semibold text-slate-100">
               {client.first_name} {client.last_name}
             </h1>
             <Badge status={client.status} />
@@ -219,7 +219,7 @@ export function ClientHeader({
           <span className="text-slate-400">
             {client.total_items_deleted} of {totalItems} items resolved
           </span>
-          <span className="font-medium text-white">{deletedPct}%</span>
+          <span className="font-medium text-slate-100">{deletedPct}%</span>
         </div>
         <div className="flex h-2 w-full overflow-hidden rounded-full bg-white/10">
           <div

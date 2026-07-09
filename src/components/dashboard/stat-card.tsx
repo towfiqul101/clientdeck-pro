@@ -62,7 +62,7 @@ export function StatCard({
         </span>
       </div>
       <div>
-        <div className="text-3xl font-bold tracking-tight text-white">
+        <div className="text-3xl font-bold tracking-tight text-slate-100">
           {value}
         </div>
         {trend && (

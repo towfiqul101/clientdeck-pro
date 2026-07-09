@@ -46,7 +46,7 @@ export function DeletionsChart({ data }: { data: MonthlyDeletion[] }) {
               <stop offset="100%" stopColor="#6d28d9" stopOpacity={0.15} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148,163,184,0.2)" />
           <XAxis
             dataKey="label"
             tickLine={false}
