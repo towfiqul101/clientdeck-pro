@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils/helpers";
 
@@ -64,12 +64,6 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/snapshot"
-            className="text-sm text-slate-400 transition-colors duration-150 hover:text-white"
-          >
-            GHL Snapshot
-          </Link>
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -78,18 +72,22 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
               href="/dashboard"
               className="cta-gradient rounded-lg px-4 py-2 text-sm font-semibold text-white"
             >
-              Go to Dashboard
+              Go to Dashboard →
             </Link>
           ) : (
             <>
-              <Link href="/login" className="text-sm text-slate-400 hover:text-white">
+              <Link
+                href="/login"
+                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-slate-300 transition-colors duration-150 hover:border-white/40 hover:text-white"
+              >
                 Log In
               </Link>
               <Link
-                href="/signup"
-                className="cta-gradient rounded-lg px-4 py-2 text-sm font-semibold text-white"
+                href="/#pricing"
+                className="cta-gradient flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
               >
                 Start Free Trial
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </>
           )}
@@ -119,23 +117,16 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/snapshot"
-            className="block py-2 text-sm text-slate-400"
-            onClick={() => setOpen(false)}
-          >
-            GHL Snapshot
-          </Link>
           {loggedIn ? (
             <Link href="/dashboard" className="block py-2 text-sm font-medium text-violet-400">
-              Go to Dashboard
+              Go to Dashboard →
             </Link>
           ) : (
             <>
               <Link href="/login" className="block py-2 text-sm text-slate-400">
                 Log In
               </Link>
-              <Link href="/signup" className="block py-2 text-sm font-medium text-violet-400">
+              <Link href="/#pricing" className="block py-2 text-sm font-medium text-violet-400">
                 Start Free Trial
               </Link>
             </>

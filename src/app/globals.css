@@ -577,3 +577,84 @@ html.light .app-content .always-dark .border-white\/10,
 html.light .app-content .always-dark .border-white\/\[0\.08\] {
   border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* -------- Accent TEXT colors (light). The pastel -300/-400 accent shades are
+   tuned for dark surfaces; on white cards they drop to ~1.5:1 contrast and
+   read as invisible. Darken them to AA-ish shades. These accents are used
+   almost exclusively as text/icons over faint colored tints (bg-*/10, bg-*/20,
+   status pills) that are NOT flipped to white, so the darker ink reads well on
+   the tint. Solid colored buttons use text-white and are untouched. -------- */
+html.light .app-content .text-violet-300,
+html.light .app-content .text-violet-400,
+html.light .app-content .text-purple-400 {
+  color: #7c3aed;
+}
+html.light .app-content .text-blue-300,
+html.light .app-content .text-blue-400 {
+  color: #2563eb;
+}
+html.light .app-content .text-emerald-300,
+html.light .app-content .text-emerald-400,
+html.light .app-content .text-green-400 {
+  color: #047857;
+}
+html.light .app-content .text-emerald-400\/80 {
+  color: rgba(4, 120, 87, 0.9);
+}
+html.light .app-content .text-teal-400 {
+  color: #0f766e;
+}
+html.light .app-content .text-amber-300,
+html.light .app-content .text-amber-400,
+html.light .app-content .text-orange-400 {
+  color: #b45309;
+}
+html.light .app-content .text-red-300,
+html.light .app-content .text-red-400 {
+  color: #dc2626;
+}
+
+/* Re-assert the bright accent shades inside .always-dark banners (e.g. the
+   dashboard hero) so they keep their glow on the dark gradient in light mode. */
+html.light .app-content .always-dark .text-violet-300 {
+  color: #c4b5fd;
+}
+html.light .app-content .always-dark .text-violet-400 {
+  color: #a78bfa;
+}
+html.light .app-content .always-dark .text-purple-400 {
+  color: #c084fc;
+}
+html.light .app-content .always-dark .text-blue-300 {
+  color: #93c5fd;
+}
+html.light .app-content .always-dark .text-blue-400 {
+  color: #60a5fa;
+}
+html.light .app-content .always-dark .text-emerald-300 {
+  color: #6ee7b7;
+}
+html.light .app-content .always-dark .text-emerald-400 {
+  color: #34d399;
+}
+html.light .app-content .always-dark .text-green-400 {
+  color: #4ade80;
+}
+html.light .app-content .always-dark .text-teal-400 {
+  color: #2dd4bf;
+}
+html.light .app-content .always-dark .text-amber-300 {
+  color: #fcd34d;
+}
+html.light .app-content .always-dark .text-amber-400 {
+  color: #fbbf24;
+}
+html.light .app-content .always-dark .text-orange-400 {
+  color: #fb923c;
+}
+html.light .app-content .always-dark .text-red-300 {
+  color: #fca5a5;
+}
+html.light .app-content .always-dark .text-red-400 {
+  color: #f87171;
+}

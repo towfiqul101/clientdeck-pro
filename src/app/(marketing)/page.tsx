@@ -598,7 +598,11 @@ function ClientDetailMockup() {
 
 export default async function LandingPage() {
   const session = await getSessionContext();
-  const primaryHref = session ? "/dashboard" : "/signup";
+  // Generic "Start Free Trial" CTAs (hero, final CTA) funnel to the pricing
+  // section first so visitors pick a plan; the plan cards themselves link to
+  // the real /signup destination.
+  const ctaHref = session ? "/dashboard" : "#pricing";
+  const signupHref = session ? "/dashboard" : "/signup";
   const primaryLabel = session ? "Go to Dashboard" : "Start Free Trial";
 
   const faqSchema = {
@@ -667,7 +671,7 @@ export default async function LandingPage() {
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href={primaryHref}
+              href={ctaHref}
               className="cta-gradient inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white"
             >
               {session ? primaryLabel : "Start Free Trial"}
@@ -1025,7 +1029,7 @@ export default async function LandingPage() {
 
           <Reveal delay={80}>
             <div className="mt-12">
-              <PricingCards signupHref={primaryHref} />
+              <PricingCards signupHref={signupHref} />
             </div>
           </Reveal>
 
@@ -1034,6 +1038,7 @@ export default async function LandingPage() {
               "14-day free trial",
               "Cancel anytime",
               "Setup support included",
+              "GHL snapshot included",
               "Built for GoHighLevel",
             ].map((b) => (
               <span key={b} className="flex items-center gap-1.5">
@@ -1109,7 +1114,7 @@ export default async function LandingPage() {
               platform, with a 14-day free trial to prove it.
             </p>
             <Link
-              href={primaryHref}
+              href={ctaHref}
               className="cta-gradient relative mt-8 inline-flex items-center gap-2 rounded-xl px-7 py-4 text-sm font-semibold text-white"
             >
               {session ? primaryLabel : "Start Your Free 14-Day Trial"}
