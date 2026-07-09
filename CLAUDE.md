@@ -115,13 +115,14 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - Font: Inter (system) for body, medium weights for headings
 - Border radius: `rounded-lg` (8px) for cards, `rounded-md` for inputs/buttons
 - Shadows: subtle `shadow-sm` on cards only
+- **Theming:** app defaults to the dark theme; a light-mode toggle (`src/lib/theme/theme-context.tsx`) sets `html.light`/`html.dark`. Light overrides are **scoped to `.app-content`** (the dashboard main column) in `globals.css` — the sidebar, `(auth)`, `portal`, and `(admin)` shells stay permanently dark. Content text should use `text-slate-*` (auto-remapped for light) and accent `-300/-400` text (auto-darkened for light); wrap any solid-dark banner in `.always-dark` so its light text isn't flipped. (Session 8.)
 
 ## GHL Integration Details
 - **Inbound webhook URL:** `/api/ghl/webhook` — handles ContactCreate, ContactUpdate, ContactTagUpdate
 - **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `onboarding-complete`. Upserts client from contact + `ghl_field_keys`, generates portal link, syncs docs to Drive + writes `clientdeck_client_id`/`clientdeck_portal_link` back. Heavy work runs in Next `after()`; always 200.
 - **Signature request:** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow.
 - **Outbound sync:** Uses per-agency `ghl_api_key` stored in `agencies` table
-- **Sync events:** Round sent → pipeline move + tag + note. Deletion → tag + field update. Score update → custom fields. Completion → goal-achieved tag.
+- **Sync events:** Round sent → pipeline move (`round_N_sent`) + tag + note. Results logged → pipeline move (`round_N_results`). Deletion → tag + field update. Score update → custom fields. Completion → `goal_achieved` stage + tag.
 - **GHL custom fields** the snapshot expects: `dispute_round_current`, `items_deleted_total`, `total_negative_items`, `next_dispute_date`, `credit_score_eq_current`, `credit_score_exp_current`, `credit_score_tu_current`, `clientdeck_portal_link`, `clientdeck_client_id`
 - **Field mapping (`agencies.ghl_field_keys` JSONB):** because GHL field IDs are unique per location, each agency maps its keys (SSN, DOB, scores, signature status/date, credit-report/ID/proof-of-address uploads) in Settings → GHL. Manual entry or heuristic "Auto-detect" (`field-detect.ts`).
 
@@ -129,7 +130,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - **Independent channel, additive to outbound sync above.** `src/lib/ghl/notifications.ts` POSTs to an agency-configured GHL "Custom Webhook" trigger URL per event (`agencies.settings.ghl_webhook_triggers`, one URL per `GHLNotificationType`), falling back to Resend email (only 4 of 10 types have a template — `round_sent`/`deletion_win`/`goal_achieved`/`payment_failed`), falling back to a log-only no-op. Every send is logged to `activity_log` (`action: "notification_sent"`) and never throws past its caller.
 - **10 notification types**, each wired into one event: `round_sent`, `deletion_win`, `round_results_in` (round lifecycle), `goal_achieved` (client completed), `payment_failed` (Stripe webhook — client's own `stripe_customer_id`, distinct from the agency's SaaS subscription), `portal_link` (regeneration), `staff_new_client` (onboarding webhook), `staff_round_overdue` / `staff_next_round_ready` (crons), `monthly_progress` (new monthly cron, `/api/cron/monthly-progress`, `0 9 1 * *`). Staff-facing types need `agencies.settings.owner_ghl_contact_id` configured.
 - **Configure at Settings → GHL:** "Notification Webhooks" (per-type URL + Test button, backed by `/api/ghl/test-webhook`), "Pipeline Configuration", and a link to the full setup guide at `/onboarding/ghl-setup`.
-- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through 3 stages of the existing "Active Client" pipeline (`round_1_sent`, `round_2_plus`, `goal_achieved` — configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`). Lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()` and caches it on `clients.ghl_opportunity_id`. Best-effort, no-ops cleanly if unconfigured.
+- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through the **8-stage** "Active Client" pipeline — `analysis`, `ready_to_dispute`, `round_1_sent`, `round_1_results`, `round_2_sent`, `round_2_results`, `round_3_plus`, `goal_achieved` (configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`; labels + `stageForRoundSent`/`stageForRoundResults`/`stageForClientState` helpers live in `pipeline.ts`). Wired into round events in `clients/[id]/rounds/actions.ts` (round sent → `round_N_sent`, results logged → `round_N_results`, completion → `goal_achieved`); lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()`, caching it on `clients.ghl_opportunity_id`. New clients are placed in `analysis` at onboarding; `/api/ghl/setup/create-opportunities` backfills opportunities for all synced clients (each in the stage matching its progress); `/api/ghl/setup/find-pipeline` auto-maps stage ids by name. Best-effort, no-ops cleanly if unconfigured. **Requires the agency's GHL "Active Client" pipeline to actually contain all 8 stages** — unmapped stages just no-op. (Session 6; expanded from 3 to 8 stages in Session 8.)
 - **Visibility:** client Timeline tab shows a "✓ GHL" / "⚠ Email fallback" badge on notification entries; admin agency slide-over's GHL Config tab shows a 10-row configured/not-set breakdown.
 
 ## Credit Monitoring Integration (Session 7)
@@ -244,6 +245,18 @@ analytics, landing page.
   the GHL onboarding webhook for new clients (`settings.auto_pull_scores`);
   a Reports "Credit Score Analytics" section; and an admin agency slide-over
   tool to check credit-monitoring status and test the stored connection.
+- **Session 8** — (a) Light/dark **font-contrast fix**: pastel accent `-300/-400`
+  text was ~invisible on white in light mode; `globals.css` now darkens accent
+  text in the `.app-content` light layer and re-asserts bright shades inside
+  `.always-dark`. (b) **Landing-nav cleanup**: dropped the "GHL Snapshot" nav
+  link (page still at `/snapshot`), outline "Log In", and the generic "Start
+  Free Trial" CTAs (nav/hero/final) scroll to `#pricing` while the plan cards
+  keep the real `/signup` link. (c) **Granular 8-stage GHL pipeline**: expanded
+  `ghl_pipeline_stages` from 3 keys to 8, granular stage moves on round
+  sent/results, opportunity creation at onboarding (Analysis stage) +
+  `/api/ghl/setup/create-opportunities` backfill + a Settings → GHL 8-stage
+  config/status UI and "Create Opportunities for All Clients" tool. No new
+  migrations (reuses `clients.ghl_opportunity_id` + `agencies.settings`).
 
 ## Common Commands
 ```bash
