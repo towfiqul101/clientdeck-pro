@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionContext } from "@/lib/auth/session";
 import { checkClientLimit } from "@/lib/utils/license";
 import { createGHLContact, getGHLContact } from "@/lib/ghl/api";
@@ -311,5 +312,80 @@ export async function updateClientNotes(
 
   if (error) return { success: false, error: error.message };
   revalidatePath(`/clients/${clientId}`);
+  return { success: true };
+}
+
+/**
+ * Permanently deletes a client and all cascaded data (items, rounds, disputes,
+ * documents rows, score history, credit-monitoring pulls). Owner/admin only.
+ * Requires the caller to re-type the client's full name. Best-effort removal of
+ * the client's Supabase Storage files so no orphaned PII is left behind. Leaves
+ * the GHL contact and Google Drive files untouched.
+ */
+export async function deleteClient(
+  clientId: string,
+  confirmName: string
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  if (session.teamMember.role !== "owner" && session.teamMember.role !== "admin") {
+    return { success: false, error: "Only owners and admins can delete clients." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+
+  // RLS scopes this to the caller's agency.
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id, first_name, last_name")
+    .eq("id", clientId)
+    .single();
+  if (!client) return { success: false, error: "Client not found." };
+
+  const fullName = `${client.first_name} ${client.last_name}`;
+  if (confirmName.trim() !== fullName) {
+    return { success: false, error: "Name did not match. Deletion cancelled." };
+  }
+
+  // Collect storage paths BEFORE deleting (the documents rows cascade away).
+  const { data: docs } = await supabase
+    .from("documents")
+    .select("storage_path")
+    .eq("client_id", clientId);
+  const storagePaths = (docs ?? [])
+    .map((d) => d.storage_path)
+    .filter((p): p is string => Boolean(p));
+
+  // Delete the client (RLS-scoped). DB cascade removes all child rows.
+  const { error: deleteError } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", clientId);
+  if (deleteError) return { success: false, error: deleteError.message };
+
+  // Best-effort: remove the client's files from the private `documents` bucket.
+  // Storage deletes go through the service role in this codebase. Never surface
+  // a storage failure — the client is already gone.
+  if (storagePaths.length > 0) {
+    try {
+      const admin = createAdminClient();
+      await admin.storage.from("documents").remove(storagePaths);
+    } catch (e) {
+      console.error("[deleteClient] Storage cleanup failed:", e);
+    }
+  }
+
+  // Audit entry (client_id null — the row no longer exists).
+  await supabase.from("activity_log").insert({
+    agency_id: session.agency.id,
+    client_id: null,
+    actor_type: "staff",
+    actor_id: session.userId,
+    action: "Client deleted",
+    description: `Client deleted: ${fullName}`,
+  });
+
+  revalidatePath("/clients");
   return { success: true };
 }
