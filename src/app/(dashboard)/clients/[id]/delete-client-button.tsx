@@ -84,16 +84,25 @@ export function DeleteClientButton({
             Your GoHighLevel contact and Google Drive files are not affected.
           </p>
           <div>
-            <label className="mb-1 block text-xs font-medium" style={{ color: "var(--overlay-text-muted)" }}>
+            <label
+              htmlFor="delete-confirm-name"
+              className="mb-1 block text-xs font-medium"
+              style={{ color: "var(--overlay-text-muted)" }}
+            >
               Type <span className="font-semibold">{clientName}</span> to confirm
             </label>
             <input
+              id="delete-confirm-name"
               type="text"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder={clientName}
               autoFocus
-              className="w-full rounded-md border border-red-500/40 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              className="w-full rounded-md border border-red-500/40 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              style={{
+                color: "var(--overlay-text)",
+                backgroundColor: "color-mix(in srgb, var(--overlay-text) 6%, transparent)",
+              }}
             />
           </div>
         </div>
