@@ -14,7 +14,7 @@ const LINKS = [
   { id: "faq", label: "FAQ" },
 ];
 
-export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
+export function MarketingNav() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(null);
 
@@ -67,30 +67,19 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          {loggedIn ? (
-            <Link
-              href="/dashboard"
-              className="cta-gradient rounded-lg px-4 py-2 text-sm font-semibold text-white"
-            >
-              Go to Dashboard →
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-slate-300 transition-colors duration-150 hover:border-white/40 hover:text-white"
-              >
-                Log In
-              </Link>
-              <Link
-                href="/#pricing"
-                className="cta-gradient flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
-              >
-                Start Free Trial
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </>
-          )}
+          <Link
+            href="/login"
+            className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-slate-300 transition-colors duration-150 hover:border-white/40 hover:text-white"
+          >
+            Login
+          </Link>
+          <Link
+            href="/signup"
+            className="cta-gradient flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
+          >
+            Sign Up
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
 
         <button
@@ -117,20 +106,12 @@ export function MarketingNav({ loggedIn }: { loggedIn: boolean }) {
               {l.label}
             </Link>
           ))}
-          {loggedIn ? (
-            <Link href="/dashboard" className="block py-2 text-sm font-medium text-violet-400">
-              Go to Dashboard →
-            </Link>
-          ) : (
-            <>
-              <Link href="/login" className="block py-2 text-sm text-slate-400">
-                Log In
-              </Link>
-              <Link href="/#pricing" className="block py-2 text-sm font-medium text-violet-400">
-                Start Free Trial
-              </Link>
-            </>
-          )}
+          <Link href="/login" className="block py-2 text-sm text-slate-400">
+            Login
+          </Link>
+          <Link href="/signup" className="block py-2 text-sm font-medium text-violet-400">
+            Sign Up
+          </Link>
         </div>
       )}
     </header>

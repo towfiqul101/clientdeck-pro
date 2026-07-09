@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { getSessionContext } from "@/lib/auth/session";
 import { cn } from "@/lib/utils/helpers";
 import { FaqAccordion } from "./faq-accordion";
 import { FAQS } from "./faq-data";
@@ -596,14 +594,11 @@ function ClientDetailMockup() {
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-export default async function LandingPage() {
-  const session = await getSessionContext();
-  // Generic "Start Free Trial" CTAs (hero, final CTA) funnel to the pricing
-  // section first so visitors pick a plan; the plan cards themselves link to
-  // the real /signup destination.
-  const ctaHref = session ? "/dashboard" : "#pricing";
-  const signupHref = session ? "/dashboard" : "/signup";
-  const primaryLabel = session ? "Go to Dashboard" : "Start Free Trial";
+export default function LandingPage() {
+  // The landing page is always in acquisition mode (even for logged-in
+  // visitors): generic "Start a Free Trial" CTAs scroll to the pricing section
+  // via native anchors (Next <Link> hash hrefs don't reliably scroll), and the
+  // plan cards link to the real /signup destination.
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -670,19 +665,19 @@ export default async function LandingPage() {
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href={ctaHref}
+            <a
+              href="#pricing"
               className="cta-gradient inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white"
             >
-              {session ? primaryLabel : "Start Free Trial"}
+              Start a Free Trial
               <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
+            </a>
+            <a
               href="#how-it-works"
               className="rounded-xl border border-white/15 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.06]"
             >
               See how it works ↓
-            </Link>
+            </a>
           </div>
 
           <p className="mt-6 text-xs text-slate-500">
@@ -1029,7 +1024,7 @@ export default async function LandingPage() {
 
           <Reveal delay={80}>
             <div className="mt-12">
-              <PricingCards signupHref={signupHref} />
+              <PricingCards signupHref="/signup" />
             </div>
           </Reveal>
 
@@ -1087,13 +1082,13 @@ export default async function LandingPage() {
             </blockquote>
             <p className="mt-6 font-semibold text-slate-900">Towfiqul Islam</p>
             <p className="text-sm text-slate-500">Founder, ClientDeck Pro</p>
-            <Link
+            <a
               href="#how-it-works"
               className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 hover:text-violet-700"
             >
               Read about ClientDeck Pro
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            </a>
           </Reveal>
         </div>
       </section>
@@ -1113,13 +1108,13 @@ export default async function LandingPage() {
               Disputes, client communication, and GHL — connected in one
               platform, with a 14-day free trial to prove it.
             </p>
-            <Link
-              href={ctaHref}
+            <a
+              href="#pricing"
               className="cta-gradient relative mt-8 inline-flex items-center gap-2 rounded-xl px-7 py-4 text-sm font-semibold text-white"
             >
-              {session ? primaryLabel : "Start Your Free 14-Day Trial"}
+              Start Your Free 14-Day Trial
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </a>
             <div className="relative mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
               {[
                 "No credit card required",

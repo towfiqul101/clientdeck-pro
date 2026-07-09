@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSessionContext } from "@/lib/auth/session";
 import { Logo } from "@/components/ui/logo";
 import { MarketingNav } from "./marketing-nav";
 
@@ -35,17 +34,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://clientdeckpro.com" },
 };
 
-export default async function MarketingLayout({
+export default function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSessionContext();
-  const loggedIn = Boolean(session);
-
   return (
     <div className="flex min-h-screen flex-col bg-[#0F1730]">
-      <MarketingNav loggedIn={loggedIn} />
+      <MarketingNav />
       <main className="flex-1">{children}</main>
 
       <footer className="border-t border-white/[0.06] bg-[#0b1122] text-slate-400">
