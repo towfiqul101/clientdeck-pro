@@ -1,299 +1,605 @@
 import Link from "next/link";
 import { getSessionContext } from "@/lib/auth/session";
-import { PLANS } from "@/lib/billing/plans";
 import { cn } from "@/lib/utils/helpers";
 import { FaqAccordion } from "./faq-accordion";
 import { FAQS } from "./faq-data";
 import { Reveal } from "./reveal";
+import { PricingCards } from "./pricing-cards";
 import {
   Sparkles,
+  FileText,
   Smartphone,
   RefreshCw,
-  Check,
+  BarChart3,
+  HardDrive,
   ArrowRight,
-  Star,
-  FileText,
-  Workflow,
+  Check,
   Bell,
   TrendingUp,
-  Clock,
+  ClipboardList,
+  Zap,
 } from "lucide-react";
 
-const TRUST_BADGES = [
-  "Built for GoHighLevel",
-  "No spreadsheets needed",
-  "AI-powered letters",
-  "Clients love the portal",
-  "Setup in 15 minutes",
+/* ------------------------------------------------------------------ */
+/* Static content                                                      */
+/* ------------------------------------------------------------------ */
+
+const MARQUEE_ITEMS = [
+  "Credit Repair Agencies",
+  "Dispute Specialists",
+  "GHL Agencies",
+  "Credit Consultants",
+  "Financial Coaches",
+  "Tax & Credit Firms",
+  "Mortgage Brokers",
+  "Fintech Startups",
 ];
 
-const PAIN_POINTS = [
+const FEATURES = [
   {
-    emoji: "😤",
-    title: "I'm managing disputes in a spreadsheet",
-    body: "Tracking rounds, results, and follow-ups across 50+ clients in Excel. One mistake and you miss a bureau deadline.",
+    icon: ClipboardList,
+    title: "Dispute Management",
+    body: "Track every client across rounds, items, and bureaus. Nothing falls through the cracks — or a spreadsheet.",
   },
-  {
-    emoji: "📋",
-    title: "My clients have no idea what's happening",
-    body: "They text you asking for updates. You spend hours manually sending progress emails that no one reads.",
-  },
-  {
-    emoji: "🔄",
-    title: "I'm using GHL AND a separate dispute tool",
-    body: "Double data entry. Nothing syncs. You're paying for two systems that don't talk to each other.",
-  },
-];
-
-const SOLUTION_FEATURES = [
   {
     icon: Sparkles,
-    title: "AI Writes Your Dispute Letters",
-    body: "Pick the accounts to dispute, click generate. AI writes FCRA-compliant letters for every bureau in seconds. You review, edit if you want, and mail. Never write a dispute letter from scratch again.",
+    title: "AI Letter Generation",
+    body: "Generate FCRA-compliant dispute letters in seconds. You review and edit every one before it goes out.",
   },
   {
     icon: Smartphone,
-    title: "Clients See Their Progress — Automatically",
-    body: "Every client gets a beautiful portal with their credit scores, deleted accounts, and round history. It updates automatically when you log results. No more “what's the status?” texts.",
+    title: "Client Portal",
+    body: "A branded portal clients open with a text link — scores, progress, and document uploads, no password.",
   },
   {
     icon: RefreshCw,
-    title: "GHL Updates Without You Touching It",
-    body: "When you delete an item, GHL moves the pipeline, tags the contact, and fires your SMS workflow. All automatic. Your GHL runs your business. You run the work.",
+    title: "Native GHL Sync",
+    body: "Pipelines move, fields update, and your workflows fire automatically. No Zapier, no webhook fees.",
+  },
+  {
+    icon: BarChart3,
+    title: "Reports & Analytics",
+    body: "Deletion rates, bureau success, and round velocity — see what's working across your whole book.",
+  },
+  {
+    icon: HardDrive,
+    title: "Google Drive Sync",
+    body: "Every letter, ID, and bureau response filed automatically to your own Drive, organized per client.",
   },
 ];
 
 const STEPS = [
   {
     n: "01",
-    title: "Client Gets Onboarded",
-    body: "Your client pays in GHL and fills your onboarding form. ClientDeck Pro automatically creates their profile, saves their documents to Google Drive, and sends them their portal link.",
+    title: "Client onboarding",
+    body: "Your lead pays and completes your GHL onboarding form. ClientDeck Pro creates the profile, files their documents to Drive, and texts them a portal link — automatically.",
   },
   {
     n: "02",
-    title: "You Add Their Credit Items",
-    body: "Upload their credit report PDF — AI extracts every negative item automatically. Review the list and confirm. Done in 2 minutes. No manual typing.",
+    title: "Credit analysis",
+    body: "Upload the credit report PDF and AI extracts every negative item by bureau. Review the list, confirm, and you're ready to dispute in about two minutes.",
   },
   {
     n: "03",
-    title: "AI Generates the Letters",
-    body: "Select which accounts to dispute. AI writes the correct letter for every account and every bureau. Review, finalize, download the PDFs. Mail them certified.",
+    title: "AI dispute letters",
+    body: "Select the accounts and round type. AI writes the right letter for each bureau, citing the correct FCRA sections. You review, finalize, and export print-ready PDFs.",
   },
   {
     n: "04",
-    title: "GHL Handles the Rest",
-    body: "When you log results, GHL sends a celebration text on deletions, moves the client to the right pipeline stage, and schedules the next round. You just work — GHL communicates.",
+    title: "GHL runs the communication",
+    body: "Marking a round sent moves the pipeline stage, updates custom fields, and fires your SMS and email workflows — all through free GHL tags, not paid webhooks.",
+  },
+  {
+    n: "05",
+    title: "Track results & repeat",
+    body: "Log the bureaus' responses. Deletions update the client's scores and portal, notify them of the win, and queue the next round so momentum never stalls.",
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    quote: "I was managing 40 clients in a Google Sheet. ClientDeck Pro cut my admin time in half in the first week. The client portal alone is worth it — they stop texting me asking for updates.",
-    name: "Credit repair business owner",
-  },
-  {
-    quote: "The AI letters are better than anything I was writing manually. And when GHL sends the deletion win text automatically — clients love it. I look way more professional now.",
-    name: "Agency owner",
-  },
-  {
-    quote: "Finally, a credit repair tool that actually works WITH GoHighLevel instead of fighting it.",
-    name: "Dispute specialist",
-  },
+type Cell = "yes" | "no" | "partial" | string;
+
+const COMPARE_COLS = ["ClientDeck Pro", "CDM", "DisputeFox", "DisputeBee"];
+const COMPARE_ROWS: { label: string; cells: Cell[] }[] = [
+  { label: "Native GHL Integration", cells: ["yes", "no", "no", "no"] },
+  { label: "AI Dispute Letters", cells: ["yes", "partial", "partial", "partial"] },
+  { label: "Free GHL Notifications (tags)", cells: ["yes", "no", "no", "no"] },
+  { label: "Branded Client Portal", cells: ["yes", "yes", "yes", "partial"] },
+  { label: "Auto Pipeline Moves", cells: ["yes", "no", "no", "no"] },
+  { label: "Google Drive Sync", cells: ["yes", "no", "no", "no"] },
+  { label: "AI Credit Report Parser", cells: ["yes", "no", "partial", "no"] },
+  { label: "Starting Price", cells: ["$49", "$97", "$108", "$49"] },
+  { label: "GoHighLevel Required", cells: ["Yes", "No", "No", "No"] },
 ];
 
-function Kicker({ children }: { children: React.ReactNode }) {
+const REPLACES = [
+  "CDM or DisputeFox for dispute tracking",
+  "Spreadsheets for client and round status",
+  "Manual GHL contact updates after every action",
+  "Separate email / SMS tools for client updates",
+  "Google Drive filing you do by hand",
+];
+
+/* ------------------------------------------------------------------ */
+/* Small building blocks                                               */
+/* ------------------------------------------------------------------ */
+
+function Eyebrow({
+  children,
+  tone = "dark",
+}: {
+  children: React.ReactNode;
+  tone?: "dark" | "light";
+}) {
   return (
-    <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-blue-400">
+    <p
+      className={cn(
+        "mb-3 text-xs font-semibold uppercase tracking-[0.18em]",
+        tone === "dark" ? "text-violet-300" : "text-violet-600"
+      )}
+    >
       {children}
     </p>
   );
 }
 
-function KanbanMockup() {
-  const columns = [
-    {
-      label: "Preparing",
-      cards: [{ initials: "MJ", name: "Marcus J.", meta: "Round 1 · 8 items" }],
-    },
-    {
-      label: "Letters Ready",
-      cards: [{ initials: "ST", name: "Sarah T.", meta: "Round 1 · 15 items" }],
-    },
-    {
-      label: "Sent",
-      cards: [{ initials: "JW", name: "James W.", meta: "Round 2 · 5 items" }],
-    },
-    {
-      label: "Awaiting",
-      cards: [{ initials: "DC", name: "David C.", meta: "Round 3 · 22 days" }],
-    },
+function CompareMark({ value }: { value: Cell }) {
+  if (value === "yes")
+    return (
+      <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <Check className="h-3.5 w-3.5" strokeWidth={3} />
+      </span>
+    );
+  if (value === "no")
+    return <span className="text-lg text-slate-300">✕</span>;
+  if (value === "partial")
+    return <span className="text-base" title="Limited / templates only">⚠️</span>;
+  return <span className="text-sm font-semibold text-slate-900">{value}</span>;
+}
+
+/* ------------------------------------------------------------------ */
+/* Pure-CSS mockups                                                    */
+/* ------------------------------------------------------------------ */
+
+function WindowChrome({ label }: { label?: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
+      <div className="flex items-center gap-1.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+        <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+        <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+      </div>
+      {label && (
+        <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-emerald-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 live-indicator" />
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Hero — a full dashboard: stat cards, pipeline row, round cards + activity feed. */
+function HeroDashboardMockup() {
+  const stats = [
+    { label: "Active clients", value: "24", trend: "+3" },
+    { label: "Items disputed", value: "47", trend: "+12" },
+    { label: "MRR", value: "$3,096", trend: "+8%" },
+    { label: "Deletion rate", value: "68%", trend: "+5%" },
+  ];
+  const pipeline = [
+    ["Preparing", "6"],
+    ["Letters ready", "4"],
+    ["Sent", "9"],
+    ["Awaiting", "5"],
+  ];
+  const activity = [
+    ["Capital One deleted", "Marcus J.", "text-emerald-400"],
+    ["Round 2 sent", "Sarah T.", "text-blue-400"],
+    ["Portal link opened", "James W.", "text-slate-400"],
   ];
 
   return (
-    <div className="relative">
-      <div className="rounded-xl border border-gray-700 bg-gray-900 text-left shadow-2xl">
-        <div className="flex items-center justify-between gap-1.5 border-b border-gray-800 px-4 py-3">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-gray-700" />
-            <span className="h-2.5 w-2.5 rounded-full bg-gray-700" />
-            <span className="h-2.5 w-2.5 rounded-full bg-gray-700" />
-          </div>
-          <span className="rounded bg-green-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-green-400">
-            Live
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6">
-          {columns.map((col) => (
-            <div key={col.label} className="space-y-2">
-              <div className="rounded bg-gray-800 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                {col.label}
+    <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#13131f] shadow-2xl">
+      <WindowChrome label="Live" />
+      <div className="space-y-4 p-4 sm:p-6">
+        {/* Stat cards */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="rounded-xl border border-white/8 bg-white/[0.03] p-3"
+            >
+              <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                {s.label}
+              </p>
+              <div className="mt-1 flex items-end justify-between">
+                <span className="text-xl font-bold text-white">{s.value}</span>
+                <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400">
+                  <TrendingUp className="h-3 w-3" />
+                  {s.trend}
+                </span>
               </div>
-              {col.cards.map((card) => (
-                <div
-                  key={card.name}
-                  className="space-y-1.5 rounded-lg border border-gray-800 bg-gray-800/60 p-2.5"
-                >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600/20 text-[10px] font-semibold text-blue-400">
-                    {card.initials}
+            </div>
+          ))}
+        </div>
+
+        {/* Pipeline row */}
+        <div className="grid grid-cols-4 gap-2">
+          {pipeline.map(([label, count]) => (
+            <div
+              key={label}
+              className="rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-2"
+            >
+              <p className="text-[9px] uppercase tracking-wide text-slate-500">
+                {label}
+              </p>
+              <p className="mt-0.5 text-sm font-semibold text-slate-200">
+                {count}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Two round cards */}
+          <div className="space-y-3">
+            {[
+              { name: "Marcus J.", meta: "Round 2 · Experian", pct: 72 },
+              { name: "Sarah T.", meta: "Round 1 · All bureaus", pct: 40 },
+            ].map((r) => (
+              <div
+                key={r.name}
+                className="rounded-xl border border-white/8 bg-white/[0.03] p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-[10px] font-semibold text-white">
+                    {r.name
+                      .split(" ")
+                      .map((p) => p[0])
+                      .join("")}
+                  </span>
+                  <div>
+                    <p className="text-xs font-medium text-slate-200">
+                      {r.name}
+                    </p>
+                    <p className="text-[10px] text-slate-500">{r.meta}</p>
                   </div>
-                  <p className="text-xs font-medium text-gray-200">{card.name}</p>
-                  <p className="text-[10px] text-slate-500">{card.meta}</p>
+                </div>
+                <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500"
+                    style={{ width: `${r.pct}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Activity feed */}
+          <div className="rounded-xl border border-white/8 bg-white/[0.03] p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Recent activity
+              </span>
+              <span className="flex items-center gap-1 text-[9px] font-medium uppercase text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 live-indicator" />
+                Live
+              </span>
+            </div>
+            <div className="space-y-2.5">
+              {activity.map(([text, who, color]) => (
+                <div key={text} className="flex items-start gap-2">
+                  <Bell className={cn("mt-0.5 h-3 w-3 shrink-0", color)} />
+                  <div className="leading-tight">
+                    <p className={cn("text-[11px] font-medium", color)}>
+                      {text}
+                    </p>
+                    <p className="text-[10px] text-slate-500">{who}</p>
+                  </div>
                 </div>
               ))}
-              <div className="h-10 rounded-lg border border-dashed border-gray-800/80" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Pain section — scattered tools converging into one connected flow. */
+function ConnectedFlowGraphic() {
+  const tools = [
+    { emoji: "📊", label: "Spreadsheets" },
+    { emoji: "📋", label: "CDM / DisputeFox" },
+    { emoji: "📱", label: "Manual GHL" },
+  ];
+  return (
+    <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_auto_1fr]">
+      <div className="space-y-3">
+        {tools.map((t) => (
+          <div
+            key={t.label}
+            className="flex items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3"
+          >
+            <span className="text-xl">{t.emoji}</span>
+            <span className="text-sm font-medium text-slate-500">
+              {t.label}
+            </span>
+            <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              Disconnected
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-white shadow-lg">
+          <ArrowRight className="h-5 w-5" />
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-violet-200 bg-white p-6 shadow-[0_20px_50px_-24px_rgba(139,92,246,0.5)]">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-blue-600 text-white">
+            <Zap className="h-4 w-4" />
+          </span>
+          <span className="font-semibold text-slate-900">ClientDeck Pro</span>
+        </div>
+        <p className="mt-3 text-sm text-slate-600">
+          One connected flow — disputes, portal, and GHL sync in a single
+          system.
+        </p>
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+            <span>Everything in sync</span>
+            <span className="text-emerald-600">100%</span>
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div className="h-full w-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Feature section — AI letter generator: item list + rendered letter preview. */
+function LetterGeneratorMockup() {
+  const items = [
+    { name: "Capital One", bureau: "Experian", state: "Finalized" },
+    { name: "Midland Funding", bureau: "TransUnion", state: "Generating" },
+    { name: "LVNV Funding", bureau: "Equifax", state: "Pending" },
+  ];
+  const stateStyle: Record<string, string> = {
+    Finalized: "bg-emerald-500/15 text-emerald-400",
+    Generating: "bg-blue-500/15 text-blue-400",
+    Pending: "bg-white/10 text-slate-400",
+  };
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#13131f] shadow-2xl">
+      <WindowChrome />
+      <div className="grid grid-cols-1 gap-0 sm:grid-cols-2">
+        {/* Item list */}
+        <div className="space-y-2.5 border-b border-white/8 p-4 sm:border-b-0 sm:border-r">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+            Round 2 · 3 items
+          </p>
+          {items.map((it) => (
+            <div
+              key={it.name}
+              className="rounded-lg border border-white/8 bg-white/[0.03] p-2.5"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-200">
+                  {it.name}
+                </span>
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[9px] font-semibold",
+                    stateStyle[it.state]
+                  )}
+                >
+                  {it.state}
+                </span>
+              </div>
+              <p className="mt-0.5 text-[10px] text-slate-500">{it.bureau}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Letter preview */}
+        <div className="p-4">
+          <div className="mb-3 flex items-center gap-2 text-slate-500">
+            <FileText className="h-3.5 w-3.5" />
+            <span className="text-[10px] font-medium uppercase tracking-wide">
+              §611 MOV · Experian
+            </span>
+          </div>
+          <div className="space-y-2">
+            <div className="h-2 w-3/4 rounded bg-white/10" />
+            <div className="h-2 w-full rounded bg-white/10" />
+            <div className="h-2 w-5/6 rounded bg-white/10" />
+          </div>
+          <div className="my-3 rounded-md border border-violet-500/30 bg-violet-500/10 px-2.5 py-1.5 text-[10px] text-violet-300">
+            Cites FCRA §611 — method of verification requested
+          </div>
+          <div className="space-y-2">
+            <div className="h-2 w-full rounded bg-white/10" />
+            <div className="h-2 w-2/3 rounded bg-white/10" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Per-step compact mockups for "How it works". */
+function StepVisual({ n }: { n: string }) {
+  if (n === "01")
+    return (
+      <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+        <p className="text-[10px] uppercase tracking-wide text-slate-500">
+          New client
+        </p>
+        <div className="mt-2 flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-[11px] font-semibold text-white">
+            MJ
+          </span>
+          <div>
+            <p className="text-xs font-medium text-slate-200">Marcus Johnson</p>
+            <p className="text-[10px] text-emerald-400">Portal link sent ✓</p>
+          </div>
+        </div>
+      </div>
+    );
+  if (n === "02")
+    return (
+      <div className="space-y-1.5 rounded-xl border border-white/8 bg-white/[0.03] p-4">
+        <p className="text-[10px] uppercase tracking-wide text-slate-500">
+          Extracted items
+        </p>
+        {["Capital One", "Midland Funding", "LVNV Funding"].map((x) => (
+          <div key={x} className="flex items-center gap-2">
+            <Check className="h-3 w-3 text-emerald-400" />
+            <span className="text-[11px] text-slate-300">{x}</span>
+          </div>
+        ))}
+      </div>
+    );
+  if (n === "03") return <LetterGeneratorMockup />;
+  if (n === "04")
+    return (
+      <div className="space-y-2 rounded-xl border border-white/8 bg-white/[0.03] p-4">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="h-3.5 w-3.5 text-blue-400" />
+          <span className="text-[10px] uppercase tracking-wide text-slate-500">
+            GHL contact · Marcus J.
+          </span>
+          <span className="ml-auto rounded-full bg-blue-500/15 px-2 py-0.5 text-[9px] font-medium text-blue-400">
+            Round 2 Sent
+          </span>
+        </div>
+        {[
+          ["dispute_round_current", "2"],
+          ["items_deleted_total", "5"],
+          ["Tag added", "round-2-sent"],
+        ].map(([k, v]) => (
+          <div
+            key={k}
+            className="flex items-center justify-between rounded-md bg-white/[0.03] px-2.5 py-1.5"
+          >
+            <span className="text-[10px] text-slate-500">{k}</span>
+            <span className="text-[10px] font-medium text-slate-300">{v}</span>
+          </div>
+        ))}
+      </div>
+    );
+  // 05
+  return (
+    <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
+      <p className="text-[10px] uppercase tracking-wide text-slate-500">
+        Log results
+      </p>
+      <div className="mt-2 space-y-1.5">
+        {[
+          ["Capital One", "Deleted"],
+          ["Midland Funding", "Deleted"],
+          ["LVNV Funding", "Verified"],
+        ].map(([name, res]) => (
+          <div key={name} className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-300">{name}</span>
+            <span
+              className={cn(
+                "flex items-center gap-1 text-[10px] font-semibold",
+                res === "Deleted" ? "text-emerald-400" : "text-slate-500"
+              )}
+            >
+              {res === "Deleted" && <Check className="h-3 w-3" />}
+              {res}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** "Who it's for" — a live client-detail card. */
+function ClientDetailMockup() {
+  const scores = [
+    ["EQ", "612", "+38"],
+    ["EX", "605", "+41"],
+    ["TU", "628", "+33"],
+  ];
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#13131f] shadow-2xl">
+      <WindowChrome />
+      <div className="p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-sm font-semibold text-white">
+              MJ
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-white">Marcus Johnson</p>
+              <p className="text-[11px] text-slate-500">Round 2 · Awaiting</p>
+            </div>
+          </div>
+          <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-400">
+            <Check className="h-3 w-3" /> GHL synced
+          </span>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {scores.map(([b, v, up]) => (
+            <div
+              key={b}
+              className="rounded-xl border border-white/8 bg-white/[0.03] p-2.5 text-center"
+            >
+              <p className="text-[9px] uppercase tracking-wide text-slate-500">
+                {b}
+              </p>
+              <p className="mt-0.5 text-lg font-bold text-white">{v}</p>
+              <p className="text-[10px] font-medium text-emerald-400">{up}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 space-y-2 border-t border-white/8 pt-4">
+          {[
+            ["8 items disputed", "text-slate-300"],
+            ["5 deletions confirmed", "text-emerald-400"],
+            ["Next round: ready", "text-blue-400"],
+          ].map(([text, color]) => (
+            <div key={text} className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full",
+                  color === "text-emerald-400"
+                    ? "bg-emerald-400"
+                    : color === "text-blue-400"
+                      ? "bg-blue-400"
+                      : "bg-slate-500"
+                )}
+              />
+              <span className={cn("text-xs", color)}>{text}</span>
             </div>
           ))}
         </div>
       </div>
-
-      <div className="float-card pulse-ring absolute -bottom-6 -right-4 hidden max-w-[240px] rounded-lg border border-gray-700 bg-gray-900 p-3.5 shadow-xl sm:-right-8 sm:block">
-        <div className="flex items-start gap-2">
-          <Bell className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
-          <div>
-            <p className="text-xs font-semibold text-white">🎉 Deletion Win!</p>
-            <p className="mt-0.5 text-[11px] text-slate-500">
-              Marcus J. — Capital One deleted
-            </p>
-            <p className="mt-1 text-[11px] font-medium text-green-400">
-              GHL notified automatically ✓
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
 
-function LetterMockup() {
-  return (
-    <div className="rounded-xl border border-gray-700 bg-gray-900 p-5 shadow-xl">
-      <div className="mb-4 flex items-center gap-2 text-slate-500">
-        <FileText className="h-4 w-4" />
-        <span className="text-xs font-medium uppercase tracking-wide">
-          Round 2 · Experian · 611 Letter
-        </span>
-      </div>
-      <div className="space-y-2">
-        <div className="h-2.5 w-3/4 rounded bg-gray-700" />
-        <div className="h-2.5 w-full rounded bg-gray-700" />
-        <div className="h-2.5 w-5/6 rounded bg-gray-700" />
-      </div>
-      <div className="my-4 rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-[11px] text-blue-300">
-        Cites FCRA § 611 — reinvestigation of disputed information
-      </div>
-      <div className="space-y-2">
-        <div className="h-2.5 w-full rounded bg-gray-700" />
-        <div className="h-2.5 w-2/3 rounded bg-gray-700" />
-      </div>
-      <div className="mt-4 flex justify-end gap-2">
-        <span className="rounded-md border border-gray-700 px-3 py-1.5 text-[11px] font-medium text-slate-600">
-          Edit
-        </span>
-        <span className="rounded-md bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white">
-          Finalize &amp; Export
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function PortalMockup() {
-  const bars = [58, 64, 63, 71, 78, 82];
-  return (
-    <div className="rounded-xl border border-white/10 bg-[#1a1a2e] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Your Progress
-        </span>
-        <TrendingUp className="h-4 w-4 text-green-400" />
-      </div>
-      <div className="flex items-end gap-2">
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            className="w-full rounded-t bg-blue-600/80"
-            style={{ height: `${h}px` }}
-          />
-        ))}
-      </div>
-      <p className="mt-2 text-center text-[11px] text-slate-500">
-        Experian score, last 6 rounds
-      </p>
-      <div className="mt-4 space-y-2 border-t border-white/[0.06] pt-4">
-        {["Round 1 sent", "3 items deleted", "Round 2 in progress"].map((step, i) => (
-          <div key={step} className="flex items-center gap-2 text-xs text-slate-400">
-            <span
-              className={cn(
-                "h-1.5 w-1.5 rounded-full",
-                i < 2 ? "bg-green-500" : "bg-blue-500"
-              )}
-            />
-            {step}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function GhlFieldsMockup() {
-  const fields = [
-    ["dispute_round_current", "2"],
-    ["items_deleted_total", "5"],
-    ["credit_score_eq_current", "612"],
-    ["clientdeck_portal_link", "clientdeck.io/p/9f2a"],
-  ];
-  return (
-    <div className="rounded-xl border border-gray-700 bg-gray-900 p-5 shadow-xl">
-      <div className="mb-4 flex items-center gap-2">
-        <Workflow className="h-4 w-4 text-blue-400" />
-        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          GHL Contact · Marcus J.
-        </span>
-        <span className="ml-auto rounded-full bg-blue-600/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-          Round 2 Sent
-        </span>
-      </div>
-      <div className="space-y-2">
-        {fields.map(([k, v]) => (
-          <div
-            key={k}
-            className="flex items-center justify-between rounded-md bg-gray-800/60 px-2.5 py-2"
-          >
-            <span className="text-[11px] text-slate-500">{k}</span>
-            <span className="text-[11px] font-medium text-gray-200">{v}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
 
 export default async function LandingPage() {
   const session = await getSessionContext();
-  const primaryCta = session
-    ? { href: "/dashboard", label: "Go to Dashboard" }
-    : { href: "/signup", label: "Start Free Trial" };
+  const primaryHref = session ? "/dashboard" : "/signup";
+  const primaryLabel = session ? "Go to Dashboard" : "Start Free Trial";
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -328,422 +634,548 @@ export default async function LandingPage() {
 
   return (
     <>
-      {/* Hero */}
-      <section id="hero" className="relative overflow-hidden bg-gray-950 text-white">
+      {/* ============================================================ */}
+      {/* 1. HERO                                                       */}
+      {/* ============================================================ */}
+      <section
+        id="hero"
+        className="relative overflow-hidden bg-[#0F1730] text-white"
+      >
         <div
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 opacity-60"
           style={{
-            backgroundImage: "radial-gradient(circle, #ffffff12 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "26px 26px",
           }}
         />
-        <div className="pointer-events-none absolute left-1/2 -top-20 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="relative mx-auto max-w-4xl px-4 pb-28 pt-10 text-center sm:pt-14">
-          <span className="inline-flex items-center gap-2 rounded-full border border-gray-700 bg-gray-900/80 px-4 py-1.5 text-xs font-medium text-slate-600">
-            🚀 Now with AI dispute letter generation — try it free for 14 days
+        <div className="pointer-events-none absolute left-1/2 -top-24 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-violet-600/20 blur-3xl" />
+
+        <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-16 text-center sm:pt-20">
+          <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/15 px-4 py-1.5 text-xs font-medium text-violet-300">
+            ✦ Built exclusively for GoHighLevel agencies
           </span>
 
-          <h1 className="mt-8 text-4xl font-bold tracking-tight sm:text-5xl">
-            Your Credit Repair Business
-            <br />
-            Deserves Better Than Spreadsheets.
+          <h1 className="mx-auto mt-7 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+            Run your entire credit repair operation from one connected platform.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-500">
-            ClientDeck Pro runs your entire credit repair operation inside GoHighLevel —
-            AI-generated dispute letters, automatic client updates, and a beautiful portal
-            your clients will actually check. No spreadsheets. No copy-paste. No chaos.
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-400">
+            AI dispute letters, client and round tracking, a branded portal, and
+            native GoHighLevel sync — together in one system. Stop juggling CDM,
+            spreadsheets, and manual GHL updates.
           </p>
+
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href={primaryCta.href}
-              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition-colors duration-150 hover:bg-blue-700"
+              href={primaryHref}
+              className="cta-gradient inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white"
             >
-              {session ? primaryCta.label : "Start Free Trial — 14 Days"}
+              {session ? primaryLabel : "Start Free Trial"}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="#how-it-works"
-              className="rounded-md border border-gray-700 px-6 py-3 text-sm font-semibold text-gray-200 transition-colors duration-150 hover:bg-gray-900"
+              className="rounded-xl border border-white/15 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.06]"
             >
-              See How It Works ↓
+              See how it works ↓
             </Link>
           </div>
 
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
-            {TRUST_BADGES.map((badge) => (
-              <li key={badge} className="flex items-center gap-1.5">
-                <Check className="h-3.5 w-3.5 text-blue-500" />
-                {badge}
-              </li>
-            ))}
-          </ul>
+          <p className="mt-6 text-xs text-slate-500">
+            14-day free trial · No credit card required · Built for GHL
+          </p>
 
-          <div className="mx-auto mt-16 max-w-4xl">
-            <KanbanMockup />
+          {/* Live dashboard mockup */}
+          <div className="mx-auto mt-14 max-w-4xl [perspective:1200px]">
+            <div className="hero-mockup">
+              <HeroDashboardMockup />
+            </div>
+          </div>
+        </div>
+
+        {/* Marquee */}
+        <div className="marquee-mask relative border-t border-white/[0.06] py-5">
+          <div className="marquee-track">
+            {[0, 1].map((copy) => (
+              <div
+                key={copy}
+                className="flex shrink-0 items-center gap-8 px-4"
+                aria-hidden={copy === 1}
+              >
+                {MARQUEE_ITEMS.map((item) => (
+                  <span
+                    key={item}
+                    className="flex items-center gap-8 whitespace-nowrap text-sm font-medium text-slate-500"
+                  >
+                    {item}
+                    <span className="text-violet-500/40">◆</span>
+                  </span>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Pain points */}
-      <section className="bg-[#13131f]">
-        <div className="mx-auto max-w-5xl px-4 py-20">
+      {/* ============================================================ */}
+      {/* 2. PAIN                                                       */}
+      {/* ============================================================ */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <Reveal>
-            <h2 className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
-              Sound familiar?
-            </h2>
+            <div className="mx-auto max-w-3xl text-center">
+              <Eyebrow tone="light">The real problem</Eyebrow>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                Your credit repair business isn&apos;t disorganized. Your tools
+                are.
+              </h2>
+            </div>
           </Reveal>
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {PAIN_POINTS.map((p, i) => (
-              <Reveal key={p.title} delay={i * 80}>
-                <div className="h-full rounded-lg border border-white/10 bg-[#1a1a2e] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
-                  <span className="text-2xl">{p.emoji}</span>
-                  <h3 className="mt-3 font-semibold text-slate-100">{p.title}</h3>
-                  <p className="mt-2 text-sm text-slate-400">{p.body}</p>
+
+          <Reveal delay={80}>
+            <div className="mx-auto mt-8 max-w-3xl space-y-5 text-lg leading-relaxed text-slate-600">
+              <p>
+                It&apos;s Monday morning. A client texts asking where their case
+                stands. You open a spreadsheet to check the round, switch to your
+                dispute tool to see the letters, then jump into GoHighLevel to
+                update the pipeline and fire off a reply.
+              </p>
+              <p>
+                Three tools, none of them talking to each other. Every deletion
+                means re-typing the same result in three places — and every gap
+                between them is a missed deadline or a client left in the dark.
+              </p>
+              <p className="font-medium text-slate-900">
+                ClientDeck Pro connects all of it. Do the work once; your
+                spreadsheet, your dispute tracker, and your GHL stay in sync
+                automatically.
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={160}>
+            <div className="mt-14">
+              <ConnectedFlowGraphic />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 3. ZERO EXTRA GHL COST                                        */}
+      {/* ============================================================ */}
+      <section className="bg-[#0F1730] text-white">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
+          <Reveal>
+            <div className="mx-auto max-w-3xl text-center">
+              <Eyebrow>No hidden webhook fees</Eyebrow>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Most dispute tools send notifications through costly GHL
+                webhooks. ClientDeck Pro doesn&apos;t.
+              </h2>
+              <p className="mt-5 text-lg leading-relaxed text-slate-400">
+                GHL&apos;s premium webhook actions bill about $0.10 per
+                execution. Push a notification on every round, deletion, and
+                status change across a full book of clients and those cents turn
+                into a monthly bill. ClientDeck Pro drives your workflows with
+                contact tags and custom fields instead — actions that are free
+                inside your existing GHL plan.
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-3">
+            {[
+              { clients: "50 clients", label: "Your GHL webhook bill" },
+              { clients: "100 clients", label: "Your GHL webhook bill" },
+              { clients: "200 clients", label: "Your GHL webhook bill" },
+            ].map((c, i) => (
+              <Reveal key={c.clients} delay={i * 80}>
+                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-7 text-center">
+                  <p className="text-sm font-medium text-slate-400">
+                    {c.clients}
+                  </p>
+                  <p className="mt-3 text-4xl font-bold text-emerald-400">
+                    $0
+                    <span className="text-lg font-normal text-slate-500">
+                      /mo
+                    </span>
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">{c.label}</p>
                 </div>
               </Reveal>
             ))}
           </div>
-          <p className="mt-10 text-center text-sm font-medium text-blue-400">
-            There&apos;s a better way. →
+
+          <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-slate-500">
+            You still pay GHL&apos;s standard subscription. ClientDeck Pro&apos;s
+            GHL integration is always free.
           </p>
         </div>
       </section>
 
-      {/* Solution */}
-      <section id="features" className="scroll-mt-20 bg-gray-950 text-white">
-        <div className="mx-auto max-w-6xl px-4 py-20">
+      {/* ============================================================ */}
+      {/* 4. FEATURE OVERVIEW                                           */}
+      {/* ============================================================ */}
+      <section id="features" className="scroll-mt-20 bg-[#f8fafc]">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <Reveal>
-            <h2 className="text-center text-2xl font-semibold sm:text-3xl">
-              One Platform. Everything Handled.
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-center text-slate-500">
-              ClientDeck Pro lives inside your GoHighLevel. When you work in ClientDeck,
-              GHL updates automatically. Your clients get notified. Your team stays organized.
-            </p>
+            <div className="mx-auto max-w-3xl text-center">
+              <Eyebrow tone="light">Everything in one place</Eyebrow>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                Everything connected in one credit repair operating system.
+              </h2>
+            </div>
           </Reveal>
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {SOLUTION_FEATURES.map((f, i) => (
-              <Reveal key={f.title} delay={i * 80}>
-                <div className="h-full rounded-lg border border-gray-800 bg-gray-900 p-6">
-                  <f.icon className="h-8 w-8 text-blue-400" />
-                  <h3 className="mt-4 font-semibold text-white">{f.title}</h3>
-                  <p className="mt-2 text-sm text-slate-500">{f.body}</p>
+
+          <div className="mt-14 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.title} delay={(i % 3) * 80}>
+                <div className="h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 text-white">
+                    <f.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-4 font-semibold text-slate-900">
+                    {f.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    {f.body}
+                  </p>
                 </div>
               </Reveal>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="scroll-mt-20 bg-[#13131f]">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <Reveal>
-            <h2 className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
-              Up and Running in 15 Minutes
-            </h2>
-          </Reveal>
-          <div className="mt-14 grid grid-cols-1 gap-10 md:grid-cols-4 md:gap-6">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.n} delay={i * 80}>
-                <div className="relative">
-                  <span className="text-4xl font-bold text-blue-100">{s.n}</span>
-                  <h3 className="mt-2 font-semibold text-slate-100">{s.title}</h3>
-                  <p className="mt-2 text-sm text-slate-400">{s.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Feature deep dive 1 — AI letters */}
-      <section className="bg-gray-950 text-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-20 md:grid-cols-2 md:gap-16">
-          <Reveal>
-            <Kicker>AI Letter Generation</Kicker>
-            <h2 className="text-2xl font-semibold sm:text-3xl">
-              Stop Writing Dispute Letters By Hand
-            </h2>
-            <p className="mt-4 text-slate-500">
-              Our AI knows the difference between a Round 1 initial dispute, a Round 2
-              Method of Verification request, and a Round 3 escalation. It writes the
-              right letter for every situation — citing the exact FCRA sections that
-              work for that account type.
-            </p>
-            <ul className="mt-5 space-y-2.5">
-              {[
-                "609, 611, and 623 letters",
-                "Collections, charge-offs, late payments, inquiries",
-                "Goodwill letters to original creditors",
-                "Identity theft affidavits",
-                "You review before anything is sent — always",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
           <Reveal delay={120}>
-            <LetterMockup />
+            <div className="mx-auto mt-14 max-w-3xl">
+              <LetterGeneratorMockup />
+            </div>
           </Reveal>
         </div>
       </section>
 
-      {/* Feature deep dive 2 — Portal */}
-      <section className="bg-[#13131f]">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-20 md:grid-cols-2 md:gap-16">
-          <Reveal delay={120} className="order-2 md:order-1">
-            <PortalMockup />
-          </Reveal>
-          <Reveal className="order-1 md:order-2">
-            <Kicker>Client Portal</Kicker>
-            <h2 className="text-2xl font-semibold text-slate-100 sm:text-3xl">
-              Give Clients a Portal They&apos;ll Actually Use
-            </h2>
-            <p className="mt-4 text-slate-400">
-              Clients get a magic link via text — one tap, they&apos;re in their portal.
-              No app download. No password. They see their score going up, their deleted
-              accounts, and exactly what&apos;s happening with their case.
-            </p>
-            <ul className="mt-5 space-y-2.5">
-              {[
-                "Credit score tracker (all 3 bureaus)",
-                "Round-by-round progress timeline",
-                "Document upload (ID, reports, anything)",
-                "Looks like your brand, not ours",
-                "Auto-updates when you log results — zero extra work",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-slate-300">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Feature deep dive 3 — GHL */}
-      <section className="bg-gray-950 text-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-20 md:grid-cols-2 md:gap-16">
+      {/* ============================================================ */}
+      {/* 5. HOW IT WORKS                                               */}
+      {/* ============================================================ */}
+      <section id="how-it-works" className="scroll-mt-20 bg-[#0F1730] text-white">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <Reveal>
-            <Kicker>GoHighLevel Integration</Kicker>
-            <h2 className="text-2xl font-semibold sm:text-3xl">
-              The Only Dispute Software Built for GHL
-            </h2>
-            <p className="mt-4 text-slate-500">
-              Every other dispute tool is an island. You work in one app, then copy-paste
-              into GHL, then manually text the client. With ClientDeck Pro, one action
-              in the app triggers everything in GHL automatically.
-            </p>
-            <ul className="mt-5 space-y-2.5">
-              {[
-                "Pipeline stages move automatically",
-                "Custom fields update with scores and deletions",
-                "Your GHL workflows fire (SMS, email, tasks)",
-                "No Zapier. No webhooks to maintain. No extra fees.",
-                "Uses your existing GHL — doesn't replace it",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-slate-600">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <div className="mx-auto max-w-3xl text-center">
+              <Eyebrow>How it works</Eyebrow>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                From onboarding to deletions — one continuous flow.
+              </h2>
+            </div>
           </Reveal>
-          <Reveal delay={120}>
-            <GhlFieldsMockup />
-          </Reveal>
-        </div>
-      </section>
 
-      {/* Social proof */}
-      <section className="bg-[#13131f]">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <Reveal>
-            <h2 className="text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
-              Credit Repair Professionals Love ClientDeck Pro
-            </h2>
-          </Reveal>
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} delay={i * 80}>
-                <div className="flex h-full flex-col rounded-lg border border-white/10 bg-[#1a1a2e] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
-                  <div className="flex gap-0.5 text-amber-400">
-                    {Array.from({ length: 5 }).map((_, idx) => (
-                      <Star key={idx} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
-                  <p className="mt-3 flex-1 text-sm text-slate-300">&ldquo;{t.quote}&rdquo;</p>
-                  <p className="mt-4 text-xs font-medium text-slate-500">— {t.name}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <p className="mt-6 text-center text-xs text-slate-500">
-            Example quotes shown while we collect our first agency reviews — replace with
-            real testimonials as they come in.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 border-t border-white/[0.06] pt-8 text-sm text-slate-500">
-            <span>Built for GHL agencies</span>
-            <span className="text-slate-600">·</span>
-            <span>AI-powered letters</span>
-            <span className="text-slate-600">·</span>
-            <span>Auto client updates</span>
-            <span className="text-slate-600">·</span>
-            <span>14-day free trial</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="scroll-mt-20 bg-gray-950 text-white">
-        <div className="mx-auto max-w-5xl px-4 py-20">
-          <Reveal>
-            <h2 className="text-center text-2xl font-semibold sm:text-3xl">
-              Simple Pricing. No Surprises.
-            </h2>
-            <p className="mt-2 text-center text-sm text-slate-500">
-              14-day free trial on all plans. No credit card required to start.
-            </p>
-          </Reveal>
-          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {PLANS.map((plan, i) => (
-              <Reveal key={plan.id} delay={i * 80}>
+          <div className="mt-16 space-y-16">
+            {STEPS.map((step, i) => (
+              <Reveal key={step.n} delay={40}>
                 <div
                   className={cn(
-                    "relative flex h-full flex-col rounded-lg border bg-gray-900 transition-transform duration-150",
-                    plan.highlight ? "border-blue-500 md:scale-[1.03]" : "border-gray-800"
+                    "grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-14",
+                    i % 2 === 1 && "md:[&>*:first-child]:order-2"
                   )}
                 >
-                  {plan.highlight && (
-                    <span className="absolute right-4 top-0 -translate-y-1/2 rounded-full bg-blue-600 px-3 py-1 text-xs font-bold text-white">
-                      Most Popular
+                  <div>
+                    <span className="text-5xl font-bold text-white/10">
+                      {step.n}
                     </span>
-                  )}
-                  <div
-                    className={cn(
-                      "rounded-t-lg px-6 py-5",
-                      plan.highlight && "bg-gradient-to-r from-blue-600 to-blue-700"
-                    )}
-                  >
-                    <h3 className="font-semibold text-white">{plan.name}</h3>
-                    <p className="mt-2 text-3xl font-bold text-white">
-                      {plan.priceLabel}
-                      <span className="text-sm font-normal text-slate-500">/mo</span>
+                    <h3 className="mt-2 text-xl font-semibold text-white">
+                      {step.title}
+                    </h3>
+                    <p className="mt-3 text-base leading-relaxed text-slate-400">
+                      {step.body}
                     </p>
-                    <p className="mt-1 text-sm text-slate-500">{plan.clientsLabel}</p>
                   </div>
-                  <div className="flex flex-1 flex-col px-6 pb-6">
-                    <ul className="mt-4 flex-1 space-y-2">
-                      {plan.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      href="/signup"
-                      className={cn(
-                        "mt-5 rounded-md px-4 py-2 text-center text-sm font-medium transition-colors duration-150",
-                        plan.highlight
-                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                          : "border border-gray-700 text-gray-200 hover:bg-gray-800"
-                      )}
-                    >
-                      Start Free Trial
-                    </Link>
+                  <div>
+                    <StepVisual n={step.n} />
                   </div>
                 </div>
               </Reveal>
             ))}
           </div>
-          <p className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-center text-xs text-slate-500">
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> 14-day free trial</span>
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Cancel anytime</span>
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Setup support included</span>
-            <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> All future updates</span>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 6. COMPARISON                                                 */}
+      {/* ============================================================ */}
+      <section id="compare" className="scroll-mt-20 bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
+          <Reveal>
+            <div className="mx-auto max-w-3xl text-center">
+              <Eyebrow tone="light">How we compare</Eyebrow>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                The same jobs. Without the double entry.
+              </h2>
+            </div>
+          </Reveal>
+
+          <Reveal delay={80}>
+            <div className="mt-12 overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+              <table className="w-full min-w-[640px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-5 py-4 text-left font-medium text-slate-500">
+                      Capability
+                    </th>
+                    {COMPARE_COLS.map((col, idx) => (
+                      <th
+                        key={col}
+                        className={cn(
+                          "px-5 py-4 text-center font-semibold",
+                          idx === 0
+                            ? "text-violet-700"
+                            : "text-slate-500"
+                        )}
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARE_ROWS.map((row) => (
+                    <tr
+                      key={row.label}
+                      className="border-b border-slate-100 last:border-0"
+                    >
+                      <td className="px-5 py-3.5 font-medium text-slate-700">
+                        {row.label}
+                      </td>
+                      {row.cells.map((cell, idx) => (
+                        <td
+                          key={idx}
+                          className={cn(
+                            "px-5 py-3.5 text-center",
+                            idx === 0 && "bg-violet-50/60"
+                          )}
+                        >
+                          <CompareMark value={cell} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Reveal>
+
+          <p className="mt-6 text-center text-xs text-slate-400">
+            CDM, DisputeFox, and DisputeBee pricing verified July 2026. Plans and
+            fees can change.
           </p>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section id="faq" className="scroll-mt-20 bg-[#13131f]">
-        <div className="mx-auto max-w-3xl px-4 py-20">
+      {/* ============================================================ */}
+      {/* 7. WHO IT'S FOR                                               */}
+      {/* ============================================================ */}
+      <section className="bg-[#0F1730] text-white">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-16 sm:py-24 md:grid-cols-2 md:gap-16">
           <Reveal>
-            <h2 className="mb-10 text-center text-2xl font-semibold text-slate-100 sm:text-3xl">
-              Common Questions
+            <Eyebrow>Who it&apos;s for</Eyebrow>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Built for GHL-powered credit repair agencies that need more than a
+              dispute tracker.
             </h2>
+            <p className="mt-4 text-lg leading-relaxed text-slate-400">
+              Replaces a stack of tools you&apos;re already paying for and
+              stitching together by hand:
+            </p>
+            <ul className="mt-6 space-y-3">
+              {REPLACES.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-3 text-sm text-slate-300"
+                >
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </Reveal>
-          <FaqAccordion />
+
+          <Reveal delay={120}>
+            <ClientDetailMockup />
+          </Reveal>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-gray-950 text-white">
-        <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+      {/* ============================================================ */}
+      {/* 8. PRICING                                                    */}
+      {/* ============================================================ */}
+      <section id="pricing" className="scroll-mt-20 bg-[#f8fafc]">
+        <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <Reveal>
-            <h2 className="text-2xl font-bold sm:text-3xl">
-              Ready to Stop Running Your Credit Repair Business on Spreadsheets?
+            <div className="mx-auto max-w-3xl text-center">
+              <Eyebrow tone="light">Pricing</Eyebrow>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                Simple pricing. No surprises.
+              </h2>
+              <p className="mt-4 text-lg text-slate-600">
+                Every plan includes a 14-day free trial. No credit card required
+                to start.
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={80}>
+            <div className="mt-12">
+              <PricingCards signupHref={primaryHref} />
+            </div>
+          </Reveal>
+
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-400">
+            {[
+              "14-day free trial",
+              "Cancel anytime",
+              "Setup support included",
+              "Built for GoHighLevel",
+            ].map((b) => (
+              <span key={b} className="flex items-center gap-1.5">
+                <Check className="h-4 w-4 text-emerald-500" />
+                {b}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 9. FAQ                                                        */}
+      {/* ============================================================ */}
+      <section id="faq" className="scroll-mt-20 bg-[#0F1730]">
+        <div className="mx-auto max-w-3xl px-6 py-16 sm:py-24">
+          <Reveal>
+            <div className="mx-auto mb-10 max-w-2xl text-center">
+              <Eyebrow>FAQ</Eyebrow>
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Questions, answered.
+              </h2>
+            </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <FaqAccordion />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 10. FOUNDER NOTE                                              */}
+      {/* ============================================================ */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-24">
+          <Reveal>
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-xl font-bold text-white shadow-lg">
+              TI
+            </span>
+            <blockquote className="mt-6 text-xl leading-relaxed text-slate-700 sm:text-2xl">
+              &ldquo;I kept watching credit repair agencies juggle CDM,
+              spreadsheets, and GoHighLevel — spending more time keeping tools in
+              sync than serving clients. ClientDeck Pro exists to make running a
+              credit repair business feel like doing the work again, not managing
+              the software around it.&rdquo;
+            </blockquote>
+            <p className="mt-6 font-semibold text-slate-900">Towfiqul Islam</p>
+            <p className="text-sm text-slate-500">Founder, ClientDeck Pro</p>
+            <Link
+              href="#how-it-works"
+              className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 hover:text-violet-700"
+            >
+              Read about ClientDeck Pro
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ============================================================ */}
+      {/* 11. FINAL CTA                                                 */}
+      {/* ============================================================ */}
+      <section className="bg-[#0F1730] text-white">
+        <div className="relative mx-auto max-w-4xl overflow-hidden px-6 py-20 text-center">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-violet-600/20 blur-3xl" />
+          <Reveal>
+            <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">
+              Stop running your credit repair business across three different
+              tools.
             </h2>
-            <p className="mt-3 text-slate-500">
-              Join credit repair professionals who&apos;ve automated their disputes,
-              client communication, and GHL workflow — all from one platform.
+            <p className="relative mx-auto mt-4 max-w-xl text-lg text-slate-400">
+              Disputes, client communication, and GHL — connected in one
+              platform, with a 14-day free trial to prove it.
             </p>
             <Link
-              href={primaryCta.href}
-              className="mt-8 inline-flex items-center gap-2 rounded-md bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+              href={primaryHref}
+              className="cta-gradient relative mt-8 inline-flex items-center gap-2 rounded-xl px-7 py-4 text-sm font-semibold text-white"
             >
-              {session ? primaryCta.label : "Start Your Free 14-Day Trial"}
+              {session ? primaryLabel : "Start Your Free 14-Day Trial"}
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <p className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> No credit card required</span>
-              <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Setup support included</span>
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Cancel anytime</span>
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Your GHL data stays yours</span>
-            </p>
+            <div className="relative mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
+              {[
+                "No credit card required",
+                "Setup in 15 minutes",
+                "Cancel anytime",
+              ].map((b) => (
+                <span key={b} className="flex items-center gap-1.5">
+                  <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  {b}
+                </span>
+              ))}
+            </div>
           </Reveal>
         </div>
       </section>
 
-      {/* SEO text block — small, for search engines */}
-      <section className="bg-[#13131f]">
-        <div className="mx-auto max-w-4xl space-y-6 px-4 py-16 text-xs leading-relaxed text-slate-500">
+      {/* ============================================================ */}
+      {/* SEO text block (small, crawler-oriented)                     */}
+      {/* ============================================================ */}
+      <section className="bg-[#0F1730]">
+        <div className="mx-auto max-w-4xl space-y-6 border-t border-white/[0.06] px-6 py-14 text-xs leading-relaxed text-slate-500">
           <div>
-            <h2 className="font-semibold text-slate-500">What is ClientDeck Pro?</h2>
+            <h2 className="font-semibold text-slate-400">
+              What is ClientDeck Pro?
+            </h2>
             <p className="mt-1">
-              ClientDeck Pro is dispute management software for credit repair agencies
-              built natively for GoHighLevel (GHL). It provides AI-powered dispute
-              letter generation, an automated client portal, round tracking, and full
-              GHL integration including pipeline sync, custom field updates, and
-              workflow automation.
+              ClientDeck Pro is dispute management software for credit repair
+              agencies built natively for GoHighLevel (GHL). It provides
+              AI-powered dispute letter generation, an automated client portal,
+              round tracking, and full GHL integration including pipeline sync,
+              custom field updates, and workflow automation through free contact
+              tags.
             </p>
           </div>
           <div>
-            <h2 className="font-semibold text-slate-500">Who uses ClientDeck Pro?</h2>
+            <h2 className="font-semibold text-slate-400">
+              Who uses ClientDeck Pro?
+            </h2>
             <p className="mt-1">
-              Credit repair business owners, dispute specialists, and credit repair
-              agencies who use GoHighLevel as their CRM. Supports solo operators and
-              teams up to unlimited members depending on plan.
+              Credit repair business owners, dispute specialists, and credit
+              repair agencies that use GoHighLevel as their CRM. It supports solo
+              operators through multi-seat teams depending on plan, from Starter
+              to Agency.
             </p>
           </div>
           <div>
-            <h2 className="font-semibold text-slate-500">
+            <h2 className="font-semibold text-slate-400">
               How does ClientDeck Pro compare to CDM, DisputeFox, and DisputeBee?
             </h2>
             <p className="mt-1">
               ClientDeck Pro is the only dispute management software with native
-              GoHighLevel integration. Unlike CDM, DisputeFox, and DisputeBee, which
-              operate as standalone platforms requiring manual data transfer,
-              ClientDeck Pro syncs automatically with GHL contacts, pipelines, and
-              workflows.
+              GoHighLevel integration. Unlike CDM, DisputeFox, and DisputeBee —
+              which operate as standalone platforms requiring manual data
+              transfer — ClientDeck Pro syncs automatically with GHL contacts,
+              pipelines, and workflows, without per-execution webhook fees.
             </p>
           </div>
+          <p className="border-t border-white/[0.06] pt-6 text-slate-600">
+            Practice management software for credit professionals. Not a credit
+            repair service. Not legal advice. Not affiliated with HighLevel, Inc.
+          </p>
         </div>
       </section>
 

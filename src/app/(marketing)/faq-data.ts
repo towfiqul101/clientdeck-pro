@@ -1,34 +1,34 @@
 export const FAQS: { q: string; a: string }[] = [
   {
     q: "Do I need GoHighLevel to use ClientDeck Pro?",
-    a: "Yes — ClientDeck Pro is built to work inside your GHL account. It uses your GHL contacts, pipelines, and workflows. If you don't have GHL yet, plans start at $97/month at gohighlevel.com.",
+    a: "Yes. ClientDeck Pro is built to run on top of your GHL account — it uses your contacts, pipelines, and workflows to communicate with clients. If you don't have GHL yet, plans start around $97/month at gohighlevel.com. You connect ClientDeck Pro with a Private Integration Token in about two minutes.",
   },
   {
-    q: "How does the GHL integration work?",
-    a: "You connect your GHL account with a Private Integration Token — a key you generate in GHL settings, takes 2 minutes. ClientDeck Pro then automatically updates your GHL contacts, moves pipeline stages, adds tags, and triggers your workflows. No Zapier, no middleware, no extra cost.",
+    q: "Does ClientDeck Pro charge GHL webhook fees?",
+    a: "No. Many dispute tools push every notification through GHL premium webhook actions, which bill roughly $0.10 per execution and add up fast at scale. ClientDeck Pro drives your workflows with contact tags and custom fields instead — actions that are free inside your existing GHL subscription. The integration itself never costs extra.",
   },
   {
-    q: "Do I need technical skills to set it up?",
-    a: 'No. After signing up, click "Create Custom Fields" and "Find Pipeline" — the app configures GHL automatically. Then create a handful of simple GHL workflows using the copy-paste SMS templates we provide. Total setup time is about 15 minutes.',
+    q: "How does AI letter generation work?",
+    a: "You pick the accounts to dispute and choose the round type. The AI writes an FCRA-compliant letter for each bureau — Round 1 initial disputes, Round 2 Method of Verification requests, 609/611/623 letters, and more — citing the correct sections for each account. You review and edit every letter before anything is finalized. Nothing is ever sent automatically.",
   },
   {
-    q: "Can I import clients from CDM, DisputeFox, or DisputeBee?",
-    a: "Yes — CSV import is available. Export your clients from your current tool, upload to ClientDeck Pro, and you're running.",
+    q: "Can I import my clients from CDM or DisputeFox?",
+    a: "Yes. Export your clients from your current tool as a CSV and upload it to ClientDeck Pro. Your case history and client list come over, and your GHL contacts stay right where they are.",
   },
   {
-    q: "Is this legal / FCRA compliant?",
-    a: "ClientDeck Pro is practice management software for credit professionals. Letters are generated as templates for your professional review before sending. You are responsible for compliance in your jurisdiction. We are not a credit repair service and do not provide legal advice.",
+    q: 'What is a "dispute round"?',
+    a: "A round is one cycle of disputes sent to the bureaus. You select the negative items, generate and mail the letters, then log the bureaus' responses when they come back. ClientDeck Pro tracks each round's status — preparing, sent, awaiting response, complete — and can auto-schedule the next round so nothing slips.",
+  },
+  {
+    q: "Is ClientDeck Pro FCRA compliant?",
+    a: "ClientDeck Pro is practice management software for credit professionals. It generates letters as templates for your professional review before sending, and keeps a full audit trail of every action. You remain responsible for compliance in your jurisdiction. We are not a credit repair service and do not provide legal advice.",
+  },
+  {
+    q: "How does the client portal work?",
+    a: "Each client gets a branded portal they open with a magic link sent by text — no app download, no password. They see their credit scores across all three bureaus, deleted accounts, and a round-by-round progress timeline, and they can upload documents. It updates automatically whenever you log results.",
   },
   {
     q: "What happens to my data if I cancel?",
-    a: "Your data remains accessible for 30 days after cancellation. Export everything via CSV before cancelling. Your GHL data — contacts, fields, pipeline — stays in your GHL account. It's always yours.",
-  },
-  {
-    q: "How is this different from CDM or DisputeFox?",
-    a: "CDM and DisputeFox don't connect to GoHighLevel. You manage clients in one tool and communications in another — double work, double cost. ClientDeck Pro is built specifically for GHL agencies: one platform, everything synced.",
-  },
-  {
-    q: "Do clients need to download an app?",
-    a: "No. Clients access their portal via a magic link sent by text. One tap and they're in — no app store, no password, no friction.",
+    a: "Your data stays accessible for 30 days after cancellation so you can export everything by CSV. Your GHL data — contacts, custom fields, and pipeline — lives in your own GHL account and is always yours to keep.",
   },
 ];

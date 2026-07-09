@@ -331,6 +331,75 @@ html {
   animation: pulse-ring 2.4s ease-in-out infinite;
 }
 
+/* ------------------------------------------------------------------ */
+/* Landing hero mockup — 3D tilt + gentle float                        */
+/* ------------------------------------------------------------------ */
+@keyframes hero-mockup-float {
+  0%,
+  100% {
+    transform: perspective(1200px) rotateX(3deg) translateY(0);
+  }
+  50% {
+    transform: perspective(1200px) rotateX(3deg) translateY(-8px);
+  }
+}
+
+.hero-mockup {
+  transform: perspective(1200px) rotateX(3deg);
+  animation: hero-mockup-float 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------------ */
+/* Marquee (agency-type strip) — pure CSS, duplicated track           */
+/* ------------------------------------------------------------------ */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  display: inline-flex;
+  width: max-content;
+  animation: marquee 34s linear infinite;
+}
+
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 12%,
+    #000 88%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 12%,
+    #000 88%,
+    transparent
+  );
+}
+
+/* Purple → blue CTA fill, reused across the marketing page */
+.cta-gradient {
+  background-image: linear-gradient(135deg, #8b5cf6 0%, #2563eb 100%);
+  box-shadow: 0 8px 24px rgba(99, 78, 235, 0.35);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+.cta-gradient:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 30px rgba(99, 78, 235, 0.45);
+  filter: brightness(1.05);
+}
+.cta-gradient:active {
+  transform: translateY(0);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -345,8 +414,13 @@ html {
   .hero-gradient,
   .animate-fade-up,
   .animate-slide-in-right,
-  .live-indicator {
+  .live-indicator,
+  .marquee-track {
     animation: none;
+  }
+  .hero-mockup {
+    animation: none;
+    transform: perspective(1200px) rotateX(3deg);
   }
   .glass-card:hover {
     transform: none;

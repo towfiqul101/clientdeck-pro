@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSessionContext } from "@/lib/auth/session";
+import { Logo } from "@/components/ui/logo";
 import { MarketingNav } from "./marketing-nav";
 
 export const metadata: Metadata = {
@@ -43,46 +44,54 @@ export default async function MarketingLayout({
   const loggedIn = Boolean(session);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#13131f]">
+    <div className="flex min-h-screen flex-col bg-[#0F1730]">
       <MarketingNav loggedIn={loggedIn} />
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-gray-800 bg-gray-950 text-slate-500">
-        <div className="mx-auto max-w-6xl px-4 py-12">
-          <div className="flex flex-col justify-between gap-8 md:flex-row">
+      <footer className="border-t border-white/[0.06] bg-[#0b1122] text-slate-400">
+        <div className="mx-auto max-w-6xl px-6 py-14">
+          <div className="flex flex-col justify-between gap-10 md:flex-row">
             <div className="max-w-sm space-y-3">
-              <span className="font-semibold text-white">ClientDeck Pro</span>
-              <p className="text-sm">
-                Practice management software for credit professionals. It is not
-                a credit repair service and does not provide legal or financial
-                advice.
+              <Logo className="h-6 w-auto" variant="light" />
+              <p className="text-sm leading-relaxed">
+                The connected platform for GoHighLevel credit repair agencies —
+                AI dispute letters, client portal, and native GHL sync in one
+                system.
               </p>
+              <a
+                href="mailto:support@clientdeckpro.com"
+                className="inline-block text-sm text-slate-400 hover:text-white"
+              >
+                support@clientdeckpro.com
+              </a>
             </div>
             <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <p className="font-medium text-white">Product</p>
                 <Link href="/#features" className="block hover:text-white">Features</Link>
                 <Link href="/#how-it-works" className="block hover:text-white">How It Works</Link>
                 <Link href="/#pricing" className="block hover:text-white">Pricing</Link>
+                <Link href="/#compare" className="block hover:text-white">Compare</Link>
                 <Link href="/#faq" className="block hover:text-white">FAQ</Link>
                 <Link href="/snapshot" className="block hover:text-white">GHL Snapshot</Link>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <p className="font-medium text-white">Company</p>
                 <a href="mailto:support@clientdeckpro.com" className="block hover:text-white">Contact</a>
                 <Link href="/login" className="block hover:text-white">Log In</Link>
                 <Link href="/signup" className="block hover:text-white">Sign Up</Link>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <p className="font-medium text-white">Legal</p>
                 <Link href="/terms" className="block hover:text-white">Terms of Service</Link>
                 <Link href="/privacy" className="block hover:text-white">Privacy Policy</Link>
               </div>
             </div>
           </div>
-          <p className="mt-10 border-t border-gray-800 pt-6 text-xs text-slate-500">
-            © {new Date().getFullYear()} ClientDeck Pro. All rights reserved. Not
-            affiliated with HighLevel, Inc.
+          <p className="mt-12 border-t border-white/[0.06] pt-6 text-xs leading-relaxed text-slate-500">
+            © {new Date().getFullYear()} ClientDeck Pro. Not affiliated with
+            HighLevel, Inc. ClientDeck Pro is practice management software. Not a
+            credit repair service. Not legal advice.
           </p>
         </div>
       </footer>
