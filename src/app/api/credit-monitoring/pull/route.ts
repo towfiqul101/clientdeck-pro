@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
 import { pullCreditScores } from "@/lib/credit-monitoring";
 import { updateGHLContactFields } from "@/lib/ghl/api";
+import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 import type { Client, CreditMonitoringService } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -100,9 +101,9 @@ export async function POST(req: Request) {
 
   if (client.ghl_contact_id && agency.ghl_api_key && agency.ghl_location_id) {
     const fields: Record<string, string> = {};
-    if (result.score_eq !== null) fields.credit_score_eq_current = String(result.score_eq);
-    if (result.score_exp !== null) fields.credit_score_exp_current = String(result.score_exp);
-    if (result.score_tu !== null) fields.credit_score_tu_current = String(result.score_tu);
+    if (result.score_eq !== null) fields[GHL_FIELD_KEYS.EQ_SCORE] = String(result.score_eq);
+    if (result.score_exp !== null) fields[GHL_FIELD_KEYS.EXP_SCORE] = String(result.score_exp);
+    if (result.score_tu !== null) fields[GHL_FIELD_KEYS.TU_SCORE] = String(result.score_tu);
     if (Object.keys(fields).length) {
       await updateGHLContactFields(client.ghl_contact_id, fields, {
         apiKey: agency.ghl_api_key,

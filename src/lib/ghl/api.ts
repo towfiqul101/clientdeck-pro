@@ -3,6 +3,8 @@
 // Handles all outbound sync: app → GHL
 // ============================================
 
+import { GHL_FIELD_KEYS } from "./field-keys";
+
 const GHL_BASE_URL = "https://services.leadconnectorhq.com";
 
 interface GHLRequestOptions {
@@ -130,11 +132,19 @@ export async function createGHLContact(
 
 export async function updateGHLContactFields(
   contactId: string,
-  customFields: Record<string, string | number>,
+  fields: Record<string, string | number>,
   opts: GHLRequestOptions
 ) {
-  // GHL custom fields are updated via the contact update endpoint
-  // Custom field keys should match the field names created in GHL
+  // GHL v2 expects customFields as an ARRAY of { key, field_value } — NOT an
+  // object of key→value. Sending an object is silently ignored (fields stay
+  // empty). `key` is the GHL field key (see field-keys.ts); values are
+  // stringified because GHL stores field values as strings.
+  const customFields = Object.entries(fields)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => ({ key, field_value: String(value) }));
+
+  if (customFields.length === 0) return null;
+
   return ghlFetch(`/contacts/${contactId}`, opts, {
     method: "PUT",
     body: JSON.stringify({ customFields }),
@@ -266,8 +276,9 @@ export async function syncRoundSent(
 ) {
   await Promise.allSettled([
     updateGHLContactFields(contactId, {
-      dispute_round_current: roundNumber,
-      next_dispute_date: new Date(
+      [GHL_FIELD_KEYS.ROUND_NUMBER]: roundNumber,
+      [GHL_FIELD_KEYS.ITEMS_DISPUTED]: itemsDisputed,
+      [GHL_FIELD_KEYS.NEXT_DISPUTE_DATE]: new Date(
         Date.now() + 35 * 24 * 60 * 60 * 1000
       ).toISOString().split("T")[0],
     }, opts),
@@ -288,7 +299,8 @@ export async function syncDeletionAchieved(
 ) {
   await Promise.allSettled([
     updateGHLContactFields(contactId, {
-      items_deleted_total: totalDeletions,
+      [GHL_FIELD_KEYS.ITEMS_DELETED]: totalDeletions,
+      [GHL_FIELD_KEYS.DELETIONS_THIS_ROUND]: deletionsThisRound,
     }, opts),
     addGHLTag(contactId, ["had-deletion"], opts),
     addGHLNote(
@@ -309,9 +321,9 @@ export async function syncScoreUpdate(
   opts: GHLRequestOptions
 ) {
   const fields: Record<string, number> = {};
-  if (scores.eq) fields.credit_score_eq_current = scores.eq;
-  if (scores.exp) fields.credit_score_exp_current = scores.exp;
-  if (scores.tu) fields.credit_score_tu_current = scores.tu;
+  if (scores.eq) fields[GHL_FIELD_KEYS.EQ_SCORE] = scores.eq;
+  if (scores.exp) fields[GHL_FIELD_KEYS.EXP_SCORE] = scores.exp;
+  if (scores.tu) fields[GHL_FIELD_KEYS.TU_SCORE] = scores.tu;
 
   await updateGHLContactFields(contactId, fields, opts);
 }

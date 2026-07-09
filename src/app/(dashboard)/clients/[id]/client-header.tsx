@@ -6,6 +6,7 @@ import { AssignClient } from "./assign-client";
 import { AIStrategyPanel } from "./ai-strategy-panel";
 import { SendReviewRequestButton } from "./send-review-request-button";
 import { PullScoresButton } from "./pull-scores-button";
+import { ForceSyncButton } from "./force-sync-button";
 import { cn, scoreChange } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
 import {
@@ -142,6 +143,7 @@ export function ClientHeader({
           </Link>
           <PortalLinkMenu clientId={client.id} />
           {showCreditMonitoring && <PullScoresButton client={client} />}
+          {client.ghl_contact_id && <ForceSyncButton clientId={client.id} />}
         </div>
       </div>
 

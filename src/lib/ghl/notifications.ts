@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { addGHLTag, removeGHLTag, updateGHLContactFields } from "@/lib/ghl/api";
+import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 import type { Agency, Client } from "@/types";
 import { NOTIFICATION_TAGS, type GHLNotificationType } from "@/lib/ghl/notification-tags";
 
@@ -145,55 +146,55 @@ function buildNotificationFields(
   switch (type) {
     case "round_sent":
       return {
-        dispute_round_current: Number(data.round_number),
-        cdp_items_disputed: Number(data.items_disputed),
-        next_dispute_date: String(data.response_deadline),
-        clientdeck_portal_link: String(data.portal_link),
+        [GHL_FIELD_KEYS.ROUND_NUMBER]: Number(data.round_number),
+        [GHL_FIELD_KEYS.ITEMS_DISPUTED]: Number(data.items_disputed),
+        [GHL_FIELD_KEYS.NEXT_DISPUTE_DATE]: String(data.response_deadline),
+        [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link),
       };
     case "deletion_win":
       return {
-        cdp_deletions_this_round: Number(data.deletions_this_round),
-        items_deleted_total: Number(data.total_deletions),
-        cdp_deleted_items_list: String(data.deleted_items_list),
-        credit_score_eq_current: Number(data.score_eq),
-        credit_score_exp_current: Number(data.score_exp),
-        credit_score_tu_current: Number(data.score_tu),
-        clientdeck_portal_link: String(data.portal_link),
+        [GHL_FIELD_KEYS.DELETIONS_THIS_ROUND]: Number(data.deletions_this_round),
+        [GHL_FIELD_KEYS.ITEMS_DELETED]: Number(data.total_deletions),
+        [GHL_FIELD_KEYS.DELETED_ITEMS_LIST]: String(data.deleted_items_list),
+        [GHL_FIELD_KEYS.EQ_SCORE]: Number(data.score_eq),
+        [GHL_FIELD_KEYS.EXP_SCORE]: Number(data.score_exp),
+        [GHL_FIELD_KEYS.TU_SCORE]: Number(data.score_tu),
+        [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link),
       };
     case "round_results_in":
       return {
-        dispute_round_current: Number(data.round_number),
-        items_deleted_total: Number(data.total_deletions),
-        total_negative_items: Number(data.total_items_disputed),
-        clientdeck_portal_link: String(data.portal_link),
+        [GHL_FIELD_KEYS.ROUND_NUMBER]: Number(data.round_number),
+        [GHL_FIELD_KEYS.ITEMS_DELETED]: Number(data.total_deletions),
+        [GHL_FIELD_KEYS.TOTAL_ITEMS]: Number(data.total_items_disputed),
+        [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link),
       };
     case "goal_achieved":
       return {
-        items_deleted_total: Number(data.total_deletions),
-        cdp_score_improvement: Number(data.score_improvement),
-        credit_score_eq_current: Number(data.final_score_eq),
-        credit_score_exp_current: Number(data.final_score_exp),
-        credit_score_tu_current: Number(data.final_score_tu),
-        clientdeck_portal_link: String(data.portal_link),
-        cdp_google_review_link: String(data.review_link ?? ""),
+        [GHL_FIELD_KEYS.ITEMS_DELETED]: Number(data.total_deletions),
+        [GHL_FIELD_KEYS.SCORE_IMPROVEMENT]: Number(data.score_improvement),
+        [GHL_FIELD_KEYS.EQ_SCORE]: Number(data.final_score_eq),
+        [GHL_FIELD_KEYS.EXP_SCORE]: Number(data.final_score_exp),
+        [GHL_FIELD_KEYS.TU_SCORE]: Number(data.final_score_tu),
+        [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link),
+        [GHL_FIELD_KEYS.GOOGLE_REVIEW_LINK]: String(data.review_link ?? ""),
       };
     case "payment_failed":
       return {
-        cdp_monthly_fee: Number(data.monthly_fee),
-        clientdeck_portal_link: String(data.portal_link),
-        cdp_agency_phone: String(data.agency_phone ?? ""),
+        [GHL_FIELD_KEYS.MONTHLY_FEE]: Number(data.monthly_fee),
+        [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link),
+        [GHL_FIELD_KEYS.AGENCY_PHONE]: String(data.agency_phone ?? ""),
       };
     case "portal_link":
-      return { clientdeck_portal_link: String(data.portal_link) };
+      return { [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link) };
     case "monthly_progress":
       return {
-        credit_score_eq_current: Number(data.score_eq),
-        credit_score_exp_current: Number(data.score_exp),
-        credit_score_tu_current: Number(data.score_tu),
-        items_deleted_total: Number(data.total_deletions),
-        total_negative_items: Number(data.total_items),
-        dispute_round_current: Number(data.current_round),
-        clientdeck_portal_link: String(data.portal_link),
+        [GHL_FIELD_KEYS.EQ_SCORE]: Number(data.score_eq),
+        [GHL_FIELD_KEYS.EXP_SCORE]: Number(data.score_exp),
+        [GHL_FIELD_KEYS.TU_SCORE]: Number(data.score_tu),
+        [GHL_FIELD_KEYS.ITEMS_DELETED]: Number(data.total_deletions),
+        [GHL_FIELD_KEYS.TOTAL_ITEMS]: Number(data.total_items),
+        [GHL_FIELD_KEYS.ROUND_NUMBER]: Number(data.current_round),
+        [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link),
       };
     case "staff_new_client":
     case "staff_round_overdue":

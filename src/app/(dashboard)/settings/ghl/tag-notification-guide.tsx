@@ -11,13 +11,13 @@ import { NOTIFICATION_TAGS, type GHLNotificationType } from "@/lib/ghl/notificat
 import { updateOwnerGhlContactId } from "../actions";
 
 const ROWS: { key: GHLNotificationType; event: string; fields: string }[] = [
-  { key: "round_sent", event: "Round Sent", fields: "dispute_round_current, cdp_items_disputed, clientdeck_portal_link" },
-  { key: "deletion_win", event: "Deletion Win", fields: "cdp_deletions_this_round, items_deleted_total, cdp_deleted_items_list" },
-  { key: "round_results_in", event: "Round Complete", fields: "dispute_round_current, items_deleted_total, total_negative_items" },
-  { key: "goal_achieved", event: "Goal Achieved", fields: "cdp_score_improvement, cdp_google_review_link" },
-  { key: "payment_failed", event: "Payment Failed", fields: "cdp_monthly_fee, cdp_agency_phone" },
-  { key: "portal_link", event: "Portal Link Sent", fields: "clientdeck_portal_link" },
-  { key: "monthly_progress", event: "Monthly Update", fields: "credit_score_eq_current, credit_score_exp_current, credit_score_tu_current" },
+  { key: "round_sent", event: "Round Sent", fields: "cdp__round_number, cdp__items_disputed, cdp__portal_link" },
+  { key: "deletion_win", event: "Deletion Win", fields: "cdp__deletions_this_round, cdp__items_deleted, cdp__deleted_items_list" },
+  { key: "round_results_in", event: "Round Complete", fields: "cdp__round_number, cdp__items_deleted, cdp__total_items" },
+  { key: "goal_achieved", event: "Goal Achieved", fields: "cdp__score_improvement, cdp__google_review_link" },
+  { key: "payment_failed", event: "Payment Failed", fields: "cdp__monthly_fee, cdp__agency_phone" },
+  { key: "portal_link", event: "Portal Link Sent", fields: "cdp__portal_link" },
+  { key: "monthly_progress", event: "Monthly Update", fields: "cdp__eq_score, cdp__exp_score, cdp__tu_score" },
   { key: "staff_new_client", event: "Staff: New Client", fields: "(fires on your owner contact — no fields written)" },
   { key: "staff_round_overdue", event: "Staff: Round Overdue", fields: "(fires on your owner contact — no fields written)" },
   { key: "staff_next_round_ready", event: "Staff: Next Round Ready", fields: "(fires on your owner contact — no fields written)" },

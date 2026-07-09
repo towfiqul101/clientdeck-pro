@@ -4,6 +4,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { updateGHLContactFields } from "@/lib/ghl/api";
+import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
 import { sendPortalLinkEmail } from "@/lib/email/templates";
 import {
@@ -17,7 +18,7 @@ type PortalLinkResult = { success: true; url: string } | { success: false; error
 
 /**
  * Rotates the client's portal token and (best-effort) pushes it into the GHL
- * `clientdeck_portal_link` custom field. Does NOT fire any client-facing
+ * `cdp__portal_link` custom field. Does NOT fire any client-facing
  * notification — that's each channel action's own job, so the three portal-
  * link delivery options stay genuinely independent.
  */
@@ -51,7 +52,7 @@ async function rotatePortalLink(
   if (ghl_api_key && ghl_location_id && client.ghl_contact_id) {
     await updateGHLContactFields(
       client.ghl_contact_id,
-      { clientdeck_portal_link: url },
+      { [GHL_FIELD_KEYS.PORTAL_LINK]: url },
       { apiKey: ghl_api_key, locationId: ghl_location_id }
     ).catch((e) => console.error("Failed to sync portal link to GHL:", e));
   }

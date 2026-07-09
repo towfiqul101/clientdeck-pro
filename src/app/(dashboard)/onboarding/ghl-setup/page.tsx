@@ -14,50 +14,50 @@ const WORKFLOWS: WorkflowDoc[] = [
   {
     key: "round_sent",
     title: "Round Sent to Bureaus (Client SMS)",
-    mergeFields: ["{{contact.first_name}}", "{{contact.dispute_round_current}}", "{{contact.cdp_items_disputed}}", "{{contact.clientdeck_portal_link}}"],
+    mergeFields: ["{{contact.first_name}}", "{{contact.cdp__round_number}}", "{{contact.cdp__items_disputed}}", "{{contact.cdp__portal_link}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}! Your Round {{contact.dispute_round_current}} dispute letters have been sent to all 3 bureaus ({{contact.cdp_items_disputed}} items). Track your progress: {{contact.clientdeck_portal_link}}",
+      "Hi {{contact.first_name}}! Your Round {{contact.cdp__round_number}} dispute letters have been sent to all 3 bureaus ({{contact.cdp__items_disputed}} items). Track your progress: {{contact.cdp__portal_link}}",
   },
   {
     key: "deletion_win",
     title: "Deletion Win (Client SMS)",
-    mergeFields: ["{{contact.cdp_deletions_this_round}}", "{{contact.items_deleted_total}}", "{{contact.cdp_deleted_items_list}}", "{{contact.clientdeck_portal_link}}"],
+    mergeFields: ["{{contact.cdp__deletions_this_round}}", "{{contact.cdp__items_deleted}}", "{{contact.cdp__deleted_items_list}}", "{{contact.cdp__portal_link}}"],
     suggestedCopy:
-      "Great news, {{contact.first_name}}! {{contact.cdp_deletions_this_round}} item(s) were removed this round. Total deleted so far: {{contact.items_deleted_total}}. View your progress: {{contact.clientdeck_portal_link}}",
+      "Great news, {{contact.first_name}}! {{contact.cdp__deletions_this_round}} item(s) were removed this round. Total deleted so far: {{contact.cdp__items_deleted}}. View your progress: {{contact.cdp__portal_link}}",
   },
   {
     key: "round_results_in",
     title: "Round Results In (Client SMS)",
-    mergeFields: ["{{contact.dispute_round_current}}", "{{contact.items_deleted_total}}", "{{contact.total_negative_items}}", "{{contact.clientdeck_portal_link}}"],
+    mergeFields: ["{{contact.cdp__round_number}}", "{{contact.cdp__items_deleted}}", "{{contact.cdp__total_items}}", "{{contact.cdp__portal_link}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}, your Round {{contact.dispute_round_current}} results are in. Full details: {{contact.clientdeck_portal_link}}",
+      "Hi {{contact.first_name}}, your Round {{contact.cdp__round_number}} results are in. Full details: {{contact.cdp__portal_link}}",
   },
   {
     key: "goal_achieved",
     title: "Goal Achieved (Client SMS + Email)",
-    mergeFields: ["{{contact.items_deleted_total}}", "{{contact.cdp_score_improvement}}", "{{contact.cdp_google_review_link}}"],
+    mergeFields: ["{{contact.cdp__items_deleted}}", "{{contact.cdp__score_improvement}}", "{{contact.cdp__google_review_link}}"],
     suggestedCopy:
-      "Congratulations {{contact.first_name}}! You've reached your credit goal — {{contact.items_deleted_total}} items removed, +{{contact.cdp_score_improvement}} points. Mind leaving us a review? {{contact.cdp_google_review_link}}",
+      "Congratulations {{contact.first_name}}! You've reached your credit goal — {{contact.cdp__items_deleted}} items removed, +{{contact.cdp__score_improvement}} points. Mind leaving us a review? {{contact.cdp__google_review_link}}",
   },
   {
     key: "payment_failed",
     title: "Payment Failed (Client SMS)",
-    mergeFields: ["{{contact.cdp_monthly_fee}}", "{{contact.clientdeck_portal_link}}", "{{contact.cdp_agency_phone}}"],
+    mergeFields: ["{{contact.cdp__monthly_fee}}", "{{contact.cdp__portal_link}}", "{{contact.cdp__agency_phone}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}, your payment of ${{contact.cdp_monthly_fee}}/month didn't go through. Update it here: {{contact.clientdeck_portal_link}} or call {{contact.cdp_agency_phone}}.",
+      "Hi {{contact.first_name}}, your payment of ${{contact.cdp__monthly_fee}}/month didn't go through. Update it here: {{contact.cdp__portal_link}} or call {{contact.cdp__agency_phone}}.",
   },
   {
     key: "portal_link",
     title: "Portal Link Sent (Client SMS)",
-    mergeFields: ["{{contact.clientdeck_portal_link}}"],
-    suggestedCopy: "Hi {{contact.first_name}}, here's your client portal link: {{contact.clientdeck_portal_link}}",
+    mergeFields: ["{{contact.cdp__portal_link}}"],
+    suggestedCopy: "Hi {{contact.first_name}}, here's your client portal link: {{contact.cdp__portal_link}}",
   },
   {
     key: "monthly_progress",
     title: "Monthly Progress Update (Client SMS)",
-    mergeFields: ["{{contact.credit_score_eq_current}}", "{{contact.credit_score_exp_current}}", "{{contact.credit_score_tu_current}}", "{{contact.items_deleted_total}}", "{{contact.dispute_round_current}}"],
+    mergeFields: ["{{contact.cdp__eq_score}}", "{{contact.cdp__exp_score}}", "{{contact.cdp__tu_score}}", "{{contact.cdp__items_deleted}}", "{{contact.cdp__round_number}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}, your monthly update: {{contact.items_deleted_total}} items resolved, currently on Round {{contact.dispute_round_current}}. Details: {{contact.clientdeck_portal_link}}",
+      "Hi {{contact.first_name}}, your monthly update: {{contact.cdp__items_deleted}} items resolved, currently on Round {{contact.cdp__round_number}}. Details: {{contact.cdp__portal_link}}",
   },
   {
     key: "staff_new_client",

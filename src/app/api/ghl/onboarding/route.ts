@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getGHLContact, updateGHLContactFields } from "@/lib/ghl/api";
+import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
@@ -228,8 +229,8 @@ export async function POST(req: Request) {
           await syncOnboardingDocsToDrive(agency, contact);
         })().catch((err) => console.error("[Onboarding] Drive sync error:", err)),
         (async () => {
-          const fields: Record<string, string> = { clientdeck_client_id: clientId };
-          if (portalLink) fields.clientdeck_portal_link = portalLink;
+          const fields: Record<string, string> = { [GHL_FIELD_KEYS.CLIENT_ID]: clientId };
+          if (portalLink) fields[GHL_FIELD_KEYS.PORTAL_LINK] = portalLink;
           await updateGHLContactFields(contactId, fields, opts);
         })().catch((err) => console.error("[Onboarding] GHL field sync error:", err)),
         (async () => {

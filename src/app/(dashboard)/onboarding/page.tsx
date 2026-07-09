@@ -17,15 +17,15 @@ import {
 const SNAPSHOT_URL = "https://clientdeckpro.com/snapshot"; // Week 7: final URL
 
 const CUSTOM_FIELDS = [
-  "dispute_round_current",
-  "items_deleted_total",
-  "total_negative_items",
-  "next_dispute_date",
-  "credit_score_eq_current",
-  "credit_score_exp_current",
-  "credit_score_tu_current",
-  "clientdeck_portal_link",
-  "clientdeck_client_id",
+  "cdp__round_number",
+  "cdp__items_deleted",
+  "cdp__total_items",
+  "cdp__next_dispute_date",
+  "cdp__eq_score",
+  "cdp__exp_score",
+  "cdp__tu_score",
+  "cdp__portal_link",
+  "cdp__client_id",
 ];
 
 export default async function OnboardingPage() {

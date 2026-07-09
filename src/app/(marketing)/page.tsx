@@ -481,8 +481,8 @@ function StepVisual({ n }: { n: string }) {
           </span>
         </div>
         {[
-          ["dispute_round_current", "2"],
-          ["items_deleted_total", "5"],
+          ["cdp__round_number", "2"],
+          ["cdp__items_deleted", "5"],
           ["Tag added", "round-2-sent"],
         ].map(([k, v]) => (
           <div
