@@ -262,6 +262,18 @@ analytics, landing page.
   `/api/ghl/setup/create-opportunities` backfill + a Settings → GHL 8-stage
   config/status UI and "Create Opportunities for All Clients" tool. No new
   migrations (reuses `clients.ghl_opportunity_id` + `agencies.settings`).
+- **Session 9** — **Product rename: ClientDeck Pro → RoundTrack Pro** (domain
+  `clientdeckpro.com → roundtrackpro.com`). Branding-only text sweep across
+  `src/`, docs, and config (`package.json` name → `roundtrack-pro`, marketing
+  metadata, logo wordmark, email FROM addresses, legal/portal/onboarding copy).
+  **Zero** schema/API/logic changes. Intentionally preserved for backward
+  compatibility with live GHL installs: `cdp__*` field keys, `cdp-*` notification
+  tags, the `cdp_admin_session` cookie, theme/view storage keys, and the
+  `x-clientdeck-secret` webhook header. GHL field NAMES keep the `"CDP - "`
+  prefix because GHL derives the stored `cdp__` key from the name — renaming to
+  `"RTP - "` would generate `rtp__` keys and break the mapping (see the REBRAND
+  NOTE comments in `field-keys.ts`/`setup-config.ts`). See "Post-Rename Manual
+  Steps" below for the outstanding infra/domain cutover checklist.
 
 ## Common Commands
 ```bash
