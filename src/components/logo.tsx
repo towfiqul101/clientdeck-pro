@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils/helpers";
  * wordmark meant to sit on a dark surface, `*-light.png` is the dark-ink
  * wordmark for a light surface. Intrinsic dimensions are passed to next/image
  * (sidebar 1983×793, wordmark 1774×887) and display size is driven by the
- * `h-* w-auto` className so the aspect ratio is preserved.
+ * `h-* w-auto` className so the aspect ratio is preserved. The source PNGs are
+ * cropped tight to the glyph (sidebar 1873×459, wordmark 1763×470) — keep the
+ * width/height below in sync with the actual files or `w-auto` will distort.
  */
 
 /**
@@ -21,10 +23,10 @@ export function AppSidebarLogo({ className }: { className?: string }) {
     <Image
       src="/logos/logo-sidebar-dark.png"
       alt="RoundTrack Pro"
-      width={1983}
-      height={793}
+      width={1873}
+      height={459}
       priority
-      className={cn("h-10 w-auto", className)}
+      className={cn("h-11 w-auto", className)}
     />
   );
 }
@@ -50,9 +52,9 @@ export function AppContentLogo({
     <Image
       src={src}
       alt="RoundTrack Pro"
-      width={1774}
-      height={887}
-      className={cn("h-7 w-auto", className)}
+      width={1763}
+      height={470}
+      className={cn("h-8 w-auto", className)}
     />
   );
 }

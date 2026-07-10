@@ -48,7 +48,7 @@ export default function MarketingLayout({
         <div className="mx-auto max-w-6xl px-6 py-14">
           <div className="flex flex-col justify-between gap-10 md:flex-row">
             <div className="max-w-sm space-y-3">
-              <AppContentLogo theme="dark" className="h-7 w-auto" />
+              <AppContentLogo theme="dark" className="h-9 w-auto" />
               <p className="text-sm leading-relaxed">
                 The connected platform for GoHighLevel credit repair agencies —
                 AI dispute letters, client portal, and native GHL sync in one

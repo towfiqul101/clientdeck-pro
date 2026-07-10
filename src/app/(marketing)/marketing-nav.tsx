@@ -49,7 +49,7 @@ export function MarketingNav() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
         <Link href="/" className="flex items-center gap-2 text-white">
           {/* Marketing shell is permanently dark → dark-surface wordmark. */}
-          <AppContentLogo theme="dark" className="h-8 w-auto" />
+          <AppContentLogo theme="dark" className="h-10 w-auto" />
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
