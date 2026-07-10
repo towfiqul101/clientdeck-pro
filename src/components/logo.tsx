@@ -24,15 +24,16 @@ export function AppSidebarLogo({ className }: { className?: string }) {
       width={1983}
       height={793}
       priority
-      className={cn("h-8 w-auto", className)}
+      className={cn("h-10 w-auto", className)}
     />
   );
 }
 
 /**
- * Wordmark for the toggleable `.app-content` area. Picks the asset matching the
- * active background: light theme → light-surface (dark-ink) wordmark, dark
- * theme → dark-surface (light-ink) wordmark.
+ * Theme-aware wordmark. Picks the asset matching the surface passed via `theme`:
+ * light → light-surface (dark-ink) wordmark, dark → dark-surface (light-ink)
+ * wordmark. Used in the toggleable `.app-content` header (theme from context)
+ * and on the permanently-dark marketing shell (theme="dark").
  */
 export function AppContentLogo({
   theme,

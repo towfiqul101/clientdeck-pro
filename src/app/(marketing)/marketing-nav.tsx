@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X, ArrowRight } from "lucide-react";
-import { Logo } from "@/components/ui/logo";
+import { AppContentLogo } from "@/components/logo";
 import { cn } from "@/lib/utils/helpers";
 
 const LINKS = [
@@ -48,7 +48,8 @@ export function MarketingNav() {
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
         <Link href="/" className="flex items-center gap-2 text-white">
-          <Logo className="h-6 w-auto" variant="light" />
+          {/* Marketing shell is permanently dark → dark-surface wordmark. */}
+          <AppContentLogo theme="dark" className="h-8 w-auto" />
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">
