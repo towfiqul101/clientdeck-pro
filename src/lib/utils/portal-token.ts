@@ -8,7 +8,7 @@ const PORTAL_TOKEN_TTL_DAYS = 90;
 function appUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "https://app.clientdeckpro.com"
+    "https://app.roundtrackpro.com"
   );
 }
 

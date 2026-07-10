@@ -67,7 +67,7 @@ async function notifyOwner(input: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ClientDeck Pro <onboarding@clientdeckpro.com>",
+        from: "RoundTrack Pro <onboarding@roundtrackpro.com>",
         to: [to],
         subject: `New snapshot request — ${input.name}`,
         text: [

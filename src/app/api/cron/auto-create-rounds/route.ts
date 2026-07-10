@@ -100,7 +100,7 @@ export async function GET(req: Request) {
         ? { apiKey: agency.ghl_api_key, locationId: agency.ghl_location_id }
         : null;
       const ownerContactId = (agency as Agency).settings?.owner_ghl_contact_id;
-      const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.clientdeckpro.com";
+      const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.roundtrackpro.com";
       await Promise.allSettled([
         (async () => {
           if (opts && client.ghl_contact_id) {

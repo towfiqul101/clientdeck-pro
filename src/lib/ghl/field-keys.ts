@@ -1,5 +1,5 @@
 // ============================================================================
-// GHL Custom Field Keys for ClientDeck Pro — SINGLE SOURCE OF TRUTH
+// GHL Custom Field Keys for RoundTrack Pro — SINGLE SOURCE OF TRUTH
 // ----------------------------------------------------------------------------
 // These keys MUST match the field keys GHL actually stores. GHL auto-generates
 // a field's key from its NAME when the field is created: it lowercases, turns
@@ -14,6 +14,12 @@
 //
 // Merge tags in GHL workflows reference these as `{{contact.<key>}}`, e.g.
 // `{{contact.cdp__portal_link}}`.
+//
+// REBRAND NOTE (ClientDeck Pro → RoundTrack Pro): keys retain the `cdp__`
+// prefix for backward compatibility with existing GHL installations from the
+// ClientDeck Pro era. Fresh installs still see field names as "CDP - ..." so
+// GHL keeps deriving these same `cdp__` keys. Do NOT switch to `rtp__` here
+// unless every agency also recreates their GHL fields with "RTP - " names.
 // ============================================================================
 
 export const GHL_FIELD_KEYS = {

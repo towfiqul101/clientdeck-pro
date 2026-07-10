@@ -9,15 +9,15 @@ export async function sendStaffInviteEmail(params: {
 }): Promise<boolean> {
   const html = `
     <h2>You've been invited!</h2>
-    <p>${escapeHtml(params.inviterName)} has invited you to join <strong>${escapeHtml(params.agencyName)}</strong> on ClientDeck Pro.</p>
+    <p>${escapeHtml(params.inviterName)} has invited you to join <strong>${escapeHtml(params.agencyName)}</strong> on RoundTrack Pro.</p>
     <p><a href="${escapeHtml(params.inviteLink)}" style="background:#2563EB;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block">Accept Invitation →</a></p>
     <p>This link expires in 24 hours.</p>
-    <p>ClientDeck Pro is a dispute management platform for credit professionals.</p>
+    <p>RoundTrack Pro is a dispute management platform for credit professionals.</p>
   `;
-  const text = `You've been invited!\n\n${params.inviterName} has invited you to join ${params.agencyName} on ClientDeck Pro.\n\nAccept your invitation: ${params.inviteLink}\n\nThis link expires in 24 hours.`;
+  const text = `You've been invited!\n\n${params.inviterName} has invited you to join ${params.agencyName} on RoundTrack Pro.\n\nAccept your invitation: ${params.inviteLink}\n\nThis link expires in 24 hours.`;
   return sendEmail({
     to: params.inviteeEmail,
-    subject: `${params.agencyName} invited you to ClientDeck Pro`,
+    subject: `${params.agencyName} invited you to RoundTrack Pro`,
     html,
     text,
   });
@@ -63,9 +63,9 @@ export async function sendStaffDocUploadAlert(params: {
       <li>File: ${escapeHtml(params.documentName)}</li>
       <li>Category: ${escapeHtml(params.documentCategory)}</li>
     </ul>
-    <p><a href="${escapeHtml(params.clientDashboardUrl)}">View in ClientDeck Pro →</a></p>
+    <p><a href="${escapeHtml(params.clientDashboardUrl)}">View in RoundTrack Pro →</a></p>
   `;
-  const text = `${params.clientName} uploaded a document to their portal.\n\nFile: ${params.documentName}\nCategory: ${params.documentCategory}\n\nView in ClientDeck Pro: ${params.clientDashboardUrl}`;
+  const text = `${params.clientName} uploaded a document to their portal.\n\nFile: ${params.documentName}\nCategory: ${params.documentCategory}\n\nView in RoundTrack Pro: ${params.clientDashboardUrl}`;
   return sendEmail({
     to: params.staffEmail,
     subject: `${params.clientName} uploaded a document`,

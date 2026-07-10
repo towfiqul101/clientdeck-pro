@@ -1,9 +1,9 @@
 ---
 name: verify
-description: How to build, launch, and drive ClientDeck Pro locally to verify changes at the running-app surface
+description: How to build, launch, and drive RoundTrack Pro locally to verify changes at the running-app surface
 ---
 
-# Verifying ClientDeck Pro changes
+# Verifying RoundTrack Pro changes
 
 ## Launch
 
@@ -31,7 +31,7 @@ description: How to build, launch, and drive ClientDeck Pro locally to verify ch
   `.env.local`: `GET {SUPABASE_URL}/rest/v1/{table}?select=...` with
   `apikey` + `Authorization: Bearer` headers. Read-only checks only.
 - **Staff app / portal pages**: need a Supabase login. Demo account
-  demo@clientdeckpro.com / Demo1234! exists after `npm run seed` (idempotent,
+  demo@roundtrackpro.com / Demo1234! exists after `npm run seed` (idempotent,
   only touches the demo agency). Server Actions can't be curl'd (action IDs);
   verify their logic through pages or leave a note about what wasn't driven.
 

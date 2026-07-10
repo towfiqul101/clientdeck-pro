@@ -36,6 +36,6 @@ export async function GET() {
 function portalUrl(path: string): string {
   const base =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "https://app.clientdeckpro.com";
+    "https://app.roundtrackpro.com";
   return `${base}${path}`;
 }

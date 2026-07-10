@@ -18,7 +18,7 @@ export default async function GHLSettingsPage() {
   const { agency } = session;
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "https://app.clientdeckpro.com";
+    "https://app.roundtrackpro.com";
   const webhookUrl = `${appUrl}/api/ghl/webhook`;
   const onboardingWebhookUrl = `${appUrl}/api/ghl/onboarding`;
 

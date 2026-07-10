@@ -8,7 +8,7 @@ import type { Client } from "@/types";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-/** Pushes all of an agency's ClientDeck clients to GHL as contacts (best-effort). */
+/** Pushes all of an agency's RoundTrack clients to GHL as contacts (best-effort). */
 export async function POST(request: NextRequest) {
   const unauthorized = await requireAdminApi();
   if (unauthorized) return unauthorized;

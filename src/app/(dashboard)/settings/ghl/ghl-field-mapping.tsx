@@ -55,7 +55,7 @@ export function GhlFieldMapping({ initial }: { initial: GhlFieldKeys }) {
         <div>
           <h3 className="text-base font-semibold text-slate-100">GHL Field Mapping</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Map your GHL custom-field keys to ClientDeck Pro data. Find keys in GHL
+            Map your GHL custom-field keys to RoundTrack Pro data. Find keys in GHL
             → Settings → Custom Fields → click a field → copy &quot;Key&quot;. Or
             click Auto-detect to match them by name.
           </p>

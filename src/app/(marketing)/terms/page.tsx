@@ -1,4 +1,4 @@
-export const metadata = { title: "Terms of Service — ClientDeck Pro" };
+export const metadata = { title: "Terms of Service — RoundTrack Pro" };
 
 export default function TermsPage() {
   return (
@@ -8,12 +8,12 @@ export default function TermsPage() {
       <div className="prose prose-sm mt-8 max-w-none space-y-6 text-slate-300">
         <section>
           <h2 className="text-lg font-semibold text-slate-100">1. License</h2>
-          <p>ClientDeck Pro is licensed software, not sold. No redistribution is permitted.</p>
+          <p>RoundTrack Pro is licensed software, not sold. No redistribution is permitted.</p>
         </section>
         <section>
           <h2 className="text-lg font-semibold text-slate-100">2. Nature of the Software</h2>
           <p>
-            ClientDeck Pro is practice management software only. It is not legal
+            RoundTrack Pro is practice management software only. It is not legal
             or financial advice. Letters generated are templates; review by a
             qualified professional is recommended before sending.
           </p>

@@ -1,4 +1,4 @@
-export const metadata = { title: "Privacy Policy — ClientDeck Pro" };
+export const metadata = { title: "Privacy Policy — RoundTrack Pro" };
 
 export default function PrivacyPage() {
   return (

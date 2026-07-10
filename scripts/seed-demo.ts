@@ -1,5 +1,5 @@
 /**
- * ClientDeck Pro — demo data seeder.
+ * RoundTrack Pro — demo data seeder.
  *
  * Creates a complete, previewable demo agency ("Jetlag Recovery") with a staff
  * login, 5 realistic clients, negative items, dispute rounds + disputes, score
@@ -57,7 +57,7 @@ const admin: SupabaseClient = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const DEMO_EMAIL = "demo@clientdeckpro.com";
+const DEMO_EMAIL = "demo@roundtrackpro.com";
 const DEMO_PASSWORD = "Demo1234!";
 
 // ---------------------------------------------------------------------------

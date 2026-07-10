@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         const agencyId = await findAgencyId(customerId);
 
         if (agencyId) {
-          // The agency's own SaaS subscription to ClientDeck Pro failed.
+          // The agency's own SaaS subscription to RoundTrack Pro failed.
           await admin
             .from("agencies")
             .update({ plan_status: "past_due" })

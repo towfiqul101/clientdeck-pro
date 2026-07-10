@@ -12,7 +12,7 @@ function bareKey(k: string | undefined): string {
 
 /**
  * Diagnostics for the "fields exist but are empty" problem: compares the
- * `cdp__*` keys ClientDeck Pro writes to against the custom fields that actually
+ * `cdp__*` keys RoundTrack Pro writes to against the custom fields that actually
  * exist in the signed-in agency's GHL location. Match on field NAME (GHL derives
  * the key from the name), then flag any key mismatch or missing field.
  */

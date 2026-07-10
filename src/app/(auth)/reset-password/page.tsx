@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
           Set your password
         </h1>
         <p className="text-sm text-slate-500">
-          Choose a password for your ClientDeck Pro account.
+          Choose a password for your RoundTrack Pro account.
         </p>
       </div>
 

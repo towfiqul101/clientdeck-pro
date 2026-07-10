@@ -2,13 +2,19 @@ import type { GHLCustomFieldSpec, GHLPipelineSpec } from "@/lib/ghl/api";
 import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 
 /**
- * The 9 custom fields the ClientDeck Pro GHL snapshot expects. Created in an
+ * The 9 custom fields the RoundTrack Pro GHL snapshot expects. Created in an
  * agency's GHL location by the "Setup GHL Custom Fields" admin tool.
  *
  * NOTE: `fieldKey` is documentation only — GHL derives the real key from the
  * field NAME on creation (so "CDP - Portal Link" → `cdp__portal_link`). The
  * values below are pinned to `GHL_FIELD_KEYS` so this file, the write side, and
  * the merge-tag docs never drift apart. If you change a NAME, re-derive its key.
+ *
+ * REBRAND NOTE (ClientDeck Pro → RoundTrack Pro): field NAMES deliberately keep
+ * the "CDP - " prefix. GHL generates the stored key from the name, so renaming
+ * to "RTP - " would produce `rtp__*` keys and break the `cdp__*` mapping that
+ * existing agency installations (and this codebase) depend on. Keep "CDP - ".
+ * Field keys can be migrated later when agencies reinstall the GHL snapshot.
  */
 export const CDP_CUSTOM_FIELDS: GHLCustomFieldSpec[] = [
   { name: "CDP - Round Number", fieldKey: GHL_FIELD_KEYS.ROUND_NUMBER, dataType: "NUMERICAL" },

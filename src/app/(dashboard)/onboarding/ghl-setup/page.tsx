@@ -63,19 +63,19 @@ const WORKFLOWS: WorkflowDoc[] = [
     key: "staff_new_client",
     title: "New Client Onboarded (Staff alert)",
     mergeFields: ["(fires on YOUR contact — build the message from a GHL workflow lookup, not merge fields)"],
-    suggestedCopy: "New client onboarded — check your ClientDeck Pro dashboard for details.",
+    suggestedCopy: "New client onboarded — check your RoundTrack Pro dashboard for details.",
   },
   {
     key: "staff_round_overdue",
     title: "Round Overdue Alert (Staff alert)",
     mergeFields: ["(fires on YOUR contact — no client fields attached)"],
-    suggestedCopy: "A client's round is overdue for a bureau response — check your ClientDeck Pro dashboard.",
+    suggestedCopy: "A client's round is overdue for a bureau response — check your RoundTrack Pro dashboard.",
   },
   {
     key: "staff_next_round_ready",
     title: "Next Round Ready (Staff alert)",
     mergeFields: ["(fires on YOUR contact — no client fields attached)"],
-    suggestedCopy: "A client's next round is ready to prepare — check your ClientDeck Pro dashboard.",
+    suggestedCopy: "A client's next round is ready to prepare — check your RoundTrack Pro dashboard.",
   },
 ];
 
@@ -91,7 +91,7 @@ export default function GHLSetupGuidePage() {
         </Link>
         <h1 className="text-xl font-semibold text-slate-100">GHL Workflow Setup Guide</h1>
         <p className="mt-1 text-sm text-slate-500">
-          ClientDeck Pro notifies your clients using free GHL contact tags — your own GHL
+          RoundTrack Pro notifies your clients using free GHL contact tags — your own GHL
           workflow sends the SMS/email, so it looks like it comes from your agency.
         </p>
       </div>

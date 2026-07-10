@@ -51,7 +51,7 @@ export default async function PortalClientLayout({
 
       {showPoweredBy && (
         <p className="pb-20 text-center text-xs text-slate-500">
-          Powered by ClientDeck Pro
+          Powered by RoundTrack Pro
         </p>
       )}
 

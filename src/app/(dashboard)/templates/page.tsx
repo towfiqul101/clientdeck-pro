@@ -22,7 +22,7 @@ export default async function TemplatesPage() {
       <Card>
         <CardHeader
           title="Letter Templates"
-          description="AI prompt templates used to generate dispute letters. System templates ship with ClientDeck Pro; custom templates are specific to your agency."
+          description="AI prompt templates used to generate dispute letters. System templates ship with RoundTrack Pro; custom templates are specific to your agency."
         />
         <div className="p-5">
           <TemplatesList templates={templates} />

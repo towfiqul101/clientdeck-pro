@@ -62,7 +62,7 @@ export function AdminShell({
     <div className="flex h-full flex-col bg-gray-950">
       <div className="flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <span className="text-base font-semibold text-white">ClientDeck Pro</span>
+          <span className="text-base font-semibold text-white">RoundTrack Pro</span>
           <span className="rounded border border-red-500/40 bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.35)]">
             Admin
           </span>

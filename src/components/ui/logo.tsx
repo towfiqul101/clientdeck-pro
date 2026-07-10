@@ -7,7 +7,7 @@ interface LogoProps {
   variant?: "dark" | "light";
 }
 
-/** ClientDeck Pro wordmark with mark. */
+/** RoundTrack Pro wordmark with mark. */
 export function Logo({ className, variant = "dark" }: LogoProps) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
@@ -20,7 +20,7 @@ export function Logo({ className, variant = "dark" }: LogoProps) {
           variant === "light" ? "text-white" : "text-slate-900"
         )}
       >
-        ClientDeck<span className="text-violet-400"> Pro</span>
+        RoundTrack<span className="text-violet-400"> Pro</span>
       </span>
     </span>
   );

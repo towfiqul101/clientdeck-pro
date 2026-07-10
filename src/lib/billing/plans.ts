@@ -71,7 +71,7 @@ export const PLANS: PlanConfig[] = [
       "API access",
       "Custom portal domain",
       "Credit monitoring API keys",
-      'Removes "Powered by ClientDeck Pro"',
+      'Removes "Powered by RoundTrack Pro"',
     ],
     priceEnv: "STRIPE_PRICE_AGENCY",
   },

@@ -48,7 +48,7 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
     <Card>
       <CardHeader
         title="GHL Notifications (Free — No Per-Execution Cost)"
-        description='ClientDeck Pro notifies clients using GHL contact tags. When an event happens, we update the contact’s custom fields with the event data, then add a tag like "cdp-round-sent" — your GHL workflow (Tag trigger, free in GHL) picks it up and sends SMS/email from your own number.'
+        description='RoundTrack Pro notifies clients using GHL contact tags. When an event happens, we update the contact’s custom fields with the event data, then add a tag like "cdp-round-sent" — your GHL workflow (Tag trigger, free in GHL) picks it up and sends SMS/email from your own number.'
       />
       <div className="space-y-4 p-6">
         <div className="overflow-x-auto rounded-md border border-white/10">

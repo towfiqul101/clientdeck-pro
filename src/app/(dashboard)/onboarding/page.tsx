@@ -14,7 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-const SNAPSHOT_URL = "https://clientdeckpro.com/snapshot"; // Week 7: final URL
+const SNAPSHOT_URL = "https://roundtrackpro.com/snapshot"; // Week 7: final URL
 
 const CUSTOM_FIELDS = [
   "cdp__round_number",
@@ -42,7 +42,7 @@ export default async function OnboardingPage() {
         <h1 className="text-xl font-semibold text-slate-100">Setup Guide</h1>
         <p className="text-sm text-slate-500">
           {state.completedCount} of {state.total} steps complete. Follow these to
-          get the full ClientDeck Pro + GoHighLevel experience.
+          get the full RoundTrack Pro + GoHighLevel experience.
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export default async function OnboardingPage() {
         <div className="space-y-3 p-6 text-sm text-slate-400">
           <p>
             The snapshot installs the pipelines, workflows, and custom fields
-            ClientDeck Pro syncs into. In GoHighLevel go to{" "}
+            RoundTrack Pro syncs into. In GoHighLevel go to{" "}
             <strong>Settings → Snapshots → Import → paste this URL</strong>:
           </p>
           <code className="block rounded-md bg-gray-900 px-3 py-2 font-mono text-xs text-gray-100">

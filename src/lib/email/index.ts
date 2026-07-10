@@ -1,4 +1,4 @@
-const FROM = "ClientDeck Pro <noreply@clientdeckpro.com>";
+const FROM = "RoundTrack Pro <noreply@roundtrackpro.com>";
 
 /** Escapes a string for safe interpolation into HTML — every template below uses this on user-supplied values before inserting them into `html`. */
 export function escapeHtml(value: string): string {

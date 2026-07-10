@@ -70,7 +70,7 @@ const STEPS = [
   {
     n: "01",
     title: "Client onboarding",
-    body: "Your lead pays and completes your GHL onboarding form. ClientDeck Pro creates the profile, files their documents to Drive, and texts them a portal link — automatically.",
+    body: "Your lead pays and completes your GHL onboarding form. RoundTrack Pro creates the profile, files their documents to Drive, and texts them a portal link — automatically.",
   },
   {
     n: "02",
@@ -96,7 +96,7 @@ const STEPS = [
 
 type Cell = "yes" | "no" | "partial" | string;
 
-const COMPARE_COLS = ["ClientDeck Pro", "CDM", "DisputeFox", "DisputeBee"];
+const COMPARE_COLS = ["RoundTrack Pro", "CDM", "DisputeFox", "DisputeBee"];
 const COMPARE_ROWS: { label: string; cells: Cell[] }[] = [
   { label: "Native GHL Integration", cells: ["yes", "no", "no", "no"] },
   { label: "AI Dispute Letters", cells: ["yes", "partial", "partial", "partial"] },
@@ -341,7 +341,7 @@ function ConnectedFlowGraphic() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-blue-600 text-white">
             <Zap className="h-4 w-4" />
           </span>
-          <span className="font-semibold text-slate-900">ClientDeck Pro</span>
+          <span className="font-semibold text-slate-900">RoundTrack Pro</span>
         </div>
         <p className="mt-3 text-sm text-slate-600">
           One connected flow — disputes, portal, and GHL sync in a single
@@ -613,7 +613,7 @@ export default function LandingPage() {
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "ClientDeck Pro",
+    name: "RoundTrack Pro",
     applicationCategory: "BusinessApplication",
     description:
       "Dispute management software for credit repair agencies built natively for GoHighLevel",
@@ -628,7 +628,7 @@ export default function LandingPage() {
       },
     },
     operatingSystem: "Web browser",
-    url: "https://clientdeckpro.com",
+    url: "https://roundtrackpro.com",
   };
 
   return (
@@ -745,7 +745,7 @@ export default function LandingPage() {
                 between them is a missed deadline or a client left in the dark.
               </p>
               <p className="font-medium text-slate-900">
-                ClientDeck Pro connects all of it. Do the work once; your
+                RoundTrack Pro connects all of it. Do the work once; your
                 spreadsheet, your dispute tracker, and your GHL stay in sync
                 automatically.
               </p>
@@ -770,13 +770,13 @@ export default function LandingPage() {
               <Eyebrow>No hidden webhook fees</Eyebrow>
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
                 Most dispute tools send notifications through costly GHL
-                webhooks. ClientDeck Pro doesn&apos;t.
+                webhooks. RoundTrack Pro doesn&apos;t.
               </h2>
               <p className="mt-5 text-lg leading-relaxed text-slate-400">
                 GHL&apos;s premium webhook actions bill about $0.10 per
                 execution. Push a notification on every round, deletion, and
                 status change across a full book of clients and those cents turn
-                into a monthly bill. ClientDeck Pro drives your workflows with
+                into a monthly bill. RoundTrack Pro drives your workflows with
                 contact tags and custom fields instead — actions that are free
                 inside your existing GHL plan.
               </p>
@@ -807,7 +807,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-slate-500">
-            You still pay GHL&apos;s standard subscription. ClientDeck Pro&apos;s
+            You still pay GHL&apos;s standard subscription. RoundTrack Pro&apos;s
             GHL integration is always free.
           </p>
         </div>
@@ -1076,17 +1076,17 @@ export default function LandingPage() {
             <blockquote className="mt-6 text-xl leading-relaxed text-slate-700 sm:text-2xl">
               &ldquo;I kept watching credit repair agencies juggle CDM,
               spreadsheets, and GoHighLevel — spending more time keeping tools in
-              sync than serving clients. ClientDeck Pro exists to make running a
+              sync than serving clients. RoundTrack Pro exists to make running a
               credit repair business feel like doing the work again, not managing
               the software around it.&rdquo;
             </blockquote>
             <p className="mt-6 font-semibold text-slate-900">Towfiqul Islam</p>
-            <p className="text-sm text-slate-500">Founder, ClientDeck Pro</p>
+            <p className="text-sm text-slate-500">Founder, RoundTrack Pro</p>
             <a
               href="#how-it-works"
               className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 hover:text-violet-700"
             >
-              Read about ClientDeck Pro
+              Read about RoundTrack Pro
               <ArrowRight className="h-3.5 w-3.5" />
             </a>
           </Reveal>
@@ -1138,10 +1138,10 @@ export default function LandingPage() {
         <div className="mx-auto max-w-4xl space-y-6 border-t border-white/[0.06] px-6 py-14 text-xs leading-relaxed text-slate-500">
           <div>
             <h2 className="font-semibold text-slate-400">
-              What is ClientDeck Pro?
+              What is RoundTrack Pro?
             </h2>
             <p className="mt-1">
-              ClientDeck Pro is dispute management software for credit repair
+              RoundTrack Pro is dispute management software for credit repair
               agencies built natively for GoHighLevel (GHL). It provides
               AI-powered dispute letter generation, an automated client portal,
               round tracking, and full GHL integration including pipeline sync,
@@ -1151,7 +1151,7 @@ export default function LandingPage() {
           </div>
           <div>
             <h2 className="font-semibold text-slate-400">
-              Who uses ClientDeck Pro?
+              Who uses RoundTrack Pro?
             </h2>
             <p className="mt-1">
               Credit repair business owners, dispute specialists, and credit
@@ -1162,13 +1162,13 @@ export default function LandingPage() {
           </div>
           <div>
             <h2 className="font-semibold text-slate-400">
-              How does ClientDeck Pro compare to CDM, DisputeFox, and DisputeBee?
+              How does RoundTrack Pro compare to CDM, DisputeFox, and DisputeBee?
             </h2>
             <p className="mt-1">
-              ClientDeck Pro is the only dispute management software with native
+              RoundTrack Pro is the only dispute management software with native
               GoHighLevel integration. Unlike CDM, DisputeFox, and DisputeBee —
               which operate as standalone platforms requiring manual data
-              transfer — ClientDeck Pro syncs automatically with GHL contacts,
+              transfer — RoundTrack Pro syncs automatically with GHL contacts,
               pipelines, and workflows, without per-execution webhook fees.
             </p>
           </div>

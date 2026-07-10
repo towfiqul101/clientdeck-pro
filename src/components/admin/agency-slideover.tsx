@@ -37,7 +37,7 @@ const secondaryBtn =
   "rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.03] disabled:opacity-50";
 
 function webhookUrl(): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "https://clientdeckpro.com";
+  const base = process.env.NEXT_PUBLIC_APP_URL || "https://roundtrackpro.com";
   return `${base.replace(/\/$/, "")}/api/ghl/webhook`;
 }
 
@@ -564,7 +564,7 @@ function ToolsTab({
       key: "sync",
       icon: RefreshCw,
       title: "Sync All Clients to GHL",
-      desc: "Pushes all ClientDeck clients to GHL as contacts.",
+      desc: "Pushes all RoundTrack clients to GHL as contacts.",
       path: "/api/admin/tools/sync-clients",
     },
     {
@@ -707,7 +707,7 @@ function BrandingTab({
       </div>
       <label className="flex items-center gap-2 text-sm text-slate-300">
         <input type="checkbox" checked={poweredBy} onChange={(e) => setPoweredBy(e.target.checked)} className="h-4 w-4 rounded border-white/10" />
-        Show &quot;Powered by ClientDeck Pro&quot; in portal
+        Show &quot;Powered by RoundTrack Pro&quot; in portal
       </label>
 
       <div className="flex gap-2">

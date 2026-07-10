@@ -63,7 +63,7 @@ export function CreditMonitoringForm({ initial }: CreditMonitoringFormProps) {
     <Card>
       <CardHeader
         title="Credit Monitoring Service"
-        description="Connect MyFreeScoreNow, IdentityIQ, or SmartCredit to pull scores directly from within ClientDeck Pro. Bring your own provider account and API keys."
+        description="Connect MyFreeScoreNow, IdentityIQ, or SmartCredit to pull scores directly from within RoundTrack Pro. Bring your own provider account and API keys."
       />
       <div className="space-y-5 p-6">
         <Field label="Provider" htmlFor="service">

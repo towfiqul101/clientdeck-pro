@@ -24,7 +24,7 @@ export default async function CreditMonitoringSettingsPage() {
         </h2>
         <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
           Connect MyFreeScoreNow, IdentityIQ, or SmartCredit to pull scores directly
-          from within ClientDeck Pro.
+          from within RoundTrack Pro.
         </p>
         <Link
           href="/settings/billing"

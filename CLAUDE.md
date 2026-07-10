@@ -1,10 +1,14 @@
-# ClientDeck Pro — CLAUDE.md
+# RoundTrack Pro — CLAUDE.md
 
 ## Project Overview
-ClientDeck Pro is a B2B SaaS dispute management platform for credit repair agencies. It provides AI-powered letter generation, dispute round tracking, a client portal, and native GoHighLevel (GHL) CRM integration. Built as a white-label multi-tenant system where each agency gets their own branded experience.
+RoundTrack Pro is a B2B SaaS dispute management platform for credit repair agencies. It provides AI-powered letter generation, dispute round tracking, a client portal, and native GoHighLevel (GHL) CRM integration. Built as a white-label multi-tenant system where each agency gets their own branded experience.
 
-**Domain:** clientdeckpro.com
+**Domain:** roundtrackpro.com
+**Tagline:** "The dispute management platform built for GoHighLevel credit repair agencies"
+**Short tagline:** "Run every dispute round from one connected platform."
 **Positioning:** "Practice management software for credit professionals" — NOT credit repair software (legal distinction).
+
+> **Rename note (2026-07-10):** The product was renamed from **ClientDeck Pro → RoundTrack Pro** (domain `clientdeckpro.com → roundtrackpro.com`). This was a branding-only change — no schema, API, or logic changes. GHL custom-field keys (`cdp__*`), notification tags (`cdp-*`), the `cdp_admin_session` cookie, and the `x-clientdeck-secret` webhook header **intentionally keep their old identifiers** for backward compatibility with live agency GHL installs. See the "Post-Rename Manual Steps" section at the bottom.
 
 ## Tech Stack
 - **Framework:** Next.js 16 (App Router, React 19, TypeScript, `src/` directory)
@@ -149,7 +153,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 
 ## Google Drive Integration
 - **Per-agency OAuth** (`drive.file` + `userinfo.email` scopes). Tokens on `agencies.google_drive_*`. Connect at Settings → Documents.
-- **Folder layout:** `ClientDeck Pro / {Client Name} / {Onboarding | Round_N | Bureau_Responses | Client_Uploads | Letters}`.
+- **Folder layout:** `RoundTrack Pro / {Client Name} / {Onboarding | Round_N | Bureau_Responses | Client_Uploads | Letters}`.
 - **ALWAYS non-blocking** via `syncDocumentToDrive()` (swallows errors, returns null if not connected). Triggered by: onboarding docs, round-sent letter PDFs (regenerated), portal uploads, and the Settings → Documents **backfill** button.
 - Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` + redirect URI `{APP_URL}/api/google-drive/callback` (see README).
 
@@ -273,3 +277,39 @@ npx tsc --noEmit     # Type check
 - Vercel **Hobby plan**: function `maxDuration` must be ≤ 60s; crons are daily-only.
 - Long/after-response work uses Next 16 `after()` (not bare `.catch()`), which
   survives the serverless response on Vercel.
+
+## Post-Rename Manual Steps (roundtrackpro.com)
+
+The code rebrand (ClientDeck Pro → RoundTrack Pro) is done. These infrastructure
+steps are manual and happen outside the codebase:
+
+**Infrastructure (do after code is deployed):**
+- [ ] Register `roundtrackpro.com` (~$12/yr)
+- [ ] Register `roundtrack.pro` (brand protection, ~$10/yr)
+- [ ] Add `roundtrackpro.com` to Vercel: Project → Settings → Domains
+- [ ] Update `NEXT_PUBLIC_APP_URL` in Vercel env vars → `https://roundtrackpro.com` (redeploy after)
+- [ ] Update Google OAuth redirect URIs:
+  - Add: `https://roundtrackpro.com/api/google-drive/callback`
+  - Keep: `https://clientdeck-pro.vercel.app/api/google-drive/callback` (keep working)
+- [ ] Update Supabase Auth redirect URLs: Auth → URL Configuration → add `roundtrackpro.com`
+- [ ] Update Resend sender domain once `roundtrackpro.com` DNS is set up
+
+**Email/comms:**
+- [ ] Create `support@roundtrackpro.com` (Google Workspace or similar)
+- [ ] Add `roundtrackpro.com` in Resend → Domains
+- [ ] Update email signatures
+
+**Redirects (keep old URLs working):**
+- [ ] `clientdeck-pro.vercel.app` stays working automatically (Vercel project unchanged)
+- [ ] If `clientdeckpro.com` was registered, add a Vercel redirect → `roundtrackpro.com`
+
+**Existing GHL agencies (notify beta users):**
+- [ ] Update webhook URLs in their Settings → GHL (`.../api/ghl/webhook`, `.../api/ghl/onboarding`) to `roundtrackpro.com`
+- [ ] GHL custom fields keep the `cdp__` key prefix — **no action needed** (field NAMES stay "CDP - ...")
+- [ ] GHL notification tags keep the `cdp-` prefix — **no action needed**
+- [ ] The `x-clientdeck-secret` webhook header is unchanged — **no action needed**
+- [ ] Only the webhook URL (domain) needs updating on the agency side
+
+**Not changed (intentionally):** GitHub repo URL, Supabase project name, Vercel
+project name (`clientdeck-pro`), DB schema/table/column names, the `cdp_*`/`cdp-*`
+code identifiers, and `x-clientdeck-secret`. Rename these later if desired.

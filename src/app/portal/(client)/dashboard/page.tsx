@@ -200,7 +200,7 @@ export default async function PortalDashboardPage() {
         description: "Client viewed their portal for the first time.",
       });
 
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.clientdeckpro.com").replace(/\/$/, "");
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.roundtrackpro.com").replace(/\/$/, "");
       const staffEmail = await resolveAssignedStaffEmail(supabase, client.assigned_to, agency.owner_email);
       after(() => {
         sendStaffFirstLoginAlert({

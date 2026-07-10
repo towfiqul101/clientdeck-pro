@@ -3,7 +3,7 @@ import { ShieldCheck, AlertCircle } from "lucide-react";
 import { adminLoginAction } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Admin Access — ClientDeck Pro",
+  title: "Admin Access — RoundTrack Pro",
   robots: { index: false, follow: false },
 };
 
@@ -29,7 +29,7 @@ export default async function AdminLoginPage({
               Admin Access
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              ClientDeck Pro Admin Panel
+              RoundTrack Pro Admin Panel
             </p>
           </div>
 

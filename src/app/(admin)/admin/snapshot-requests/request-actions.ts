@@ -50,10 +50,10 @@ export async function sendSnapshot(id: string): Promise<Result> {
 
 async function sendSnapshotEmail(to: string, name: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const subject = "Your ClientDeck Pro GHL snapshot is ready";
+  const subject = "Your RoundTrack Pro GHL snapshot is ready";
   const text = `Hi ${name},
 
-Your GoHighLevel snapshot for ClientDeck Pro is ready to install.
+Your GoHighLevel snapshot for RoundTrack Pro is ready to install.
 
 1. Open the snapshot install link we've shared with you.
 2. Select the GHL location you want to load it into.
@@ -61,7 +61,7 @@ Your GoHighLevel snapshot for ClientDeck Pro is ready to install.
 
 Reply to this email if you have any questions.
 
-— ClientDeck Pro`;
+— RoundTrack Pro`;
 
   if (!apiKey) {
     console.log(`[DEV] Snapshot email would send to: ${to} — Subject: ${subject}`);
@@ -76,7 +76,7 @@ Reply to this email if you have any questions.
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ClientDeck Pro <onboarding@clientdeckpro.com>",
+        from: "RoundTrack Pro <onboarding@roundtrackpro.com>",
         to: [to],
         subject,
         text,

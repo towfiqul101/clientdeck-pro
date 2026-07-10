@@ -91,7 +91,7 @@ export default async function DocumentsSettingsPage({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Folder structure
               </p>
-              <pre className="mt-2 whitespace-pre text-xs text-slate-400">{`ClientDeck Pro /
+              <pre className="mt-2 whitespace-pre text-xs text-slate-400">{`RoundTrack Pro /
   {Client Name} /
     Onboarding / ...
     Round_1 / ...
@@ -149,7 +149,7 @@ export default async function DocumentsSettingsPage({
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm font-medium text-slate-300 hover:bg-white/[0.03]"
                 >
-                  Open ClientDeck Pro Folder
+                  Open RoundTrack Pro Folder
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
                 <form action="/api/google-drive/disconnect" method="POST">

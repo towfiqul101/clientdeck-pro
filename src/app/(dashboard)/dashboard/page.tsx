@@ -364,7 +364,7 @@ export default async function DashboardPage() {
             Good {timeOfDay}, {firstName} 👋
           </p>
           <h1 className="mb-1 text-2xl font-bold text-white md:text-3xl">
-            Welcome to <span className="text-violet-400">ClientDeck Pro</span>
+            Welcome to <span className="text-violet-400">RoundTrack Pro</span>
           </h1>
           <p className="text-slate-400">Your credit repair command center.</p>
         </div>

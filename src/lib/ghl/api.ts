@@ -1,5 +1,5 @@
 // ============================================
-// ClientDeck Pro — GHL API v2 Wrapper
+// RoundTrack Pro — GHL API v2 Wrapper
 // Handles all outbound sync: app → GHL
 // ============================================
 
@@ -262,7 +262,7 @@ export async function findOrCreateGHLOpportunity(
         pipelineId,
         locationId: opts.locationId,
         contactId,
-        name: "ClientDeck Pro Client",
+        name: "RoundTrack Pro Client",
         status: "open",
       }),
     });
@@ -330,7 +330,7 @@ export async function syncRoundSent(
     addGHLTag(contactId, ["round-sent"], opts),
     addGHLNote(
       contactId,
-      `[ClientDeck Pro] Round ${roundNumber} sent — ${itemsDisputed} items disputed across all 3 bureaus.`,
+      `[RoundTrack Pro] Round ${roundNumber} sent — ${itemsDisputed} items disputed across all 3 bureaus.`,
       opts
     ),
   ]);
@@ -350,7 +350,7 @@ export async function syncDeletionAchieved(
     addGHLTag(contactId, ["had-deletion"], opts),
     addGHLNote(
       contactId,
-      `[ClientDeck Pro] ${deletionsThisRound} item(s) deleted this round! Total deletions: ${totalDeletions}`,
+      `[RoundTrack Pro] ${deletionsThisRound} item(s) deleted this round! Total deletions: ${totalDeletions}`,
       opts
     ),
   ]);
@@ -382,7 +382,7 @@ export async function syncClientCompleted(
     removeGHLTag(contactId, ["active-client"], opts),
     addGHLNote(
       contactId,
-      `[ClientDeck Pro] Client has achieved their credit goal! Case completed.`,
+      `[RoundTrack Pro] Client has achieved their credit goal! Case completed.`,
       opts
     ),
     createGHLTask(

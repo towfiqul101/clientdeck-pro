@@ -56,7 +56,7 @@ export async function inviteTeamMember(input: {
     return { success: false, error: "That email is already on your team." };
   }
 
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.clientdeckpro.com").replace(/\/$/, "");
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.roundtrackpro.com").replace(/\/$/, "");
 
   let userId: string | null = null;
   let createdNewUser = false;

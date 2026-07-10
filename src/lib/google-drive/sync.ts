@@ -2,7 +2,7 @@
 // Google Drive sync entry point — ALWAYS non-blocking.
 // A Drive failure must never break the main operation.
 //
-// Folder layout:  ClientDeck Pro / {Client Name} / {Sub Folder} / {file}
+// Folder layout:  RoundTrack Pro / {Client Name} / {Sub Folder} / {file}
 // ============================================
 
 import { getAccessToken } from "./auth";
@@ -47,7 +47,7 @@ export async function syncDocumentToDrive(
 
     const rootFolderId =
       agency.google_drive_root_folder_id ||
-      (await getOrCreateFolder(accessToken, null, "ClientDeck Pro"));
+      (await getOrCreateFolder(accessToken, null, "RoundTrack Pro"));
 
     const clientFolderId = await getOrCreateFolder(
       accessToken,
@@ -74,7 +74,7 @@ export async function syncDocumentToDrive(
 }
 
 /**
- * Ensures the "ClientDeck Pro" root folder exists and is cached on the agency
+ * Ensures the "RoundTrack Pro" root folder exists and is cached on the agency
  * row so later syncs skip the lookup. Returns the folder id or null.
  */
 export async function ensureRootFolder(agency: DriveAgency): Promise<string | null> {
@@ -83,7 +83,7 @@ export async function ensureRootFolder(agency: DriveAgency): Promise<string | nu
 
   try {
     const accessToken = await getAccessToken(agency.google_drive_refresh_token!);
-    const folderId = await getOrCreateFolder(accessToken, null, "ClientDeck Pro");
+    const folderId = await getOrCreateFolder(accessToken, null, "RoundTrack Pro");
 
     const supabase = createAdminClient();
     await supabase

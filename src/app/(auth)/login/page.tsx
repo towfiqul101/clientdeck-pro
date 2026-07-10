@@ -79,7 +79,7 @@ function LoginForm() {
       <div className="space-y-1">
         <h1 className="text-xl font-semibold text-slate-100">Welcome back</h1>
         <p className="text-sm text-slate-500">
-          Sign in to your ClientDeck Pro account.
+          Sign in to your RoundTrack Pro account.
         </p>
       </div>
 

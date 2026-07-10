@@ -32,7 +32,7 @@ export function OnboardingWebhookCard({ webhookUrl }: { webhookUrl: string }) {
           </h3>
           <p className="mt-1 text-sm text-slate-500">
             Wire this in GHL so a completed onboarding form auto-creates the client
-            in ClientDeck Pro.
+            in RoundTrack Pro.
           </p>
         </div>
 

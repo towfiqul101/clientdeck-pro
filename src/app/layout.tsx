@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ClientDeck Pro",
+  title: "RoundTrack Pro",
   description:
     "Practice management software for credit professionals — dispute tracking, AI letters, and client portal.",
 };

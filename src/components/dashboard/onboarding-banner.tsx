@@ -78,7 +78,7 @@ export function OnboardingBanner({
             You&apos;re all set up! 🎉
           </p>
           <p className="text-sm text-emerald-400/80">
-            ClientDeck Pro is fully configured. This message disappears
+            RoundTrack Pro is fully configured. This message disappears
             automatically.
           </p>
         </div>
@@ -101,7 +101,7 @@ export function OnboardingBanner({
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-white">
           <Rocket className="h-4 w-4 text-white" />
-          Get ClientDeck Pro ready in {total} steps
+          Get RoundTrack Pro ready in {total} steps
         </span>
         <span className="flex items-center gap-3">
           <span className="text-xs font-medium text-blue-100">

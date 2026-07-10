@@ -1,5 +1,5 @@
 // ============================================
-// ClientDeck Pro — TypeScript Types
+// RoundTrack Pro — TypeScript Types
 // ============================================
 
 export type Plan = "solo" | "pro" | "agency" | "enterprise";

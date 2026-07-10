@@ -241,7 +241,7 @@ async function sendResendFallback(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: `${agency.name} <noreply@clientdeckpro.com>`,
+      from: `${agency.name} <noreply@roundtrackpro.com>`,
       to: payload.email,
       subject: template.subject,
       text: template.body,
@@ -252,12 +252,12 @@ async function sendResendFallback(
 }
 
 function portalLinkFor(client: NotifiableClient): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.clientdeckpro.com";
+  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.roundtrackpro.com";
   return `${base}/portal?token=${client.portal_token}`;
 }
 
 function dashboardLinkFor(clientId: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.clientdeckpro.com";
+  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.roundtrackpro.com";
   return `${base}/clients/${clientId}`;
 }
 

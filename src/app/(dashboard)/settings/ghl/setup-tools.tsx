@@ -33,7 +33,7 @@ const TOOLS = [
     key: "sync",
     icon: RefreshCw,
     title: "Sync All Clients to GHL",
-    desc: "Pushes all your ClientDeck clients to GHL as contacts with all custom fields.",
+    desc: "Pushes all your RoundTrack clients to GHL as contacts with all custom fields.",
     path: "/api/ghl/setup/sync-clients",
   },
   {
@@ -130,7 +130,7 @@ export function GhlSetupTools() {
           </button>
           <p className="mt-2 text-xs text-slate-500">
             Fields empty in GHL? This checks whether the custom fields in your GHL location have the
-            keys ClientDeck Pro writes to (<code className="text-slate-400">cdp__*</code>).
+            keys RoundTrack Pro writes to (<code className="text-slate-400">cdp__*</code>).
           </p>
 
           {debugOpen && (

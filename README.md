@@ -35,12 +35,12 @@ Each agency connects their own Google Drive (per-agency OAuth). To enable the
 integration on a deployment you must register a Google OAuth client:
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create a project, e.g. **ClientDeck Pro**
+2. Create a project, e.g. **RoundTrack Pro**
 3. Enable the **Google Drive API**
 4. **OAuth consent screen** → External → add scopes `drive.file` and `userinfo.email`
 5. **Credentials → Create OAuth 2.0 Client ID → Web application**
 6. Add Authorized redirect URIs:
-   - `https://clientdeckpro.com/api/google-drive/callback` (production)
+   - `https://roundtrackpro.com/api/google-drive/callback` (production)
    - `http://localhost:3000/api/google-drive/callback` (dev)
 7. Copy the **Client ID** + **Client Secret** into `.env.local` and Vercel:
 

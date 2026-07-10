@@ -7,7 +7,7 @@ const INCLUDED = [
   { icon: ListChecks, label: "15+ custom fields", detail: "Scores, round state, portal link" },
   { icon: Mail, label: "12 email templates", detail: "Client updates & milestones" },
   { icon: MessageSquare, label: "15 SMS templates", detail: "Wins, reminders, check-ins" },
-  { icon: FileInput, label: "Intake form", detail: "Auto-creates the client in ClientDeck Pro" },
+  { icon: FileInput, label: "Intake form", detail: "Auto-creates the client in RoundTrack Pro" },
 ];
 
 export default function SnapshotPage() {
@@ -20,7 +20,7 @@ export default function SnapshotPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-slate-600">
             Import a complete, ready-to-run credit-repair operating system into
-            your GHL location — pre-wired to sync with ClientDeck Pro.
+            your GHL location — pre-wired to sync with RoundTrack Pro.
           </p>
         </div>
       </section>
@@ -64,7 +64,7 @@ export default function SnapshotPage() {
         <div className="mx-auto max-w-lg px-4 py-16">
           <h2 className="mb-2 text-center text-2xl font-semibold text-slate-100">Request the Snapshot</h2>
           <p className="mb-8 text-center text-sm text-slate-500">
-            Sign up for ClientDeck Pro and we&apos;ll send your personal import link.
+            Sign up for RoundTrack Pro and we&apos;ll send your personal import link.
           </p>
           <SnapshotRequestForm />
         </div>

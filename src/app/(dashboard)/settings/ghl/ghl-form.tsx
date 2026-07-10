@@ -102,7 +102,7 @@ export function GHLForm({ initial, webhookUrl }: GHLFormProps) {
         <Field
           label="Inbound Webhook URL"
           htmlFor="webhook"
-          hint="Add this as a webhook target in your GHL workflow to sync contacts into ClientDeck."
+          hint="Add this as a webhook target in your GHL workflow to sync contacts into RoundTrack."
         >
           <div className="flex gap-2">
             <Input

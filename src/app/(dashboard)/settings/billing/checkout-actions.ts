@@ -13,7 +13,7 @@ export type CheckoutResult =
 function appUrl(path: string): string {
   const base =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "https://app.clientdeckpro.com";
+    "https://app.roundtrackpro.com";
   return `${base}${path}`;
 }
 
