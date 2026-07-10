@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn, getInitials } from "@/lib/utils/helpers";
-import { Logo } from "@/components/ui/logo";
+import { AppSidebarLogo, AppContentLogo } from "@/components/logo";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
+import { useTheme } from "@/lib/theme/theme-context";
 import {
   LayoutDashboard,
   Users,
@@ -118,6 +119,7 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const segment = pathname.split("/")[1] ?? "";
@@ -137,7 +139,7 @@ export function DashboardShell({
     <div className="flex h-full flex-col border-r border-white/[0.06] bg-[#13131f]">
       {/* Brand */}
       <div className="flex h-16 items-center justify-between px-4">
-        <Logo variant="light" />
+        <AppSidebarLogo />
         <button
           onClick={closeMobile}
           className="rounded-md p-1 text-slate-400 hover:bg-white/5 hover:text-white md:hidden"
@@ -239,7 +241,12 @@ export function DashboardShell({
           >
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-semibold text-slate-100">{pageTitle}</h1>
+          {/* Mobile: brand wordmark stands in for the hidden sidebar logo.
+              Lives in .app-content so it follows the light/dark toggle. */}
+          <AppContentLogo theme={theme} className="md:hidden" />
+          <h1 className="hidden text-lg font-semibold text-slate-100 md:block">
+            {pageTitle}
+          </h1>
           <div className="ml-auto flex items-center gap-3">
             <ThemeToggle />
             <span
