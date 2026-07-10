@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { cn, formatDate } from "@/lib/utils/helpers";
+import { UPLOAD_ACCEPT_ATTR } from "@/lib/utils/uploads";
 import {
   portalUploadDocument,
   portalDeleteDocument,
@@ -161,6 +162,7 @@ export function PortalDocumentsManager({
           ref={inputRef}
           type="file"
           multiple
+          accept={UPLOAD_ACCEPT_ATTR}
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
         />
@@ -181,7 +183,7 @@ export function PortalDocumentsManager({
             {uploading ? "Uploading…" : "Tap to upload a document"}
           </span>
           <span className="text-xs text-slate-500">
-            Uploaded as “{categoryLabel(category)}” · up to 15 MB
+            Uploaded as “{categoryLabel(category)}” · PDF, JPG, or PNG · up to 15 MB
           </span>
         </button>
       </div>

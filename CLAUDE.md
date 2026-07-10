@@ -77,7 +77,8 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 006 score_history · 007 team RLS fix · 008 snapshot_requests · 009 manual_payments ·
 010 609/611/623 templates · 011 signature+onboarding+ghl_field_keys · 012 google_drive ·
 013 client_assignment · 014 personal_info_types · 015 personal_info_template ·
-016 ghl_opportunity_id · **017 credit_monitoring**
+016 ghl_opportunity_id · 017 credit_monitoring ·
+**018 security_hardening** (adds the missing `documents` UPDATE RLS policy)
 
 ## Key Libraries & Locations
 - `src/lib/supabase/{client,server,admin}.ts` — browser / SSR / service-role clients

@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { resolveAssignedStaffEmail } from "@/lib/team/staff-contact";
 import { sendStaffDocUploadAlert } from "@/lib/email/templates";
+import { validateUploadType } from "@/lib/utils/uploads";
 import type { DocumentCategory } from "@/types";
 
 const BUCKET = "documents";
@@ -34,6 +35,8 @@ export async function portalUploadDocument(
   if (file.size > 15 * 1024 * 1024) {
     return { success: false, error: "File must be under 15 MB." };
   }
+  const typeError = validateUploadType(file);
+  if (typeError) return { success: false, error: typeError };
 
   const admin = createAdminClient();
   const safeName = file.name.replace(/[^\w.\-]/g, "_");

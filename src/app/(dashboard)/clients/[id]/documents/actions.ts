@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validateUploadType } from "@/lib/utils/uploads";
 import type { DocumentCategory } from "@/types";
 
 const BUCKET = "documents";
@@ -34,6 +35,8 @@ export async function uploadDocument(
   if (file.size > 15 * 1024 * 1024) {
     return { success: false, error: "File must be under 15 MB." };
   }
+  const typeError = validateUploadType(file);
+  if (typeError) return { success: false, error: typeError };
 
   const admin = createAdminClient();
   const safeName = file.name.replace(/[^\w.\-]/g, "_");

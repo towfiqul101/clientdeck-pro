@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { cn, formatDate } from "@/lib/utils/helpers";
+import { UPLOAD_ACCEPT_ATTR } from "@/lib/utils/uploads";
 import { uploadDocument, deleteDocument, getDocumentUrl } from "./actions";
 import type { Document, DocumentCategory } from "@/types";
 import {
@@ -141,6 +142,7 @@ export function DocumentsManager({
             ref={inputRef}
             type="file"
             multiple
+            accept={UPLOAD_ACCEPT_ATTR}
             className="hidden"
             onChange={(e) => onFiles(e.target.files)}
           />
@@ -153,7 +155,7 @@ export function DocumentsManager({
             {uploading ? "Uploading…" : "Drag & drop files here, or click to browse"}
           </p>
           <p className="text-xs text-slate-500">
-            Uploaded as “{categoryLabel(category)}”. Up to 15 MB each.
+            Uploaded as “{categoryLabel(category)}”. PDF, JPG, or PNG — up to 15 MB each.
           </p>
         </div>
       </div>
