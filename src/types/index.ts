@@ -143,6 +143,9 @@ export interface TeamMember {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Staff-facing notification opt-ins (migration 020). NULL = never
+  // configured (apply the role-based default); [] = explicitly set to none.
+  subscribed_notification_types: string[] | null;
 }
 
 export interface Client {

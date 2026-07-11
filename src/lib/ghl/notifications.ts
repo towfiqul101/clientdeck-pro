@@ -2,8 +2,9 @@ import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { addGHLTag, removeGHLTag, updateGHLContactFields } from "@/lib/ghl/api";
 import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
-import type { Agency, Client } from "@/types";
+import type { Agency, Client, TeamMember } from "@/types";
 import { NOTIFICATION_TAGS, type GHLNotificationType } from "@/lib/ghl/notification-tags";
+import { isSubscribedTo } from "@/lib/team/notification-prefs";
 
 export { NOTIFICATION_TAGS };
 export type { GHLNotificationType };
@@ -229,12 +230,26 @@ async function sendResendFallback(
       subject: `Action required: payment failed for your credit repair service`,
       body: `Hi ${payload.firstName},\n\nYour payment of $${payload.data.monthly_fee}/month didn't go through. Please update your payment method to keep your service active: ${payload.data.portal_link}\n\nContact us: ${payload.data.agency_phone}\n\n${agency.name} Team`,
     },
+    // Staff-facing — payload.firstName here is the recipient staff member's
+    // own name (not the client's), set by notifyStaffSubscribers() below.
+    staff_new_client: {
+      subject: `New client: ${payload.data.client_name}`,
+      body: `Hi ${payload.firstName},\n\n${payload.data.client_name} just onboarded.\n\nEmail: ${payload.data.client_email}\nPhone: ${payload.data.client_phone}\n\nView in RoundTrack Pro: ${payload.data.dashboard_link}`,
+    },
+    staff_round_overdue: {
+      subject: `Round ${payload.data.round_number} overdue for ${payload.data.client_name}`,
+      body: `Hi ${payload.firstName},\n\nRound ${payload.data.round_number} for ${payload.data.client_name} is ${payload.data.days_overdue} day(s) overdue.\n\nView in RoundTrack Pro: ${payload.data.dashboard_link}`,
+    },
+    staff_next_round_ready: {
+      subject: `Round ${payload.data.round_number} ready for ${payload.data.client_name}`,
+      body: `Hi ${payload.firstName},\n\nRound ${payload.data.round_number} is ready to prepare for ${payload.data.client_name}.\n\nView in RoundTrack Pro: ${payload.data.dashboard_link}`,
+    },
   };
 
   const template = templates[type];
   if (!template) return false;
 
-  await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -248,6 +263,10 @@ async function sendResendFallback(
     }),
     signal: AbortSignal.timeout(8000),
   });
+  if (!res.ok) {
+    console.error(`[Resend Fallback] ${type} error ${res.status}:`, await res.text());
+    return false;
+  }
   return true;
 }
 
@@ -422,23 +441,69 @@ export async function notifyPortalLink(agency: Agency, client: NotifiableClient)
   );
 }
 
-export async function notifyStaffNewClient(agency: Agency, client: NotifiableClient) {
-  const ownerContactId = agency.settings?.owner_ghl_contact_id;
-  if (!ownerContactId) return { success: false, method: "none" as const };
+type StaffFacingType = "staff_new_client" | "staff_round_overdue" | "staff_next_round_ready";
 
-  return sendGHLNotification(
+/**
+ * Sends a staff-facing notification to every active team member subscribed
+ * to `type` (src/lib/team/notification-prefs.ts) — the owner's own GHL
+ * contact (agencies.settings.owner_ghl_contact_id) is used for the owner
+ * specifically when subscribed, everyone else gets Resend via their own
+ * team_members.email. Falls back to the single owner-contact target — the
+ * old behavior — only when nobody at all is subscribed (e.g. an agency
+ * that hasn't touched the new per-staff settings yet).
+ */
+async function notifyStaffSubscribers(
+  agency: Agency,
+  type: StaffFacingType,
+  data: GHLNotificationPayload["data"],
+  logging: NotificationLogIds
+) {
+  const admin = createAdminClient();
+  const { data: members } = await admin
+    .from("team_members")
+    .select("id, name, email, role, subscribed_notification_types")
+    .eq("agency_id", agency.id)
+    .eq("is_active", true);
+
+  const subscribed = (members ?? []).filter((m) =>
+    isSubscribedTo(m as Pick<TeamMember, "role" | "subscribed_notification_types">, type)
+  );
+
+  if (subscribed.length === 0) {
+    const ownerContactId = agency.settings?.owner_ghl_contact_id;
+    if (!ownerContactId) return { success: false, method: "none" as const };
+    return sendGHLNotification(
+      agency,
+      type,
+      { contactId: ownerContactId, firstName: "Team", lastName: agency.name, data },
+      logging
+    );
+  }
+
+  const results = await Promise.all(
+    subscribed.map((m) => {
+      const contactId = m.role === "owner" ? agency.settings?.owner_ghl_contact_id ?? "" : "";
+      return sendGHLNotification(
+        agency,
+        type,
+        { contactId, firstName: m.name, lastName: "", email: m.email, data },
+        logging
+      );
+    })
+  );
+
+  return results.find((r) => r.success) ?? { success: false, method: "none" as const };
+}
+
+export async function notifyStaffNewClient(agency: Agency, client: NotifiableClient) {
+  return notifyStaffSubscribers(
     agency,
     "staff_new_client",
     {
-      contactId: ownerContactId,
-      firstName: "Team",
-      lastName: agency.name,
-      data: {
-        client_name: `${client.first_name} ${client.last_name}`,
-        client_email: client.email ?? "",
-        client_phone: client.phone ?? "",
-        dashboard_link: dashboardLinkFor(client.id),
-      },
+      client_name: `${client.first_name} ${client.last_name}`,
+      client_email: client.email ?? "",
+      client_phone: client.phone ?? "",
+      dashboard_link: dashboardLinkFor(client.id),
     },
     { agencyId: agency.id, clientId: client.id }
   );
@@ -450,22 +515,31 @@ export async function notifyStaffRoundOverdue(
   roundNumber: number,
   daysOverdue: number
 ) {
-  const ownerContactId = agency.settings?.owner_ghl_contact_id;
-  if (!ownerContactId) return { success: false, method: "none" as const };
-
-  return sendGHLNotification(
+  return notifyStaffSubscribers(
     agency,
     "staff_round_overdue",
     {
-      contactId: ownerContactId,
-      firstName: "Team",
-      lastName: agency.name,
-      data: {
-        client_name: `${client.first_name} ${client.last_name}`,
-        round_number: roundNumber,
-        days_overdue: daysOverdue,
-        dashboard_link: dashboardLinkFor(client.id),
-      },
+      client_name: `${client.first_name} ${client.last_name}`,
+      round_number: roundNumber,
+      days_overdue: daysOverdue,
+      dashboard_link: dashboardLinkFor(client.id),
+    },
+    { agencyId: agency.id, clientId: client.id }
+  );
+}
+
+export async function notifyStaffNextRoundReady(
+  agency: Agency,
+  client: Pick<NotifiableClient, "id" | "first_name" | "last_name">,
+  roundNumber: number
+) {
+  return notifyStaffSubscribers(
+    agency,
+    "staff_next_round_ready",
+    {
+      client_name: `${client.first_name} ${client.last_name}`,
+      round_number: roundNumber,
+      dashboard_link: dashboardLinkFor(client.id),
     },
     { agencyId: agency.id, clientId: client.id }
   );

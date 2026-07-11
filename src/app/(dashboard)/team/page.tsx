@@ -5,7 +5,9 @@ import { getSessionContext } from "@/lib/auth/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { getInitials } from "@/lib/utils/helpers";
 import { maxTeamMembersForPlan, PLAN_BY_ID } from "@/lib/billing/plans";
+import { resolveSubscribedTypes } from "@/lib/team/notification-prefs";
 import { TeamInvite } from "./team-invite";
+import { NotificationPrefsForm } from "./notification-prefs-form";
 import { Users, ArrowRight, Briefcase, Trash2, Percent } from "lucide-react";
 import type { TeamMember } from "@/types";
 
@@ -212,6 +214,16 @@ export default async function TeamPage() {
             })}
           </div>
         )}
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="My Notifications"
+          description="Choose which staff alerts you personally receive."
+        />
+        <div className="px-5 py-4">
+          <NotificationPrefsForm initial={resolveSubscribedTypes(session.teamMember)} />
+        </div>
       </Card>
 
       <Card>

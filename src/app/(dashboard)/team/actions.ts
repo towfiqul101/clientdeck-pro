@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { checkTeamMemberLimit } from "@/lib/team/limits";
 import { PLAN_BY_ID } from "@/lib/billing/plans";
 import { sendStaffInviteEmail } from "@/lib/email/templates";
+import { STAFF_FACING_NOTIFICATION_TYPES } from "@/lib/team/notification-prefs";
 import type { TeamRole } from "@/types";
 
 type Result = { success: boolean; error?: string };
@@ -115,6 +116,26 @@ export async function inviteTeamMember(input: {
       inviteLink,
     }).catch((err) => console.error("[Email] Staff invite email failed:", err));
   });
+
+  revalidatePath("/team");
+  return { success: true };
+}
+
+/** Self-service only — a team member sets their own notification subscriptions. */
+export async function updateNotificationPrefs(types: string[]): Promise<Result> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const valid = types.filter((t) => (STAFF_FACING_NOTIFICATION_TYPES as string[]).includes(t));
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("team_members")
+    .update({ subscribed_notification_types: valid })
+    .eq("id", session.teamMember.id)
+    .eq("agency_id", session.agency.id);
+
+  if (error) return { success: false, error: error.message };
 
   revalidatePath("/team");
   return { success: true };

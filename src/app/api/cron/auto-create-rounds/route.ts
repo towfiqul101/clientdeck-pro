@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCron } from "@/lib/cron/auth";
 import { addGHLTag, createGHLTask } from "@/lib/ghl/api";
-import { sendGHLNotification } from "@/lib/ghl/notifications";
+import { notifyStaffNextRoundReady } from "@/lib/ghl/notifications";
 import { suggestLetterType } from "@/lib/utils/helpers";
 import type { Agency, DisputeStatus, LetterType } from "@/types";
 
@@ -99,8 +99,6 @@ export async function GET(req: Request) {
       const opts = agency.ghl_api_key && agency.ghl_location_id
         ? { apiKey: agency.ghl_api_key, locationId: agency.ghl_location_id }
         : null;
-      const ownerContactId = (agency as Agency).settings?.owner_ghl_contact_id;
-      const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.roundtrackpro.com";
       await Promise.allSettled([
         (async () => {
           if (opts && client.ghl_contact_id) {
@@ -113,24 +111,9 @@ export async function GET(req: Request) {
             );
           }
         })().catch((e) => console.error("auto-create-rounds: GHL sync failed", e)),
-        (async () => {
-          if (!ownerContactId) return;
-          await sendGHLNotification(
-            agency as Agency,
-            "staff_next_round_ready",
-            {
-              contactId: ownerContactId,
-              firstName: "Team",
-              lastName: (agency as Agency).name,
-              data: {
-                client_name: `${client.first_name} ${client.last_name}`,
-                round_number: roundNumber,
-                dashboard_link: `${base}/clients/${client.id}`,
-              },
-            },
-            { agencyId: agency.id, clientId: client.id }
-          );
-        })().catch((e) => console.error("auto-create-rounds: staff notification failed", e)),
+        notifyStaffNextRoundReady(agency as Agency, client, roundNumber).catch((e) =>
+          console.error("auto-create-rounds: staff notification failed", e)
+        ),
       ]);
       created++;
     }
