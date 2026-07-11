@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import { getPortalSession } from "@/lib/portal/session";
 import { PortalNav } from "@/components/portal/portal-nav";
+import { PushSubscribeBanner } from "@/components/portal/push-subscribe-banner";
 import { ToastProvider } from "@/components/ui/toast";
 
 export default async function PortalClientLayout({
@@ -47,7 +48,10 @@ export default async function PortalClientLayout({
       </header>
 
       {/* Content (bottom padding clears the fixed nav) */}
-      <main className="mx-auto max-w-lg px-4 pb-28 pt-5">{children}</main>
+      <main className="mx-auto max-w-lg px-4 pb-28 pt-5">
+        <PushSubscribeBanner />
+        {children}
+      </main>
 
       {showPoweredBy && (
         <p className="pb-20 text-center text-xs text-slate-500">

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -8,6 +9,7 @@ import {
   sendConversationMessage,
 } from "@/lib/ghl/api";
 import { escapeHtml } from "@/lib/email/index";
+import { sendPushToClient } from "@/lib/push/send";
 
 export const maxDuration = 60;
 
@@ -214,6 +216,16 @@ export async function POST(req: Request) {
     }
 
     await logSendAttempt(agency.id, client.id, userId, type, true);
+
+    // Non-blocking: let the client know via push that a new message came in.
+    after(() =>
+      sendPushToClient(client.id, {
+        title: `New message from ${agency.name}`,
+        body: message.slice(0, 120),
+        url: "/portal/messages",
+      }).catch((err) => console.error("[ghl/messages] push failed:", err))
+    );
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : "Send failed.";

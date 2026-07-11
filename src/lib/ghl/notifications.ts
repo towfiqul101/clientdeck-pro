@@ -5,6 +5,7 @@ import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 import type { Agency, Client, TeamMember } from "@/types";
 import { NOTIFICATION_TAGS, type GHLNotificationType } from "@/lib/ghl/notification-tags";
 import { isSubscribedTo } from "@/lib/team/notification-prefs";
+import { sendPushToClient } from "@/lib/push/send";
 
 export { NOTIFICATION_TAGS };
 export type { GHLNotificationType };
@@ -280,6 +281,18 @@ function dashboardLinkFor(clientId: string): string {
   return `${base}/clients/${clientId}`;
 }
 
+/**
+ * Fires a Web Push notification alongside whatever GHL-tag/Resend channel
+ * already handles `type`, without blocking or delaying the caller's return.
+ * Uses after() (not a bare call) for the same reason the tag-removal above
+ * does — Vercel may freeze/recycle the function once the response is sent.
+ */
+function firePush(clientId: string, title: string, body: string, url: string) {
+  after(() => sendPushToClient(clientId, { title, body, url }).catch((err) => {
+    console.error("[push] firePush failed:", err);
+  }));
+}
+
 function monthsSince(dateStr: string): number {
   const start = new Date(dateStr);
   const now = new Date();
@@ -293,6 +306,12 @@ export interface RoundSentSummary {
 }
 
 export async function notifyRoundSent(agency: Agency, client: NotifiableClient, round: RoundSentSummary) {
+  firePush(
+    client.id,
+    "Dispute letters sent",
+    `Your Round ${round.round_number} dispute letters have been sent to all three bureaus.`,
+    "/portal"
+  );
   return sendGHLNotification(
     agency,
     "round_sent",
@@ -319,6 +338,12 @@ export async function notifyDeletionWin(
   totalDeletions: number,
   deletedItemNames: string[]
 ) {
+  firePush(
+    client.id,
+    "Great news!",
+    `${deletionsThisRound} item(s) were deleted from your credit report this round.`,
+    "/portal"
+  );
   return sendGHLNotification(
     agency,
     "deletion_win",
@@ -381,6 +406,7 @@ export async function notifyGoalAchieved(agency: Agency, client: NotifiableClien
     ) / 3
   );
 
+  firePush(client.id, "Goal achieved!", "Congratulations — you've achieved your credit goal.", "/portal");
   return sendGHLNotification(
     agency,
     "goal_achieved",
@@ -424,6 +450,7 @@ export async function notifyPaymentFailed(agency: Agency, client: NotifiableClie
 }
 
 export async function notifyPortalLink(agency: Agency, client: NotifiableClient) {
+  firePush(client.id, "Your client portal", "Your client portal link is ready.", "/portal");
   return sendGHLNotification(
     agency,
     "portal_link",
