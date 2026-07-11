@@ -235,7 +235,7 @@ export default async function ClientsPage({
                 {clients.map((c) => (
                   <tr
                     key={c.id}
-                    className="group border-b border-white/[0.05] transition-colors duration-150 last:border-b-0 hover:bg-white/[0.03] cursor-pointer"
+                    className="group border-b border-white/[0.05] transition-colors duration-150 last:border-b-0 hover:bg-white/[0.03] has-[:checked]:bg-violet-500/10 cursor-pointer"
                   >
                     <td className="px-4 py-3">
                       <RowCheckbox id={c.id} />

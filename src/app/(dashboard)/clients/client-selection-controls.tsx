@@ -22,7 +22,7 @@ export function RowCheckbox({ id }: { id: string }) {
       onChange={() => {}}
       onClick={(e) => handleToggleClick(e, () => toggle(id))}
       aria-label="Select client"
-      className="h-4 w-4 rounded border-white/20 bg-transparent"
+      className="h-4 w-4 rounded border-white/20 bg-transparent accent-violet-500"
     />
   );
 }
@@ -36,7 +36,7 @@ export function SelectAllCheckbox({ ids }: { ids: string[] }) {
       onChange={() => {}}
       onClick={(e) => handleToggleClick(e, () => toggleAll(ids))}
       aria-label="Select all clients on this page"
-      className="h-4 w-4 rounded border-white/20 bg-transparent"
+      className="h-4 w-4 rounded border-white/20 bg-transparent accent-violet-500"
     />
   );
 }

@@ -68,7 +68,7 @@ export function ClientCardsView({ clients, clientIds }: ClientCardsViewProps) {
           <Link
             key={client.id}
             href={`/clients/${client.id}`}
-            className="glass-card relative block"
+            className="glass-card relative block has-[:checked]:ring-2 has-[:checked]:ring-violet-500 has-[:checked]:bg-violet-500/5"
           >
             <span className="absolute right-3 top-3 z-10">
               <RowCheckbox id={client.id} />
