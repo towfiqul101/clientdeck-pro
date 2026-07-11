@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { ClientsFilters } from "./clients-filters";
 import { ClientCardsView } from "./client-cards-view";
+import { ClientSelectionProvider } from "./client-selection-context";
+import { RowCheckbox, SelectAllCheckbox, ExportButton } from "./client-selection-controls";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -12,7 +14,7 @@ import {
   scoreChange,
 } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
-import { Users, Plus, UserPlus, ArrowUp, Eye, Pencil, Download, Upload } from "lucide-react";
+import { Users, Plus, UserPlus, ArrowUp, Eye, Pencil, Upload } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -147,8 +149,10 @@ export default async function ClientsPage({
   };
 
   const hasFilters = Boolean(q || status || payment || assigned);
+  const clientIds = clients.map((c) => c.id);
 
   return (
+    <ClientSelectionProvider>
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
@@ -159,13 +163,7 @@ export default async function ClientsPage({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href="/api/clients/export"
-            className="inline-flex items-center gap-2 rounded-[10px] border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.06]"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </a>
+          <ExportButton />
           <Link
             href="/clients/import"
             className="inline-flex items-center gap-2 rounded-[10px] border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.06]"
@@ -210,13 +208,16 @@ export default async function ClientsPage({
           />
         </div>
       ) : view === "cards" ? (
-        <ClientCardsView clients={clients} />
+        <ClientCardsView clients={clients} clientIds={clientIds} />
       ) : (
         <div className="glass-panel overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-white/[0.06] text-sm">
               <thead className="sticky top-0 z-10 bg-white/[0.03] text-left text-xs font-medium uppercase tracking-wide text-slate-500 backdrop-blur-xl">
                 <tr>
+                  <th className="w-10 px-4 py-3">
+                    <SelectAllCheckbox ids={clientIds} />
+                  </th>
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Scores (EQ / EXP / TU)</th>
@@ -236,6 +237,9 @@ export default async function ClientsPage({
                     key={c.id}
                     className="group border-b border-white/[0.05] transition-colors duration-150 last:border-b-0 hover:bg-white/[0.03] cursor-pointer"
                   >
+                    <td className="px-4 py-3">
+                      <RowCheckbox id={c.id} />
+                    </td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/clients/${c.id}`}
@@ -369,5 +373,6 @@ export default async function ClientsPage({
         </div>
       )}
     </div>
+    </ClientSelectionProvider>
   );
 }

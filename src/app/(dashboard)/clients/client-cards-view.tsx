@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { getInitials, scoreChange } from "@/lib/utils/helpers";
 import { ArrowUp } from "lucide-react";
 import type { Client } from "@/types";
+import { RowCheckbox, SelectAllCheckbox } from "./client-selection-controls";
 
 interface ClientCardsViewProps {
   clients: Pick<
@@ -23,6 +24,7 @@ interface ClientCardsViewProps {
     | "total_items_current"
     | "total_items_deleted"
   >[];
+  clientIds: string[];
 }
 
 function BureauCell({
@@ -47,9 +49,14 @@ function BureauCell({
   );
 }
 
-export function ClientCardsView({ clients }: ClientCardsViewProps) {
+export function ClientCardsView({ clients, clientIds }: ClientCardsViewProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-3">
+      <label className="flex items-center gap-2 text-sm text-slate-400">
+        <SelectAllCheckbox ids={clientIds} />
+        Select all
+      </label>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {clients.map((client) => {
         const resolved =
           client.total_items_current > 0
@@ -61,8 +68,11 @@ export function ClientCardsView({ clients }: ClientCardsViewProps) {
           <Link
             key={client.id}
             href={`/clients/${client.id}`}
-            className="glass-card block"
+            className="glass-card relative block"
           >
+            <span className="absolute right-3 top-3 z-10">
+              <RowCheckbox id={client.id} />
+            </span>
             <div className="flex items-center gap-3 border-b border-white/[0.06] p-4">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-sm font-medium text-violet-300">
                 {getInitials(client.first_name, client.last_name)}
@@ -101,6 +111,7 @@ export function ClientCardsView({ clients }: ClientCardsViewProps) {
           </Link>
         );
       })}
+      </div>
     </div>
   );
 }

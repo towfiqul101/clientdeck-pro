@@ -60,3 +60,17 @@ export function toCSV(rows: (string | number | null | undefined)[][]): string {
     .map((row) => row.map((cell) => csvEscape(String(cell ?? ""))).join(","))
     .join("\r\n");
 }
+
+/**
+ * Excel's own CSV parser (used when a .csv is double-clicked, not imported
+ * via the Text Import Wizard) auto-detects purely-numeric cells and mangles
+ * them — scientific notation for long digit strings (a 10-digit phone
+ * becomes "1.57E+09"), stripped leading zeros for things like zip codes.
+ * Wrapping the value as ="value" forces Excel to treat it as literal text.
+ * Only use this on values we fully control and know are plain digits (zip,
+ * ssn_last4) — never on freeform text, since a leading "=" is normally a
+ * CSV-injection vector.
+ */
+export function forceCsvText(value: string): string {
+  return `="${value}"`;
+}
