@@ -254,6 +254,9 @@ export interface Dispute {
   result: DisputeResult;
   result_date: string | null;
   result_notes: string | null;
+  compliance_status: "pass" | "flagged" | null;
+  compliance_checks: import("@/lib/compliance/validate-letter").ComplianceCheck[] | null;
+  compliance_checked_at: string | null;
   created_at: string;
   updated_at: string;
 }

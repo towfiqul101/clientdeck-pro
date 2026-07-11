@@ -1,4 +1,5 @@
 import type { Client, NegativeItem, Dispute, LetterTemplate } from "@/types";
+import { validateLetterCompliance, type ComplianceResult } from "@/lib/compliance/validate-letter";
 
 const BUREAU_ADDRESSES: Record<string, string> = {
   equifax:
@@ -219,10 +220,15 @@ Now write the requested letter, following the same tone, structure, and citation
 
 export async function generateDisputeLetter(
   params: GenerateLetterParams
-): Promise<{ content: string; tokensUsed: number }> {
+): Promise<{ content: string; tokensUsed: number; compliance: ComplianceResult }> {
   // No API key → return a realistic mock so the app is fully previewable.
   if (!process.env.ANTHROPIC_API_KEY) {
-    return { content: generateMockLetter(params), tokensUsed: 0 };
+    const content = generateMockLetter(params);
+    return {
+      content,
+      tokensUsed: 0,
+      compliance: validateLetterCompliance(content, params.template.prompt_template),
+    };
   }
 
   const variables = buildPromptVariables(params);
@@ -282,15 +288,19 @@ export async function generateDisputeLetter(
   const tokensUsed =
     (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
 
-  return { content, tokensUsed };
+  return {
+    content,
+    tokensUsed,
+    compliance: validateLetterCompliance(content, params.template.prompt_template),
+  };
 }
 
 export async function generateBulkLetters(
   params: GenerateLetterParams[]
-): Promise<{ content: string; tokensUsed: number }[]> {
+): Promise<{ content: string; tokensUsed: number; compliance: ComplianceResult }[]> {
   // Process in parallel with concurrency limit
   const CONCURRENCY = 3;
-  const results: { content: string; tokensUsed: number }[] = [];
+  const results: { content: string; tokensUsed: number; compliance: ComplianceResult }[] = [];
 
   for (let i = 0; i < params.length; i += CONCURRENCY) {
     const batch = params.slice(i, i + CONCURRENCY);
@@ -302,9 +312,11 @@ export async function generateBulkLetters(
       if (result.status === "fulfilled") {
         results.push(result.value);
       } else {
+        const content = `[ERROR: Letter generation failed — ${result.reason}]`;
         results.push({
-          content: `[ERROR: Letter generation failed — ${result.reason}]`,
+          content,
           tokensUsed: 0,
+          compliance: { status: "flagged", checks: [] },
         });
       }
     }

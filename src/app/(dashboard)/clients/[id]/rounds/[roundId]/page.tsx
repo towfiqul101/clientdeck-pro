@@ -7,6 +7,7 @@ import {
   type RoundDispute,
 } from "./round-workspace";
 import type { Bureau, DisputeResult, LetterType } from "@/types";
+import type { ComplianceCheck } from "@/lib/compliance/validate-letter";
 
 interface DisputeJoinRow {
   id: string;
@@ -18,6 +19,8 @@ interface DisputeJoinRow {
   result: DisputeResult;
   result_notes: string | null;
   negative_item_id: string;
+  compliance_status: "pass" | "flagged" | null;
+  compliance_checks: ComplianceCheck[] | null;
   negative_item: { creditor_name: string } | null;
 }
 
@@ -43,7 +46,7 @@ export default async function RoundDetailPage({
   const { data: disputeRows } = await supabase
     .from("disputes")
     .select(
-      "id, bureau, letter_type, letter_content, certified_mail_number, is_finalized, result, result_notes, negative_item_id, negative_item:negative_items(creditor_name)"
+      "id, bureau, letter_type, letter_content, certified_mail_number, is_finalized, result, result_notes, negative_item_id, compliance_status, compliance_checks, negative_item:negative_items(creditor_name)"
     )
     .eq("round_id", roundId)
     .order("bureau", { ascending: true });
@@ -60,6 +63,8 @@ export default async function RoundDetailPage({
     result: d.result,
     result_notes: d.result_notes,
     negative_item_id: d.negative_item_id,
+    compliance_status: d.compliance_status,
+    compliance_checks: d.compliance_checks,
     creditor_name: d.negative_item?.creditor_name ?? "Unknown creditor",
   }));
 

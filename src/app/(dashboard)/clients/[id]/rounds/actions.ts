@@ -192,9 +192,19 @@ export async function saveLetterContent(
 
   const supabase = await createServerSupabaseClient();
   // Editing content always requires re-review, so clear the finalized flag.
+  // Compliance was checked against the pre-edit text, so it no longer
+  // reflects what's on the page — clear it rather than show a stale badge;
+  // Regenerate re-runs the check against the fresh content.
   const { error } = await supabase
     .from("disputes")
-    .update({ letter_content: content, is_finalized: false, finalized_at: null })
+    .update({
+      letter_content: content,
+      is_finalized: false,
+      finalized_at: null,
+      compliance_status: null,
+      compliance_checks: null,
+      compliance_checked_at: null,
+    })
     .eq("id", disputeId);
   if (error) return { success: false, error: error.message };
 
@@ -229,7 +239,8 @@ export async function setLetterFinalized(
 export async function markRoundSent(
   clientId: string,
   roundId: string,
-  trackingNumbers: Record<string, string>
+  trackingNumbers: Record<string, string>,
+  acknowledgedFlags = false
 ): Promise<{ success: boolean; error?: string }> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };
@@ -242,6 +253,32 @@ export async function markRoundSent(
     .eq("id", roundId)
     .single();
   if (!round) return { success: false, error: "Round not found." };
+
+  // Client-side already shows every flagged letter and requires the
+  // acknowledgment checkbox before this is even called — re-verified here
+  // since a client-only gate is trivially bypassable.
+  const { count: flaggedCount } = await supabase
+    .from("disputes")
+    .select("id", { count: "exact", head: true })
+    .eq("round_id", roundId)
+    .eq("compliance_status", "flagged");
+  if ((flaggedCount ?? 0) > 0 && !acknowledgedFlags) {
+    return {
+      success: false,
+      error: "Review the flagged letters and confirm before sending.",
+    };
+  }
+  if ((flaggedCount ?? 0) > 0) {
+    await supabase.from("activity_log").insert({
+      agency_id: session.agency.id,
+      client_id: clientId,
+      actor_type: "staff",
+      actor_id: session.userId,
+      action: "Compliance flags acknowledged",
+      description: `Staff acknowledged ${flaggedCount} flagged letter(s) before marking Round ${round.round_number} as sent.`,
+      metadata: { round_id: roundId, flagged_count: flaggedCount },
+    });
+  }
 
   const sentDate = today();
   const deadline = calculateDeadline(sentDate, 35)

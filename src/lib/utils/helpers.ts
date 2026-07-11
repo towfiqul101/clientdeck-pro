@@ -88,6 +88,9 @@ export function getStatusColor(status: string): string {
     // Results
     no_response: "bg-orange-500/15 text-orange-400 border border-orange-500/30",
     in_progress: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
+    // Letter compliance
+    pass: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    flagged: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
   };
   return colors[status] || "bg-white/5 text-slate-400 border border-white/10";
 }

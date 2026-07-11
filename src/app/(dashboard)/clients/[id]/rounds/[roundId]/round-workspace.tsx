@@ -29,6 +29,7 @@ import type {
   LetterType,
   RoundStatus,
 } from "@/types";
+import type { ComplianceCheck } from "@/lib/compliance/validate-letter";
 import {
   Sparkles,
   RefreshCw,
@@ -39,6 +40,8 @@ import {
   Loader2,
   PartyPopper,
   AlertTriangle,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 export interface RoundDispute {
@@ -51,6 +54,8 @@ export interface RoundDispute {
   result: DisputeResult;
   result_notes: string | null;
   negative_item_id: string;
+  compliance_status: "pass" | "flagged" | null;
+  compliance_checks: ComplianceCheck[] | null;
   creditor_name: string;
 }
 
@@ -73,6 +78,7 @@ interface LetterState {
   error?: string;
   finalized: boolean;
   tracking: string;
+  compliance: { status: "pass" | "flagged"; checks: ComplianceCheck[] } | null;
 }
 
 const RESULT_OPTIONS = [
@@ -115,6 +121,9 @@ export function RoundWorkspace({
           state: d.letter_content ? "ready" : "empty",
           finalized: d.is_finalized,
           tracking: d.certified_mail_number ?? "",
+          compliance: d.compliance_status
+            ? { status: d.compliance_status, checks: d.compliance_checks ?? [] }
+            : null,
         } as LetterState,
       ])
     )
@@ -167,6 +176,7 @@ export function RoundWorkspace({
         state: "ready",
         content: data.content,
         error: undefined,
+        compliance: data.compliance ?? null,
       });
       return true;
     } catch {
@@ -249,11 +259,26 @@ export function RoundWorkspace({
     disputes.length > 0 &&
     disputes.every((d) => letters[d.id]?.finalized && letters[d.id]?.content);
 
+  const flaggedDisputes = disputes.filter(
+    (d) => letters[d.id]?.compliance?.status === "flagged"
+  );
+  const [ackFlags, setAckFlags] = useState(false);
+
+  function openSendModal() {
+    setAckFlags(false);
+    setSendModal(true);
+  }
+
   async function confirmSend() {
     setSaving(true);
     const tracking: Record<string, string> = {};
     for (const d of disputes) tracking[d.id] = letters[d.id].tracking;
-    const result = await markRoundSent(clientId, round.id, tracking);
+    const result = await markRoundSent(
+      clientId,
+      round.id,
+      tracking,
+      flaggedDisputes.length > 0 ? ackFlags : true
+    );
     setSaving(false);
     if (result.success) {
       toast("Round marked as sent.", "success");
@@ -431,7 +456,10 @@ export function RoundWorkspace({
                     l.finalized ? "bg-green-500/10" : "bg-white/[0.03]"
                   )}
                 >
-                  <LetterCardHeader dispute={d} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <LetterCardHeader dispute={d} />
+                    <ComplianceBadge compliance={l.compliance} />
+                  </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="secondary"
@@ -469,6 +497,7 @@ export function RoundWorkspace({
                       patchLetter(d.id, {
                         content: e.target.value,
                         finalized: false,
+                        compliance: null,
                       })
                     }
                     onBlur={() => persistEdit(d.id)}
@@ -501,10 +530,7 @@ export function RoundWorkspace({
                     Download All as PDF
                   </Button>
                 </a>
-                <Button
-                  onClick={() => setSendModal(true)}
-                  disabled={!allFinalized}
-                >
+                <Button onClick={openSendModal} disabled={!allFinalized}>
                   <Send className="h-4 w-4" />
                   Mark Round as Sent
                 </Button>
@@ -580,13 +606,56 @@ export function RoundWorkspace({
             <Button variant="secondary" onClick={() => setSendModal(false)}>
               Cancel
             </Button>
-            <Button onClick={confirmSend} loading={saving}>
+            <Button
+              onClick={confirmSend}
+              loading={saving}
+              disabled={flaggedDisputes.length > 0 && !ackFlags}
+            >
               Confirm &amp; mark sent
             </Button>
           </>
         }
       >
         <div className="space-y-3">
+          <div className="space-y-2 rounded-lg border border-white/10 p-3">
+            <p className="text-sm font-medium text-slate-300">Compliance check</p>
+            <div className="space-y-1.5">
+              {disputes.map((d) => (
+                <div key={d.id} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate text-slate-300">
+                    {d.creditor_name}{" "}
+                    <span className="text-xs text-slate-500">({getBureauLabel(d.bureau)})</span>
+                  </span>
+                  <ComplianceBadge compliance={letters[d.id]?.compliance ?? null} />
+                </div>
+              ))}
+            </div>
+            {flaggedDisputes.length > 0 && (
+              <>
+                <ul className="space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 p-2 text-xs text-amber-300">
+                  {flaggedDisputes.flatMap((d) =>
+                    (letters[d.id]?.compliance?.checks ?? [])
+                      .filter((c) => !c.passed)
+                      .map((c) => (
+                        <li key={`${d.id}-${c.id}`}>
+                          {d.creditor_name}: {c.detail}
+                        </li>
+                      ))
+                  )}
+                </ul>
+                <label className="flex items-start gap-2 pt-1 text-sm text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={ackFlags}
+                    onChange={(e) => setAckFlags(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-white/20"
+                  />
+                  I&apos;ve reviewed the flagged letters
+                </label>
+              </>
+            )}
+          </div>
+
           <p className="text-sm text-slate-400">
             Optionally add certified-mail tracking numbers. You can leave these
             blank and add them later.
@@ -763,6 +832,32 @@ function LetterCardHeader({ dispute }: { dispute: RoundDispute }) {
         {getLetterTypeLabel(dispute.letter_type)}
       </span>
     </div>
+  );
+}
+
+function ComplianceBadge({
+  compliance,
+}: {
+  compliance: { status: "pass" | "flagged"; checks: ComplianceCheck[] } | null;
+}) {
+  if (!compliance) return null;
+  if (compliance.status === "pass") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">
+        <ShieldCheck className="h-3.5 w-3.5" />
+        Compliance check passed
+      </span>
+    );
+  }
+  const failed = compliance.checks.filter((c) => !c.passed);
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-400"
+      title={failed.map((c) => c.detail).join("\n")}
+    >
+      <ShieldAlert className="h-3.5 w-3.5" />
+      Flagged: {failed.length} check{failed.length === 1 ? "" : "s"} failed
+    </span>
   );
 }
 

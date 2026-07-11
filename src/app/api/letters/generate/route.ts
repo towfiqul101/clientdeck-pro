@@ -3,6 +3,7 @@ import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { findBestTemplate } from "@/lib/claude/template-matcher";
 import { generateDisputeLetter } from "@/lib/claude/generate-letter";
+import type { ComplianceResult } from "@/lib/compliance/validate-letter";
 import type { Client, Dispute, NegativeItem } from "@/types";
 
 export const maxDuration = 300; // letter generation can take a while for big rounds
@@ -37,7 +38,7 @@ async function generateForDispute(
   dispute: DisputeWithJoins,
   agencyId: string,
   agencyName: string
-): Promise<{ disputeId: string; ok: true; content: string } | {
+): Promise<{ disputeId: string; ok: true; content: string; compliance: ComplianceResult } | {
   disputeId: string;
   ok: false;
   error: string;
@@ -63,7 +64,7 @@ async function generateForDispute(
       dispute.round_id
     );
 
-    const { content } = await generateDisputeLetter({
+    const { content, compliance } = await generateDisputeLetter({
       client: dispute.client,
       item: dispute.negative_item,
       dispute,
@@ -74,13 +75,18 @@ async function generateForDispute(
 
     const { error } = await supabase
       .from("disputes")
-      .update({ letter_content: content })
+      .update({
+        letter_content: content,
+        compliance_status: compliance.status,
+        compliance_checks: compliance.checks,
+        compliance_checked_at: new Date().toISOString(),
+      })
       .eq("id", dispute.id);
     if (error) {
       return { disputeId: dispute.id, ok: false, error: error.message };
     }
 
-    return { disputeId: dispute.id, ok: true, content };
+    return { disputeId: dispute.id, ok: true, content, compliance };
   } catch (err) {
     return {
       disputeId: dispute.id,
@@ -155,7 +161,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: result.error }, { status: 502 });
     }
     await maybeMarkGenerated(supabase, dispute.round_id);
-    return NextResponse.json({ success: true, content: result.content });
+    return NextResponse.json({
+      success: true,
+      content: result.content,
+      compliance: result.compliance,
+    });
   }
 
   // ---- Bulk by round ----
@@ -194,7 +204,7 @@ export async function POST(req: Request) {
       success: true,
       results: results.map((r) =>
         r.ok
-          ? { disputeId: r.disputeId, ok: true }
+          ? { disputeId: r.disputeId, ok: true, compliance: r.compliance }
           : { disputeId: r.disputeId, ok: false, error: r.error }
       ),
     });
