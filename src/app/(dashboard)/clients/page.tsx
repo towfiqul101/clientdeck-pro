@@ -12,7 +12,7 @@ import {
   scoreChange,
 } from "@/lib/utils/helpers";
 import type { Client } from "@/types";
-import { Users, Plus, UserPlus, ArrowUp, Eye, Pencil } from "lucide-react";
+import { Users, Plus, UserPlus, ArrowUp, Eye, Pencil, Download, Upload } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -158,13 +158,29 @@ export default async function ClientsPage({
             {total}
           </span>
         </div>
-        <Link
-          href="/clients/new"
-          className="inline-flex items-center gap-2 rounded-[10px] bg-gradient-to-br from-violet-500 to-violet-700 px-4 py-2 text-sm font-medium text-white shadow-[0_4px_15px_rgba(139,92,246,0.3)] transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)]"
-        >
-          <Plus className="h-4 w-4" />
-          Add Client
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href="/api/clients/export"
+            className="inline-flex items-center gap-2 rounded-[10px] border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.06]"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </a>
+          <Link
+            href="/clients/import"
+            className="inline-flex items-center gap-2 rounded-[10px] border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.06]"
+          >
+            <Upload className="h-4 w-4" />
+            Import Clients
+          </Link>
+          <Link
+            href="/clients/new"
+            className="inline-flex items-center gap-2 rounded-[10px] bg-gradient-to-br from-violet-500 to-violet-700 px-4 py-2 text-sm font-medium text-white shadow-[0_4px_15px_rgba(139,92,246,0.3)] transition-all hover:-translate-y-px hover:shadow-[0_6px_20px_rgba(139,92,246,0.4)]"
+          >
+            <Plus className="h-4 w-4" />
+            Add Client
+          </Link>
+        </div>
       </div>
 
       <ClientsFilters members={members} />
