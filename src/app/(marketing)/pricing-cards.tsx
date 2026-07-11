@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Check } from "lucide-react";
 import { PLANS } from "@/lib/billing/plans";
 import { cn } from "@/lib/utils/helpers";
@@ -11,7 +10,7 @@ import { cn } from "@/lib/utils/helpers";
  * monthly/annual toggle — annual bills 10 months (2 free), shown as an
  * effective per-month figure. Prices come from PLANS (single source of truth).
  */
-export function PricingCards({ signupHref }: { signupHref: string }) {
+export function PricingCards() {
   const [annual, setAnnual] = useState(false);
 
   return (
@@ -111,8 +110,10 @@ export function PricingCards({ signupHref }: { signupHref: string }) {
                 ))}
               </ul>
 
-              <Link
-                href={signupHref}
+              <a
+                href={annual ? plan.gumroadYearlyUrl : plan.gumroadMonthlyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={cn(
                   "mt-7 rounded-xl px-4 py-3 text-center text-sm font-semibold transition-all duration-150",
                   plan.highlight
@@ -121,7 +122,7 @@ export function PricingCards({ signupHref }: { signupHref: string }) {
                 )}
               >
                 Start free trial
-              </Link>
+              </a>
             </div>
           );
         })}

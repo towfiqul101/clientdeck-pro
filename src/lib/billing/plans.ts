@@ -12,6 +12,9 @@ export interface PlanConfig {
   /** Name of the env var holding this plan's Stripe price id. */
   priceEnv: "STRIPE_PRICE_SOLO" | "STRIPE_PRICE_PRO" | "STRIPE_PRICE_AGENCY";
   highlight?: boolean;
+  /** Landing-page pricing-card checkout links (Gumroad). */
+  gumroadMonthlyUrl: string;
+  gumroadYearlyUrl: string;
 }
 
 /**
@@ -38,6 +41,8 @@ export const PLANS: PlanConfig[] = [
       "GoHighLevel sync",
     ],
     priceEnv: "STRIPE_PRICE_SOLO",
+    gumroadMonthlyUrl: "https://taxautomationsuite.gumroad.com/l/RoundTrackPro-Starter",
+    gumroadYearlyUrl: "https://taxautomationsuite.gumroad.com/l/RoundTrackPro-StarterPlan-a-Year",
   },
   {
     id: "pro",
@@ -56,6 +61,8 @@ export const PLANS: PlanConfig[] = [
     ],
     priceEnv: "STRIPE_PRICE_PRO",
     highlight: true,
+    gumroadMonthlyUrl: "https://taxautomationsuite.gumroad.com/l/RoundTrack-ProPlan",
+    gumroadYearlyUrl: "https://taxautomationsuite.gumroad.com/l/RoundTrackPro-ProPlan-a-Year",
   },
   {
     id: "agency",
@@ -74,6 +81,8 @@ export const PLANS: PlanConfig[] = [
       'Removes "Powered by RoundTrack Pro"',
     ],
     priceEnv: "STRIPE_PRICE_AGENCY",
+    gumroadMonthlyUrl: "https://taxautomationsuite.gumroad.com/l/RoundTrackPro-AgencyPlan",
+    gumroadYearlyUrl: "https://taxautomationsuite.gumroad.com/l/RoundTrackPro-AgencyPlan-a-Year",
   },
 ];
 

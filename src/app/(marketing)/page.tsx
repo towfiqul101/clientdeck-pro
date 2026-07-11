@@ -1024,7 +1024,7 @@ export default function LandingPage() {
 
           <Reveal delay={80}>
             <div className="mt-12">
-              <PricingCards signupHref="/signup" />
+              <PricingCards />
             </div>
           </Reveal>
 
