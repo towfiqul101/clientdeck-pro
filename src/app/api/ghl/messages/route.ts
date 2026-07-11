@@ -88,10 +88,17 @@ export async function GET(req: Request) {
       originMap = new Map((origins ?? []).map((o) => [o.message_id, o.origin]));
     }
 
-    const merged = messages.map((m) => ({
-      ...m,
-      origin: originMap.get(m.id) ?? (m.direction === "inbound" ? "client" : "staff"),
-    }));
+    const merged = messages
+      .map((m) => ({
+        ...m,
+        origin: originMap.get(m.id) ?? (m.direction === "inbound" ? "client" : "staff"),
+      }))
+      // GHL returns messages newest-first; render like a normal chat thread,
+      // oldest at top, newest at the bottom.
+      .sort(
+        (a, b) =>
+          new Date(a.dateAdded ?? 0).getTime() - new Date(b.dateAdded ?? 0).getTime()
+      );
 
     return NextResponse.json({ ok: true, messages: merged, conversationId });
   } catch (e) {

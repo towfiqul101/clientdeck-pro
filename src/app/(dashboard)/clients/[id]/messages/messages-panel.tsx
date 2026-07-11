@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,12 @@ export function MessagesPanel({
   const [text, setText] = useState("");
   const [subject, setSubject] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
   async function load() {
     setLoading(true);
@@ -130,7 +136,7 @@ export function MessagesPanel({
         </Button>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+      <div ref={threadRef} className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
         {loading ? (
           <div className="flex h-full items-center justify-center text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin" />

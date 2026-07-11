@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils/helpers";
 import { MessageSquare, RefreshCw, Send, Loader2 } from "lucide-react";
@@ -32,6 +32,12 @@ export function PortalMessagesPanel({
   const [text, setText] = useState("");
   const [subject, setSubject] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
   async function load() {
     setLoading(true);
@@ -128,7 +134,7 @@ export function PortalMessagesPanel({
         ))}
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] p-4">
+      <div ref={threadRef} className="flex-1 space-y-3 overflow-y-auto rounded-xl border border-white/10 bg-[#1a1a2e] p-4">
         {loading ? (
           <div className="flex h-full items-center justify-center text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin" />

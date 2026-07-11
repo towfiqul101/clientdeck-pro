@@ -81,15 +81,22 @@ export async function GET(req: Request) {
       originMap = new Map((origins ?? []).map((o) => [o.message_id, o.origin]));
     }
 
-    const merged = messages.map((m) => ({
-      ...m,
-      // GHL's own `direction` marks everything the location sends as
-      // "outbound" regardless of whether staff or a client (via our portal)
-      // sent it — only a genuine "inbound" reply can be confidently
-      // attributed without an origin record. Matches the agency route's
-      // fallback so both views agree absent a recorded origin.
-      origin: originMap.get(m.id) ?? (m.direction === "inbound" ? "client" : "staff"),
-    }));
+    const merged = messages
+      .map((m) => ({
+        ...m,
+        // GHL's own `direction` marks everything the location sends as
+        // "outbound" regardless of whether staff or a client (via our portal)
+        // sent it — only a genuine "inbound" reply can be confidently
+        // attributed without an origin record. Matches the agency route's
+        // fallback so both views agree absent a recorded origin.
+        origin: originMap.get(m.id) ?? (m.direction === "inbound" ? "client" : "staff"),
+      }))
+      // GHL returns messages newest-first; render like a normal chat thread,
+      // oldest at top, newest at the bottom.
+      .sort(
+        (a, b) =>
+          new Date(a.dateAdded ?? 0).getTime() - new Date(b.dateAdded ?? 0).getTime()
+      );
 
     return NextResponse.json({ ok: true, messages: merged, conversationId });
   } catch (e) {
