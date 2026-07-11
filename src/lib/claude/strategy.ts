@@ -36,19 +36,16 @@ ${rounds.map((r) => `Round ${r.round_number}: ${r.status} — ${r.total_deletion
 }
 
 /**
- * Calls Claude for dispute-strategy recommendations. Never throws when the
- * API key is unset — returns a clear "unavailable" string so the panel and
- * route can render it directly without special-casing a missing key.
+ * Static instructions, identical on every call — cached separately from the
+ * per-client `context` (built in buildStrategyContext) below, which changes
+ * every call and must not carry cache_control. Short enough (well under the
+ * ~4096-token minimum cacheable prefix on Haiku 4.5) that cache writes will
+ * likely no-op today (cache_creation_input_tokens: 0) — harmless, and pays
+ * off automatically if this prompt grows.
  */
-export async function generateStrategy(context: string): Promise<string> {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return "AI strategy is unavailable — add ANTHROPIC_API_KEY to enable this feature.";
-  }
-  const prompt = `You are an expert credit repair strategist with deep knowledge of FCRA, FDCPA, and bureau dispute tactics.
+const STRATEGY_SYSTEM_PROMPT = `You are an expert credit repair strategist with deep knowledge of FCRA, FDCPA, and bureau dispute tactics.
 
-Analyze this client's situation and provide specific, actionable dispute strategy recommendations.
-
-${context}
+Analyze the client's situation and provide specific, actionable dispute strategy recommendations.
 
 Provide:
 1. A brief overall assessment (2 sentences)
@@ -59,6 +56,16 @@ Provide:
 
 Reference specific FCRA sections where relevant. Keep it concise — this is for credit repair professionals.`;
 
+/**
+ * Calls Claude for dispute-strategy recommendations. Never throws when the
+ * API key is unset — returns a clear "unavailable" string so the panel and
+ * route can render it directly without special-casing a missing key.
+ */
+export async function generateStrategy(context: string): Promise<string> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return "AI strategy is unavailable — add ANTHROPIC_API_KEY to enable this feature.";
+  }
+
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -67,13 +74,32 @@ Reference specific FCRA sections where relevant. Keep it concise — this is for
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      // Internal staff-facing suggestion panel, not a client-facing legal
+      // document — Haiku is sufficient here and meaningfully cheaper than Sonnet.
+      model: "claude-haiku-4-5",
       max_tokens: 1500,
-      messages: [{ role: "user", content: prompt }],
+      system: [
+        {
+          type: "text",
+          text: STRATEGY_SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
+      messages: [{ role: "user", content: context }],
     }),
   });
   if (!res.ok) throw new Error(`Claude API error: ${res.status}`);
   const data = await res.json();
+
+  const usage = data.usage ?? {};
+  console.log("[claude:usage] strategy", {
+    model: "claude-haiku-4-5",
+    input_tokens: usage.input_tokens ?? 0,
+    output_tokens: usage.output_tokens ?? 0,
+    cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
+    cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
+  });
+
   return (data.content ?? [])
     .filter((b: { type: string }) => b.type === "text")
     .map((b: { text: string }) => b.text)

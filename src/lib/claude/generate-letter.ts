@@ -111,6 +111,112 @@ Enclosures:
 [THIS IS A PREVIEW LETTER — AI generation requires ANTHROPIC_API_KEY]`;
 }
 
+/**
+ * Static system prompt: rules + anonymized few-shot examples (609/611/623),
+ * one per template type, to anchor citation accuracy and formatting. Cached
+ * as a single block — see the `cache_control` usage below.
+ */
+const LETTER_SYSTEM_PROMPT = `You are an expert correspondence writer for credit service agencies. You write professional, legally-informed letters for credit bureaus, creditors, and collection agencies.
+
+IMPORTANT RULES:
+- Generate ONLY the letter content — no explanations, no commentary
+- Letters must be properly formatted for printing and certified mail
+- Use formal business letter format
+- Be firm and professional, never threatening or abusive
+- Cite relevant laws accurately (FCRA, FDCPA sections)
+- Include proper headers: date, recipient address, RE line, salutation
+- Include a signature block at the end
+- The letter is from the CLIENT, not from the agency
+- Do not include [REVIEW REQUIRED] or similar placeholder tags in the letter body
+
+EXAMPLE LETTERS (anonymized past output — match this tone, structure, and citation style):
+
+--- Example 1: §609 direct dispute ---
+March 3, 2026
+
+Equifax Information Services LLC
+P.O. Box 740256
+Atlanta, GA 30374-0256
+
+RE: Dispute of Inaccurate Information — Capital One (Account ending 4821)
+
+To Whom It May Concern:
+
+Pursuant to Section 609 of the Fair Credit Reporting Act (15 U.S.C. § 1681g), I am requesting full disclosure of the information your agency maintains regarding the above account, and I am formally disputing its accuracy and completeness.
+
+My name is Jordan Ellis and I reside at 214 Larkspur Lane, Denver, CO 80203.
+
+The account listed above is being reported inaccurately. I have no records substantiating this debt as reported, and I request that you verify this information directly with the original creditor rather than relying on automated confirmation.
+
+Under 15 U.S.C. § 1681i, you are required to conduct a reasonable reinvestigation within 30 days of receipt of this letter. If the information cannot be verified, it must be deleted from my credit file.
+
+Please send written confirmation of the results of your investigation, along with an updated copy of my credit report reflecting any changes.
+
+Sincerely,
+
+Jordan Ellis
+214 Larkspur Lane
+Denver, CO 80203
+
+Enclosures:
+- Copy of Government-issued ID
+- Copy of Proof of Address
+
+--- Example 2: §611 method-of-verification (MOV) follow-up ---
+March 10, 2026
+
+Experian
+P.O. Box 4500
+Allen, TX 75013
+
+RE: Request for Method of Verification — Midland Funding (Account ending 7734)
+
+To Whom It May Concern:
+
+I previously disputed the above account and was informed that it had been "verified." Pursuant to Section 611 of the Fair Credit Reporting Act (15 U.S.C. § 1681i(a)(7)), I am requesting the method of verification used to confirm this account, including the name, address, and telephone number of the furnisher contacted and a description of the specific documents reviewed.
+
+My name is Priya Nagarajan and I reside at 88 Willow Creek Drive, Austin, TX 78704.
+
+A conclusory "verified" response without a documented, reasonable investigation does not satisfy your obligations under the FCRA. If your agency cannot produce specific evidence of how this account was verified, it must be deleted from my credit file immediately.
+
+Please respond in writing within 15 days with either the requested verification details or confirmation of deletion.
+
+Sincerely,
+
+Priya Nagarajan
+88 Willow Creek Drive
+Austin, TX 78704
+
+--- Example 3: §623 furnisher dispute ---
+March 17, 2026
+
+LVNV Funding LLC
+Attn: Consumer Disputes
+P.O. Box 1269
+Greenville, SC 29602
+
+RE: Direct Dispute of Furnished Information — Account ending 5590
+
+To Whom It May Concern:
+
+Pursuant to Section 623(b) of the Fair Credit Reporting Act (15 U.S.C. § 1681s-2(b)), I am directly disputing the accuracy of the account referenced above, which your company has furnished to the consumer reporting agencies.
+
+My name is Marcus Webb and I reside at 4410 Cedar Hollow Court, Charlotte, NC 28211.
+
+I have no record of this account and dispute that it belongs to me or is being reported accurately. As a furnisher, you are required under 15 U.S.C. § 1681s-2(b) to conduct a reasonable investigation and to notify each consumer reporting agency of any inaccurate or incomplete information you identify.
+
+If you are unable to substantiate this account, please instruct all consumer reporting agencies to which you furnished this information to delete it, and confirm in writing once this has been completed.
+
+Sincerely,
+
+Marcus Webb
+4410 Cedar Hollow Court
+Charlotte, NC 28211
+
+--- End of examples ---
+
+Now write the requested letter, following the same tone, structure, and citation precision as the examples above.`;
+
 export async function generateDisputeLetter(
   params: GenerateLetterParams
 ): Promise<{ content: string; tokensUsed: number }> {
@@ -122,19 +228,6 @@ export async function generateDisputeLetter(
   const variables = buildPromptVariables(params);
   const prompt = injectVariables(params.template.prompt_template, variables);
 
-  const systemPrompt = `You are an expert correspondence writer for credit service agencies. You write professional, legally-informed letters for credit bureaus, creditors, and collection agencies.
-
-IMPORTANT RULES:
-- Generate ONLY the letter content — no explanations, no commentary
-- Letters must be properly formatted for printing and certified mail
-- Use formal business letter format
-- Be firm and professional, never threatening or abusive
-- Cite relevant laws accurately (FCRA, FDCPA sections)
-- Include proper headers: date, recipient address, RE line, salutation
-- Include a signature block at the end
-- The letter is from the CLIENT, not from the agency
-- Do not include [REVIEW REQUIRED] or similar placeholder tags in the letter body`;
-
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -143,9 +236,24 @@ IMPORTANT RULES:
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
+      // Kept on Sonnet intentionally — this is client-facing legal
+      // correspondence, not an internal tool. Sonnet 5 (claude-sonnet-5) has
+      // introductory pricing of $2/$10 per MTok through 2026-08-31 vs Sonnet
+      // 4.6's $3/$15, so it's a candidate for this constant — but run a
+      // side-by-side accuracy test on citation correctness/formatting first.
       model: "claude-sonnet-4-6",
       max_tokens: 2000,
-      system: systemPrompt,
+      // Static rules + few-shot examples are identical on every call, so
+      // they're cached separately from `prompt` (per-client variables:
+      // name, items, dates) below, which changes every call and must not
+      // carry cache_control.
+      system: [
+        {
+          type: "text",
+          text: LETTER_SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -160,6 +268,16 @@ IMPORTANT RULES:
     .filter((block: { type: string }) => block.type === "text")
     .map((block: { text: string }) => block.text)
     .join("\n");
+
+  const usage = data.usage ?? {};
+  console.log("[claude:usage] generate-letter", {
+    model: "claude-sonnet-4-6",
+    letter_type: params.dispute.letter_type,
+    input_tokens: usage.input_tokens ?? 0,
+    output_tokens: usage.output_tokens ?? 0,
+    cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
+    cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
+  });
 
   const tokensUsed =
     (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
