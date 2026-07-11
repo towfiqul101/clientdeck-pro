@@ -1,28 +1,66 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { Check, Download } from "lucide-react";
+import { cn } from "@/lib/utils/helpers";
 import { useClientSelection } from "./client-selection-context";
 
 // Checkboxes may render inside a whole-card <Link> (cards view); preventDefault
 // stops the anchor's native navigation, so the toggle is driven manually from
-// onClick rather than onChange (which wouldn't fire once preventDefault blocks
-// the native checked-state change that onChange depends on).
-function handleToggleClick(e: React.MouseEvent, run: () => void) {
+// the click handler.
+function handleToggleClick(e: React.MouseEvent | React.KeyboardEvent, run: () => void) {
   e.preventDefault();
   e.stopPropagation();
   run();
 }
 
+/**
+ * Custom checkbox — deliberately not a styled native <input>. The visible
+ * box's color comes straight from explicit Tailwind classes driven by React
+ * state, not accent-color/native rendering, so it can't end up looking
+ * unchecked due to a browser/theme quirk. A visually-hidden native checkbox
+ * mirrors the state purely so has-[:checked] can still highlight the row/card.
+ */
+function CheckboxVisual({
+  checked,
+  label,
+  onClick,
+}: {
+  checked: boolean;
+  label: string;
+  onClick: (e: React.MouseEvent | React.KeyboardEvent) => void;
+}) {
+  return (
+    <span
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === " " || e.key === "Enter") onClick(e);
+      }}
+      className="inline-flex cursor-pointer items-center justify-center"
+    >
+      <input type="checkbox" checked={checked} readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
+      <span
+        className={cn(
+          "flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
+          checked ? "border-violet-500 bg-violet-500" : "border-slate-400 bg-transparent"
+        )}
+      >
+        {checked && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+      </span>
+    </span>
+  );
+}
+
 export function RowCheckbox({ id }: { id: string }) {
   const { selected, toggle } = useClientSelection();
   return (
-    <input
-      type="checkbox"
+    <CheckboxVisual
       checked={selected.has(id)}
-      onChange={() => {}}
+      label="Select client"
       onClick={(e) => handleToggleClick(e, () => toggle(id))}
-      aria-label="Select client"
-      className="h-4 w-4 rounded border-white/20 bg-transparent accent-violet-500"
     />
   );
 }
@@ -30,13 +68,10 @@ export function RowCheckbox({ id }: { id: string }) {
 export function SelectAllCheckbox({ ids }: { ids: string[] }) {
   const { toggleAll, isAllSelected } = useClientSelection();
   return (
-    <input
-      type="checkbox"
+    <CheckboxVisual
       checked={isAllSelected(ids)}
-      onChange={() => {}}
+      label="Select all clients on this page"
       onClick={(e) => handleToggleClick(e, () => toggleAll(ids))}
-      aria-label="Select all clients on this page"
-      className="h-4 w-4 rounded border-white/20 bg-transparent accent-violet-500"
     />
   );
 }
