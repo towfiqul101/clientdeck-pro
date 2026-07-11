@@ -66,3 +66,26 @@ export async function assignClient(
   revalidatePath("/team");
   return { success: true };
 }
+
+/**
+ * Extra staff to notify about this client's events (migration 024), on top
+ * of the default owner/assigned-staff/admin targeting computed in
+ * src/lib/ghl/notifications.ts.
+ */
+export async function updateClientNotifyList(
+  clientId: string,
+  teamMemberIds: string[]
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("clients")
+    .update({ notify_team_member_ids: teamMemberIds })
+    .eq("id", clientId);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath(`/clients/${clientId}`);
+  return { success: true };
+}

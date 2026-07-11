@@ -244,6 +244,8 @@ export async function POST(req: Request) {
             phone: clientData.phone,
             ghl_contact_id: contactId,
             ghl_opportunity_id: null,
+            assigned_to: null,
+            notify_team_member_ids: [],
             portal_token: portalLink ? new URL(portalLink).searchParams.get("token") : null,
             monthly_fee: 0,
             total_items_deleted: 0,

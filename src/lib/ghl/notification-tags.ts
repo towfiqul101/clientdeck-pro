@@ -14,6 +14,7 @@ export type GHLNotificationType =
   | "staff_new_client"
   | "staff_round_overdue"
   | "staff_next_round_ready"
+  | "staff_monthly_progress"
   | "monthly_progress";
 
 /** GHL contact tags that fire each event's agency-built workflow. Removed 5s after being added so they can refire next time. */
@@ -27,5 +28,6 @@ export const NOTIFICATION_TAGS: Record<GHLNotificationType, string> = {
   staff_new_client: "cdp-staff-new-client",
   staff_round_overdue: "cdp-staff-overdue",
   staff_next_round_ready: "cdp-next-round-ready",
+  staff_monthly_progress: "cdp-staff-monthly-update",
   monthly_progress: "cdp-monthly-update",
 };

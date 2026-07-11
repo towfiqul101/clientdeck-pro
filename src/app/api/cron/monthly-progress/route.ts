@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCron } from "@/lib/cron/auth";
-import { notifyMonthlyProgress, NOTIFIABLE_CLIENT_COLUMNS, type NotifiableClient } from "@/lib/ghl/notifications";
+import {
+  notifyMonthlyProgress,
+  notifyStaffMonthlyProgress,
+  NOTIFIABLE_CLIENT_COLUMNS,
+  type NotifiableClient,
+} from "@/lib/ghl/notifications";
 import type { Agency } from "@/types";
 
 export const maxDuration = 60;
@@ -42,8 +47,8 @@ export async function GET(req: Request) {
     attempted += clients.length;
 
     const results = await Promise.allSettled(
-      clients.map((client) =>
-        notifyMonthlyProgress(agency as Agency, client as NotifiableClient, {
+      clients.map((client) => {
+        const summary = {
           scoreEq: client.score_eq_current,
           scoreExp: client.score_exp_current,
           scoreTu: client.score_tu_current,
@@ -51,10 +56,21 @@ export async function GET(req: Request) {
           totalItems: client.total_items_start,
           currentRound: client.current_round,
           monthsInProgram: monthsSince(client.service_start_date),
-        })
-      )
+        };
+        // Client-facing (their own GHL contact/portal) and the staff copy
+        // (owner/assigned staff/opted-in staff) are independent channels —
+        // one failing doesn't affect the other.
+        return Promise.allSettled([
+          notifyMonthlyProgress(agency as Agency, client as NotifiableClient, summary),
+          notifyStaffMonthlyProgress(agency as Agency, client as NotifiableClient, summary),
+        ]);
+      })
     );
-    sent += results.filter((r) => r.status === "fulfilled" && r.value.success).length;
+    sent += results.filter((r) => {
+      if (r.status !== "fulfilled") return false;
+      const [clientResult] = r.value;
+      return clientResult.status === "fulfilled" && clientResult.value.success;
+    }).length;
   }
 
   return NextResponse.json({ attempted, sent });

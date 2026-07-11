@@ -8,6 +8,7 @@ import { maxTeamMembersForPlan, PLAN_BY_ID } from "@/lib/billing/plans";
 import { resolveSubscribedTypes } from "@/lib/team/notification-prefs";
 import { TeamInvite } from "./team-invite";
 import { NotificationPrefsForm } from "./notification-prefs-form";
+import { MemberGhlContactField } from "./member-ghl-contact-field";
 import { Users, ArrowRight, Briefcase, Trash2, Percent } from "lucide-react";
 import type { TeamMember } from "@/types";
 
@@ -258,6 +259,11 @@ export default async function TeamPage() {
                   <p className="font-medium text-slate-100">{m.name}</p>
                   <p className="truncate text-sm text-slate-500">{m.email}</p>
                 </div>
+                <MemberGhlContactField
+                  memberId={m.id}
+                  initialValue={m.ghl_contact_id ?? ""}
+                  canEdit={canInvite || m.id === session.teamMember.id}
+                />
                 <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-medium capitalize text-slate-300">
                   {ROLE_LABEL[m.role] ?? m.role}
                 </span>

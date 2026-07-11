@@ -21,6 +21,8 @@ interface OverdueRoundRow {
     email: string | null;
     phone: string | null;
     ghl_contact_id: string | null;
+    assigned_to: string | null;
+    notify_team_member_ids: string[];
   } | null;
   agency: Agency | null;
 }
@@ -41,7 +43,7 @@ export async function GET(req: Request) {
   const { data, error } = await admin
     .from("dispute_rounds")
     .select(
-      "id, round_number, agency_id, client_id, response_deadline, client:clients(id, first_name, last_name, email, phone, ghl_contact_id), agency:agencies(*)"
+      "id, round_number, agency_id, client_id, response_deadline, client:clients(id, first_name, last_name, email, phone, ghl_contact_id, assigned_to, notify_team_member_ids), agency:agencies(*)"
     )
     .eq("status", "awaiting_response")
     .lt("response_deadline", today);
@@ -111,6 +113,8 @@ export async function GET(req: Request) {
           email: round.client.email,
           phone: round.client.phone,
           ghl_contact_id: round.client.ghl_contact_id,
+          assigned_to: round.client.assigned_to,
+          notify_team_member_ids: round.client.notify_team_member_ids,
           ghl_opportunity_id: null,
           portal_token: null,
           monthly_fee: 0,

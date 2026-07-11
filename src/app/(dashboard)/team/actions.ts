@@ -121,6 +121,38 @@ export async function inviteTeamMember(input: {
   return { success: true };
 }
 
+/**
+ * Sets a team member's own GHL contact id, so staff-facing notifications can
+ * reach them via a GHL tag/workflow instead of only Resend email. Self, or
+ * an owner/admin configuring on someone else's behalf (mirrors the invite
+ * permission).
+ */
+export async function updateMemberGhlContactId(
+  memberId: string,
+  ghlContactId: string
+): Promise<Result> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const isSelf = memberId === session.teamMember.id;
+  const isManager = session.teamMember.role === "owner" || session.teamMember.role === "admin";
+  if (!isSelf && !isManager) {
+    return { success: false, error: "Only owners/admins can set another member's GHL contact id." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("team_members")
+    .update({ ghl_contact_id: ghlContactId.trim() || null })
+    .eq("id", memberId)
+    .eq("agency_id", session.agency.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/team");
+  return { success: true };
+}
+
 /** Self-service only — a team member sets their own notification subscriptions. */
 export async function updateNotificationPrefs(types: string[]): Promise<Result> {
   const session = await getSessionContext();

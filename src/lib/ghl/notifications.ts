@@ -12,7 +12,7 @@ export type { GHLNotificationType };
 
 /** Columns every notify* helper needs off a `clients` row. Select this whenever a call site needs to notify. */
 export const NOTIFIABLE_CLIENT_COLUMNS =
-  "id, first_name, last_name, email, phone, ghl_contact_id, ghl_opportunity_id, portal_token, monthly_fee, total_items_deleted, total_items_start, service_start_date, score_eq_current, score_exp_current, score_tu_current, score_eq_start, score_exp_start, score_tu_start";
+  "id, first_name, last_name, email, phone, ghl_contact_id, ghl_opportunity_id, portal_token, monthly_fee, total_items_deleted, total_items_start, service_start_date, score_eq_current, score_exp_current, score_tu_current, score_eq_start, score_exp_start, score_tu_start, assigned_to, notify_team_member_ids";
 
 export type NotifiableClient = Pick<
   Client,
@@ -34,6 +34,8 @@ export type NotifiableClient = Pick<
   | "score_eq_start"
   | "score_exp_start"
   | "score_tu_start"
+  | "assigned_to"
+  | "notify_team_member_ids"
 >;
 
 export interface GHLNotificationPayload {
@@ -201,6 +203,7 @@ function buildNotificationFields(
     case "staff_new_client":
     case "staff_round_overdue":
     case "staff_next_round_ready":
+    case "staff_monthly_progress":
       return {};
     default:
       return {};
@@ -244,6 +247,10 @@ async function sendResendFallback(
     staff_next_round_ready: {
       subject: `Round ${payload.data.round_number} ready for ${payload.data.client_name}`,
       body: `Hi ${payload.firstName},\n\nRound ${payload.data.round_number} is ready to prepare for ${payload.data.client_name}.\n\nView in RoundTrack Pro: ${payload.data.dashboard_link}`,
+    },
+    staff_monthly_progress: {
+      subject: `Monthly progress: ${payload.data.client_name}`,
+      body: `Hi ${payload.firstName},\n\nMonthly progress update for ${payload.data.client_name}:\n\nScores — EQ ${payload.data.score_eq} / EXP ${payload.data.score_exp} / TU ${payload.data.score_tu}\nItems deleted: ${payload.data.total_deletions} of ${payload.data.total_items}\nCurrent round: ${payload.data.current_round}\n\nView in RoundTrack Pro: ${payload.data.dashboard_link}`,
     },
   };
 
@@ -468,35 +475,91 @@ export async function notifyPortalLink(agency: Agency, client: NotifiableClient)
   );
 }
 
-type StaffFacingType = "staff_new_client" | "staff_round_overdue" | "staff_next_round_ready";
+type StaffFacingType =
+  | "staff_new_client"
+  | "staff_round_overdue"
+  | "staff_next_round_ready"
+  | "staff_monthly_progress";
+
+/** The subset of a client row notifyStaffSubscribers needs to resolve recipients. */
+type StaffTargetClient = Pick<NotifiableClient, "id" | "assigned_to" | "notify_team_member_ids">;
+
+type StaffMember = Pick<
+  TeamMember,
+  "id" | "name" | "email" | "role" | "subscribed_notification_types" | "ghl_contact_id"
+>;
 
 /**
- * Sends a staff-facing notification to every active team member subscribed
- * to `type` (src/lib/team/notification-prefs.ts) — the owner's own GHL
- * contact (agencies.settings.owner_ghl_contact_id) is used for the owner
- * specifically when subscribed, everyone else gets Resend via their own
- * team_members.email. Falls back to the single owner-contact target — the
- * old behavior — only when nobody at all is subscribed (e.g. an agency
- * that hasn't touched the new per-staff settings yet).
+ * Resolves who should receive a staff-facing notification for a given
+ * client, merging three sources (deduplicated by member id):
+ *  1. Whoever is globally subscribed to `type` (src/lib/team/notification-
+ *     prefs.ts) — owners default to subscribed-to-everything until they
+ *     explicitly opt out.
+ *  2. The client's assigned staff member — always included for the 3
+ *     per-client event types (not staff_new_client, since nobody's
+ *     assigned yet at onboarding time).
+ *  3. For staff_new_client specifically: every owner/admin ("manager"),
+ *     since the client has no assignee yet.
+ *  4. Whoever is explicitly listed in that client's notify_team_member_ids
+ *     (migration 024) — extra recipients on top of the above, for any type.
+ */
+function resolveStaffRecipients(
+  type: StaffFacingType,
+  members: StaffMember[],
+  client: StaffTargetClient
+): StaffMember[] {
+  const recipients = new Map<string, StaffMember>();
+
+  for (const m of members) {
+    if (isSubscribedTo(m, type)) recipients.set(m.id, m);
+  }
+
+  if (type !== "staff_new_client" && client.assigned_to) {
+    const assigned = members.find((m) => m.id === client.assigned_to);
+    if (assigned) recipients.set(assigned.id, assigned);
+  }
+
+  if (type === "staff_new_client") {
+    for (const m of members) {
+      if (m.role === "owner" || m.role === "admin") recipients.set(m.id, m);
+    }
+  }
+
+  for (const id of client.notify_team_member_ids) {
+    const m = members.find((mm) => mm.id === id);
+    if (m) recipients.set(m.id, m);
+  }
+
+  return [...recipients.values()];
+}
+
+/**
+ * Sends a staff-facing notification to every recipient resolveStaffRecipients
+ * picks out for `type`/`client`. Each recipient's own GHL contact id
+ * (team_members.ghl_contact_id, migration 024) is used when set; the owner
+ * additionally falls back to the legacy agencies.settings.owner_ghl_contact_id
+ * for agencies that configured that before per-staff contact ids existed.
+ * Anyone without a resolvable contact id still gets Resend via their own
+ * email. Falls back to the single legacy owner-contact target only when
+ * nobody at all resolves — e.g. an agency that hasn't touched any of this.
  */
 async function notifyStaffSubscribers(
   agency: Agency,
   type: StaffFacingType,
   data: GHLNotificationPayload["data"],
-  logging: NotificationLogIds
+  logging: NotificationLogIds,
+  client: StaffTargetClient
 ) {
   const admin = createAdminClient();
   const { data: members } = await admin
     .from("team_members")
-    .select("id, name, email, role, subscribed_notification_types")
+    .select("id, name, email, role, subscribed_notification_types, ghl_contact_id")
     .eq("agency_id", agency.id)
     .eq("is_active", true);
 
-  const subscribed = (members ?? []).filter((m) =>
-    isSubscribedTo(m as Pick<TeamMember, "role" | "subscribed_notification_types">, type)
-  );
+  const recipients = resolveStaffRecipients(type, members ?? [], client);
 
-  if (subscribed.length === 0) {
+  if (recipients.length === 0) {
     const ownerContactId = agency.settings?.owner_ghl_contact_id;
     if (!ownerContactId) return { success: false, method: "none" as const };
     return sendGHLNotification(
@@ -508,8 +571,9 @@ async function notifyStaffSubscribers(
   }
 
   const results = await Promise.all(
-    subscribed.map((m) => {
-      const contactId = m.role === "owner" ? agency.settings?.owner_ghl_contact_id ?? "" : "";
+    recipients.map((m) => {
+      const contactId =
+        m.ghl_contact_id || (m.role === "owner" ? agency.settings?.owner_ghl_contact_id ?? "" : "");
       return sendGHLNotification(
         agency,
         type,
@@ -532,7 +596,8 @@ export async function notifyStaffNewClient(agency: Agency, client: NotifiableCli
       client_phone: client.phone ?? "",
       dashboard_link: dashboardLinkFor(client.id),
     },
-    { agencyId: agency.id, clientId: client.id }
+    { agencyId: agency.id, clientId: client.id },
+    client
   );
 }
 
@@ -551,13 +616,14 @@ export async function notifyStaffRoundOverdue(
       days_overdue: daysOverdue,
       dashboard_link: dashboardLinkFor(client.id),
     },
-    { agencyId: agency.id, clientId: client.id }
+    { agencyId: agency.id, clientId: client.id },
+    client
   );
 }
 
 export async function notifyStaffNextRoundReady(
   agency: Agency,
-  client: Pick<NotifiableClient, "id" | "first_name" | "last_name">,
+  client: Pick<NotifiableClient, "id" | "first_name" | "last_name" | "assigned_to" | "notify_team_member_ids">,
   roundNumber: number
 ) {
   return notifyStaffSubscribers(
@@ -568,7 +634,31 @@ export async function notifyStaffNextRoundReady(
       round_number: roundNumber,
       dashboard_link: dashboardLinkFor(client.id),
     },
-    { agencyId: agency.id, clientId: client.id }
+    { agencyId: agency.id, clientId: client.id },
+    client
+  );
+}
+
+export async function notifyStaffMonthlyProgress(
+  agency: Agency,
+  client: NotifiableClient,
+  summary: MonthlyProgressSummary
+) {
+  return notifyStaffSubscribers(
+    agency,
+    "staff_monthly_progress",
+    {
+      client_name: `${client.first_name} ${client.last_name}`,
+      score_eq: summary.scoreEq ?? 0,
+      score_exp: summary.scoreExp ?? 0,
+      score_tu: summary.scoreTu ?? 0,
+      total_deletions: summary.totalDeletions,
+      total_items: summary.totalItems,
+      current_round: summary.currentRound,
+      dashboard_link: dashboardLinkFor(client.id),
+    },
+    { agencyId: agency.id, clientId: client.id },
+    client
   );
 }
 

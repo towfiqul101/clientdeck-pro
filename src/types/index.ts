@@ -146,6 +146,10 @@ export interface TeamMember {
   // Staff-facing notification opt-ins (migration 020). NULL = never
   // configured (apply the role-based default); [] = explicitly set to none.
   subscribed_notification_types: string[] | null;
+  // Per-staff GHL contact id (migration 024) — lets this member receive
+  // GHL-tag notifications through their own contact rather than only via
+  // Resend email. NULL = not configured (Resend-only).
+  ghl_contact_id: string | null;
 }
 
 export interface Client {
@@ -195,6 +199,9 @@ export interface Client {
   ghl_drive_folder_id: string | null;
   assigned_to: string | null;
   assigned_at: string | null;
+  // Extra staff to notify about this specific client's events, on top of
+  // the default owner/assigned-staff/admin targeting (migration 024).
+  notify_team_member_ids: string[];
   created_at: string;
   updated_at: string;
 }

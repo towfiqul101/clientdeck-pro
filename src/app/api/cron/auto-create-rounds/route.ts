@@ -31,7 +31,9 @@ export async function GET(req: Request) {
 
     const { data: clients } = await admin
       .from("clients")
-      .select("id, current_round, ghl_contact_id, first_name, last_name, payment_status, status")
+      .select(
+        "id, current_round, ghl_contact_id, first_name, last_name, payment_status, status, assigned_to, notify_team_member_ids"
+      )
       .eq("agency_id", agency.id)
       .eq("status", "active");
 

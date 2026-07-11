@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PortalLinkMenu } from "./portal-link-menu";
 import { AssignClient } from "./assign-client";
+import { NotifyExtraStaff } from "./notify-extra-staff";
 import { AIStrategyPanel } from "./ai-strategy-panel";
 import { SendReviewRequestButton } from "./send-review-request-button";
 import { PullScoresButton } from "./pull-scores-button";
@@ -128,6 +129,11 @@ export function ClientHeader({
               members={members}
             />
           </div>
+          <NotifyExtraStaff
+            clientId={client.id}
+            selected={client.notify_team_member_ids}
+            members={members}
+          />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
