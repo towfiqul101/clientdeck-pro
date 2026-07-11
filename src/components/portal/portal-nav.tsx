@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/helpers";
-import { Home, TrendingUp, FolderOpen, CreditCard } from "lucide-react";
+import { Home, TrendingUp, MessageSquare, FolderOpen, CreditCard } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const ITEMS: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Home", href: "/portal/dashboard", icon: Home },
   { label: "Progress", href: "/portal/progress", icon: TrendingUp },
+  { label: "Messages", href: "/portal/messages", icon: MessageSquare },
   { label: "Documents", href: "/portal/documents", icon: FolderOpen },
   { label: "Billing", href: "/portal/billing", icon: CreditCard },
 ];

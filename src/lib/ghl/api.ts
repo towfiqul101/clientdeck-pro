@@ -274,6 +274,163 @@ export async function findOrCreateGHLOpportunity(
 }
 
 // ============================================
+// CONVERSATIONS
+// Used by the Messages tab on both the agency dashboard and client portal.
+// Conversations/messages are never cached locally — every fetch is a live
+// GHL round-trip, and the conversationId is resolved fresh on every call
+// rather than persisted (it's only ever used within a single request).
+// ============================================
+
+export interface GHLConversationMessage {
+  id: string;
+  direction?: "inbound" | "outbound";
+  messageType?: string;
+  body?: string;
+  dateAdded?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Finds the existing GHL conversation for this contact, or creates one.
+ * `contactId` is the only durable linking key — the returned conversationId
+ * is transient and re-derived on every call.
+ */
+export async function findOrCreateConversation(
+  contactId: string,
+  opts: GHLRequestOptions
+): Promise<string | null> {
+  const searchData = await ghlFetch(
+    `/conversations/search?locationId=${opts.locationId}&contactId=${contactId}&limit=1`,
+    opts
+  ).catch((err) => {
+    console.error("findOrCreateConversation search failed:", err);
+    return null;
+  });
+  const existing = searchData?.conversations?.[0];
+  if (existing?.id) return existing.id as string;
+
+  // No existing conversation — create one. GHL returns 400 with the
+  // existing conversationId embedded in the error body if one was created
+  // concurrently (e.g. two tabs open at once); recover it rather than
+  // failing the send, the same dedupe pattern createGHLContact() uses above.
+  let response: Response;
+  try {
+    response = await fetch(`${GHL_BASE_URL}/conversations/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${opts.apiKey}`,
+        "Content-Type": "application/json",
+        Version: "2021-07-28",
+      },
+      body: JSON.stringify({ locationId: opts.locationId, contactId }),
+    });
+  } catch (err) {
+    console.error("findOrCreateConversation create request failed:", err);
+    return null;
+  }
+
+  const text = await response.text();
+  let body: unknown = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    /* non-JSON response */
+  }
+  const b = (body ?? {}) as {
+    conversation?: { id?: string };
+    id?: string;
+    conversationId?: string;
+  };
+
+  if (response.ok) return b.conversation?.id ?? b.id ?? null;
+  if (b.conversationId) return b.conversationId;
+
+  console.error(`findOrCreateConversation create failed [${response.status}]:`, text);
+  return null;
+}
+
+/** Fetches the most recent messages in a conversation. */
+export async function getConversationMessages(
+  conversationId: string,
+  limit: number,
+  opts: GHLRequestOptions
+): Promise<GHLConversationMessage[]> {
+  const data = await ghlFetch(
+    `/conversations/${conversationId}/messages?limit=${limit}`,
+    opts
+  );
+  // GHL nests the array under messages.messages in some API versions —
+  // handle both shapes defensively.
+  return (data?.messages?.messages ?? data?.messages ?? []) as GHLConversationMessage[];
+}
+
+/** The location's default sending number, used as `fromNumber` for outbound SMS. */
+export async function getGHLLocationPhone(
+  opts: GHLRequestOptions
+): Promise<string | null> {
+  try {
+    const data = await ghlFetch(`/locations/${opts.locationId}`, opts);
+    return data?.location?.phone ?? null;
+  } catch (err) {
+    console.error("getGHLLocationPhone failed:", err);
+    return null;
+  }
+}
+
+export type SendConversationMessageInput =
+  | {
+      type: "SMS";
+      conversationId: string;
+      contactId: string;
+      message: string;
+      fromNumber: string | null;
+    }
+  | {
+      type: "Email";
+      conversationId: string;
+      contactId: string;
+      subject: string;
+      html: string;
+      emailFrom: string;
+      emailReplyTo?: string;
+    };
+
+/**
+ * Sends a message through GHL's Conversations API. SMS and Email are both
+ * routed through this single endpoint (channel selected via `type`) — no
+ * Resend involvement here, this is symmetric across both channels and both
+ * directions (staff→client, client→staff).
+ */
+export async function sendConversationMessage(
+  input: SendConversationMessageInput,
+  opts: GHLRequestOptions
+) {
+  const payload: Record<string, unknown> = {
+    type: input.type,
+    conversationId: input.conversationId,
+    contactId: input.contactId,
+  };
+
+  if (input.type === "SMS") {
+    payload.message = input.message;
+    // Known bug in the reference implementation this was ported from: SMS
+    // sends omitted fromNumber entirely, causing silent failures. Always
+    // set it when we have one (resolved via getGHLLocationPhone()).
+    if (input.fromNumber) payload.fromNumber = input.fromNumber;
+  } else {
+    payload.subject = input.subject;
+    payload.html = input.html;
+    payload.emailFrom = input.emailFrom;
+    payload.emailReplyTo = input.emailReplyTo || input.emailFrom;
+  }
+
+  return ghlFetch(`/conversations/messages`, opts, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// ============================================
 // TASKS
 // ============================================
 

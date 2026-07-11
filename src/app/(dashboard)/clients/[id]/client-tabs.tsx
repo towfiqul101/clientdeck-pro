@@ -9,6 +9,7 @@ const TABS = [
   { label: "Items", segment: "items" },
   { label: "Rounds", segment: "rounds" },
   { label: "Letters", segment: "letters" },
+  { label: "Messages", segment: "messages" },
   { label: "Documents", segment: "documents" },
   { label: "Timeline", segment: "timeline" },
 ];

@@ -74,6 +74,27 @@ export async function sendStaffDocUploadAlert(params: {
   });
 }
 
+export async function sendStaffMessageAlert(params: {
+  staffEmail: string;
+  clientName: string;
+  channel: "SMS" | "Email";
+  preview: string;
+  clientDashboardUrl: string;
+}): Promise<boolean> {
+  const html = `
+    <h3>New ${escapeHtml(params.channel)} message from ${escapeHtml(params.clientName)}</h3>
+    <p style="color:#475569">${escapeHtml(params.preview)}</p>
+    <p><a href="${escapeHtml(params.clientDashboardUrl)}">Reply in RoundTrack Pro →</a></p>
+  `;
+  const text = `${params.clientName} sent a ${params.channel} message via their portal:\n\n"${params.preview}"\n\nReply in RoundTrack Pro: ${params.clientDashboardUrl}`;
+  return sendEmail({
+    to: params.staffEmail,
+    subject: `${params.clientName} sent you a message`,
+    html,
+    text,
+  });
+}
+
 export async function sendStaffFirstLoginAlert(params: {
   staffEmail: string;
   clientName: string;
