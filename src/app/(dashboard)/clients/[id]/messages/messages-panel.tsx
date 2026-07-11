@@ -113,9 +113,8 @@ export function MessagesPanel({
             <button
               key={c}
               onClick={() => setChannel(c)}
-              disabled={c === "SMS" ? !hasPhone : !hasEmail}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 channel === c
                   ? "bg-violet-600 text-white"
                   : "text-slate-400 hover:text-slate-200"

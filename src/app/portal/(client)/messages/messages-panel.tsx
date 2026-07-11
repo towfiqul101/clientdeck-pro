@@ -116,8 +116,7 @@ export function PortalMessagesPanel({
           <button
             key={c}
             onClick={() => setChannel(c)}
-            disabled={c === "SMS" ? !hasPhone : !hasEmail}
-            className="flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors"
             style={
               channel === c
                 ? { backgroundColor: "var(--brand)", color: "white" }
