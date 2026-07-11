@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Zalando_Sans_Expanded, Zalando_Sans } from "next/font/google";
 import { AppContentLogo } from "@/components/logo";
 import { MarketingNav } from "./marketing-nav";
+
+// Scoped to the marketing route group only — dashboard/admin/portal keep Inter.
+const zalandoSansExpanded = Zalando_Sans_Expanded({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const zalandoSans = Zalando_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-marketing-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "RoundTrack Pro — Dispute Management Software for GoHighLevel",
@@ -40,7 +56,9 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-[#0F1730]">
+    <div
+      className={`${zalandoSansExpanded.variable} ${zalandoSans.variable} flex min-h-screen flex-col bg-[#0F1730] font-marketing-sans`}
+    >
       <MarketingNav />
       <main className="flex-1">{children}</main>
 

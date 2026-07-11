@@ -655,7 +655,7 @@ export default function LandingPage() {
             ✦ Built exclusively for GoHighLevel agencies
           </span>
 
-          <h1 className="mx-auto mt-7 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+          <h1 className="font-display mx-auto mt-7 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             Run your entire credit repair operation from one connected platform.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-400">
@@ -724,7 +724,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="mx-auto max-w-3xl text-center">
               <Eyebrow tone="light">The real problem</Eyebrow>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                 Your credit repair business isn&apos;t disorganized. Your tools
                 are.
               </h2>
@@ -768,7 +768,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="mx-auto max-w-3xl text-center">
               <Eyebrow>No hidden webhook fees</Eyebrow>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
                 Most dispute tools send notifications through costly GHL
                 webhooks. RoundTrack Pro doesn&apos;t.
               </h2>
@@ -794,7 +794,7 @@ export default function LandingPage() {
                   <p className="text-sm font-medium text-slate-400">
                     {c.clients}
                   </p>
-                  <p className="mt-3 text-4xl font-bold text-emerald-400">
+                  <p className="font-display mt-3 text-4xl font-bold text-emerald-400">
                     $0
                     <span className="text-lg font-normal text-slate-500">
                       /mo
@@ -821,7 +821,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="mx-auto max-w-3xl text-center">
               <Eyebrow tone="light">Everything in one place</Eyebrow>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                 Everything connected in one credit repair operating system.
               </h2>
             </div>
@@ -834,7 +834,7 @@ export default function LandingPage() {
                   <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 text-white">
                     <f.icon className="h-5 w-5" />
                   </span>
-                  <h3 className="mt-4 font-semibold text-slate-900">
+                  <h3 className="font-display mt-4 font-semibold text-slate-900">
                     {f.title}
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -861,7 +861,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="mx-auto max-w-3xl text-center">
               <Eyebrow>How it works</Eyebrow>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
                 From onboarding to deletions — one continuous flow.
               </h2>
             </div>
@@ -877,10 +877,10 @@ export default function LandingPage() {
                   )}
                 >
                   <div>
-                    <span className="text-5xl font-bold text-white/10">
+                    <span className="font-display text-5xl font-bold text-white/10">
                       {step.n}
                     </span>
-                    <h3 className="mt-2 text-xl font-semibold text-white">
+                    <h3 className="font-display mt-2 text-xl font-semibold text-white">
                       {step.title}
                     </h3>
                     <p className="mt-3 text-base leading-relaxed text-slate-400">
@@ -905,7 +905,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="mx-auto max-w-3xl text-center">
               <Eyebrow tone="light">How we compare</Eyebrow>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                 The same jobs. Without the double entry.
               </h2>
             </div>
@@ -975,7 +975,7 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-16 sm:py-24 md:grid-cols-2 md:gap-16">
           <Reveal>
             <Eyebrow>Who it&apos;s for</Eyebrow>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
               Built for GHL-powered credit repair agencies that need more than a
               dispute tracker.
             </h2>
@@ -1012,7 +1012,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="mx-auto max-w-3xl text-center">
               <Eyebrow tone="light">Pricing</Eyebrow>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                 Simple pricing. No surprises.
               </h2>
               <p className="mt-4 text-lg text-slate-600">
@@ -1053,7 +1053,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="mx-auto mb-10 max-w-2xl text-center">
               <Eyebrow>FAQ</Eyebrow>
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
                 Questions, answered.
               </h2>
             </div>
@@ -1073,7 +1073,7 @@ export default function LandingPage() {
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-xl font-bold text-white shadow-lg">
               TI
             </span>
-            <blockquote className="mt-6 text-xl leading-relaxed text-slate-700 sm:text-2xl">
+            <blockquote className="font-display mt-6 text-xl leading-relaxed text-slate-700 sm:text-2xl">
               &ldquo;I kept watching credit repair agencies juggle CDM,
               spreadsheets, and GoHighLevel — spending more time keeping tools in
               sync than serving clients. RoundTrack Pro exists to make running a
@@ -1100,7 +1100,7 @@ export default function LandingPage() {
         <div className="relative mx-auto max-w-4xl overflow-hidden px-6 py-20 text-center">
           <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-72 -translate-x-1/2 rounded-full bg-violet-600/20 blur-3xl" />
           <Reveal>
-            <h2 className="relative text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="font-display relative text-3xl font-bold tracking-tight sm:text-4xl">
               Stop running your credit repair business across three different
               tools.
             </h2>

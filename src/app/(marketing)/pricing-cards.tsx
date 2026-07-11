@@ -81,11 +81,11 @@ export function PricingCards({ signupHref }: { signupHref: string }) {
                 </span>
               )}
 
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="font-display text-lg font-semibold text-slate-900">
                 {plan.name}
               </h3>
               <div className="mt-4 flex items-end gap-1.5">
-                <span className="text-4xl font-bold tracking-tight text-slate-900">
+                <span className="font-display text-4xl font-bold tracking-tight text-slate-900">
                   ${perMonth}
                 </span>
                 <span className="mb-1.5 text-sm text-slate-500">/mo</span>

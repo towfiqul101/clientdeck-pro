@@ -75,6 +75,11 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
+
+  /* Marketing-page-only faces (loaded in (marketing)/layout.tsx). Kept
+     separate from --font-sans so the dashboard/admin/portal stay on Inter. */
+  --font-display: var(--font-display);
+  --font-marketing-sans: var(--font-marketing-sans);
 }
 
 body {
