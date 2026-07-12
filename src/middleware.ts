@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Agency auth pages — always reachable while signed out.
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
@@ -10,6 +11,33 @@ const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 // would trigger the "signed-in user hitting an auth route -> /dashboard" rule
 // below and bounce the user away before they can set their password.
 const PUBLIC_ROUTES = ["/", "/snapshot", "/terms", "/privacy", "/reset-password"];
+
+/** True for the app's own hosts (production domain, Vercel preview/prod
+ *  aliases, localhost) — i.e. NOT a candidate for custom-domain resolution. */
+function isPrimaryAppHost(host: string): boolean {
+  const bare = host.split(":")[0].toLowerCase();
+  if (bare === "localhost" || bare === "127.0.0.1") return true;
+  if (bare.endsWith(".vercel.app")) return true;
+  try {
+    const appHost = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "").hostname.toLowerCase();
+    return bare === appHost;
+  } catch {
+    return false;
+  }
+}
+
+/** True if `host` is a verified custom_domain on some agency. */
+async function isVerifiedAgencyDomain(host: string): Promise<boolean> {
+  const bare = host.split(":")[0].toLowerCase();
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("agencies")
+    .select("id")
+    .eq("custom_domain", bare)
+    .eq("custom_domain_verified", true)
+    .maybeSingle();
+  return Boolean(data);
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -22,6 +50,14 @@ export async function middleware(request: NextRequest) {
   // 2. Portal (client-facing) — separate auth via the portal_session cookie.
   //    Never apply staff Supabase Auth here.
   if (pathname.startsWith("/portal")) {
+    const host = request.headers.get("host");
+    // Defense-in-depth: on any Host that isn't our own, only proceed if it's
+    // a verified custom domain. The token/cookie flow below is already
+    // fully host-agnostic and does the real work; this just guards against
+    // stale DNS after an agency disconnects their domain.
+    if (host && !isPrimaryAppHost(host) && !(await isVerifiedAgencyDomain(host))) {
+      return new NextResponse("Not found", { status: 404 });
+    }
     if (pathname === "/portal") {
       // Magic-link entry: exchange ?token= for an httpOnly session cookie.
       const token = request.nextUrl.searchParams.get("token");
