@@ -34,17 +34,22 @@ async function vercelFetch(
   env: VercelEnv,
   init?: RequestInit
 ): Promise<{ ok: boolean; status: number; body: any }> {
-  const url = `${VERCEL_API}${withTeam(path, env)}`;
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${env.token}`,
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
-  const body = await response.json().catch(() => null);
-  return { ok: response.ok, status: response.status, body };
+  try {
+    const url = `${VERCEL_API}${withTeam(path, env)}`;
+    const response = await fetch(url, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${env.token}`,
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+    });
+    const body = await response.json().catch(() => null);
+    return { ok: response.ok, status: response.status, body };
+  } catch {
+    // Network-level failure (DNS, timeout, connection reset, etc.) — signal via status: 0
+    return { ok: false, status: 0, body: null };
+  }
 }
 
 export interface VerificationChallenge {
