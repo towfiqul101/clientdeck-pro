@@ -22,21 +22,34 @@ function isPrimaryAppHost(host: string): boolean {
     const appHost = new URL(process.env.NEXT_PUBLIC_APP_URL ?? "").hostname.toLowerCase();
     return bare === appHost;
   } catch {
-    return false;
+    // NEXT_PUBLIC_APP_URL is unset/malformed — an operational misconfig
+    // unrelated to any agency's custom-domain setup. Don't let that turn
+    // into "reject all portal traffic": treat the host as indeterminate and
+    // let it through, same as the "Supabase isn't configured" fallback
+    // below. The token/cookie flow remains the real security boundary.
+    return true;
   }
 }
 
 /** True if `host` is a verified custom_domain on some agency. */
 async function isVerifiedAgencyDomain(host: string): Promise<boolean> {
   const bare = host.split(":")[0].toLowerCase();
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("agencies")
-    .select("id")
-    .eq("custom_domain", bare)
-    .eq("custom_domain_verified", true)
-    .maybeSingle();
-  return Boolean(data);
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("agencies")
+      .select("id")
+      .eq("custom_domain", bare)
+      .eq("custom_domain_verified", true)
+      .maybeSingle();
+    return Boolean(data);
+  } catch {
+    // This only runs for non-primary-host /portal traffic (an actual or
+    // spoofed custom-domain request) — ordinary agency/localhost traffic
+    // never reaches here. Fail closed: a DB/env failure should reject as
+    // "not verified", not crash the middleware with a 500.
+    return false;
+  }
 }
 
 export async function middleware(request: NextRequest) {
