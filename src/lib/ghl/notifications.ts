@@ -278,8 +278,11 @@ async function sendResendFallback(
   return true;
 }
 
-function portalLinkFor(client: NotifiableClient): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.roundtrackpro.com";
+function portalLinkFor(agency: Agency, client: NotifiableClient): string {
+  const base =
+    agency?.custom_domain && agency.custom_domain_verified
+      ? `https://${agency.custom_domain}`
+      : process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://app.roundtrackpro.com";
   return `${base}/portal?token=${client.portal_token}`;
 }
 
@@ -331,7 +334,7 @@ export async function notifyRoundSent(agency: Agency, client: NotifiableClient, 
         round_number: round.round_number,
         items_disputed: round.total_items_disputed,
         response_deadline: round.response_deadline,
-        portal_link: portalLinkFor(client),
+        portal_link: portalLinkFor(agency, client),
       },
     },
     { agencyId: agency.id, clientId: client.id }
@@ -366,7 +369,7 @@ export async function notifyDeletionWin(
         score_eq: client.score_eq_current ?? 0,
         score_exp: client.score_exp_current ?? 0,
         score_tu: client.score_tu_current ?? 0,
-        portal_link: portalLinkFor(client),
+        portal_link: portalLinkFor(agency, client),
       },
     },
     { agencyId: agency.id, clientId: client.id }
@@ -397,7 +400,7 @@ export async function notifyRoundResults(agency: Agency, client: NotifiableClien
         total_no_response: round.total_no_response,
         total_items_disputed: round.total_items_disputed,
         has_wins: round.total_deletions > 0,
-        portal_link: portalLinkFor(client),
+        portal_link: portalLinkFor(agency, client),
       },
     },
     { agencyId: agency.id, clientId: client.id }
@@ -429,7 +432,7 @@ export async function notifyGoalAchieved(agency: Agency, client: NotifiableClien
         final_score_exp: client.score_exp_current ?? 0,
         final_score_tu: client.score_tu_current ?? 0,
         months_in_program: monthsSince(client.service_start_date),
-        portal_link: portalLinkFor(client),
+        portal_link: portalLinkFor(agency, client),
         review_link: agency.settings?.google_review_link ?? "",
       },
     },
@@ -448,7 +451,7 @@ export async function notifyPaymentFailed(agency: Agency, client: NotifiableClie
       email: client.email ?? undefined,
       data: {
         monthly_fee: client.monthly_fee,
-        portal_link: portalLinkFor(client),
+        portal_link: portalLinkFor(agency, client),
         agency_phone: agency.phone ?? "",
       },
     },
@@ -467,7 +470,7 @@ export async function notifyPortalLink(agency: Agency, client: NotifiableClient)
       lastName: client.last_name,
       email: client.email ?? undefined,
       data: {
-        portal_link: portalLinkFor(client),
+        portal_link: portalLinkFor(agency, client),
         agency_name: agency.name,
       },
     },
@@ -693,7 +696,7 @@ export async function notifyMonthlyProgress(
         total_items: summary.totalItems,
         current_round: summary.currentRound,
         months_in_program: summary.monthsInProgram,
-        portal_link: portalLinkFor(client),
+        portal_link: portalLinkFor(agency, client),
       },
     },
     { agencyId: agency.id, clientId: client.id }

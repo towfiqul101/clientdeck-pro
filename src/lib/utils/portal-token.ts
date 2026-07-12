@@ -26,6 +26,12 @@ export async function generatePortalLink(
     Date.now() + PORTAL_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000
   ).toISOString();
 
+  const { data: agency } = await supabase
+    .from("agencies")
+    .select("custom_domain, custom_domain_verified")
+    .eq("id", agencyId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("clients")
     .update({ portal_token: token, portal_token_expires_at: expires })
@@ -34,7 +40,12 @@ export async function generatePortalLink(
 
   if (error) throw new Error(`Could not generate portal link: ${error.message}`);
 
-  return `${appUrl()}/portal?token=${token}`;
+  const base =
+    agency?.custom_domain && agency.custom_domain_verified
+      ? `https://${agency.custom_domain}`
+      : appUrl();
+
+  return `${base}/portal?token=${token}`;
 }
 
 /**
