@@ -63,6 +63,7 @@ export interface Agency {
   logo_url: string | null;
   brand_color: string;
   custom_domain: string | null;
+  custom_domain_verified: boolean;
   ghl_location_id: string | null;
   ghl_api_key: string | null;
   ghl_webhook_url: string | null;
