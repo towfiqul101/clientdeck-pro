@@ -11,6 +11,14 @@ import type { AgencySettings, GhlFieldKeys } from "@/types";
 import type { PipelineStageKey } from "@/lib/ghl/pipeline";
 import { testConnection } from "@/lib/credit-monitoring";
 import type { CreditMonitoringService } from "@/types";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
+import {
+  addDomainToProject,
+  verifyDomain,
+  removeDomainFromProject,
+  type VerificationChallenge,
+} from "@/lib/vercel/domains";
 
 export interface ActionResult {
   success: boolean;
@@ -390,4 +398,106 @@ export async function testCreditMonitoringConnection(input: {
     : input.apiSecret;
 
   return testConnection(input.service, apiKey, apiSecret);
+}
+
+const DOMAIN_REGEX = /^(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/i;
+
+export interface ConnectDomainResult {
+  success: boolean;
+  error?: string;
+  ownershipChallenge?: VerificationChallenge | null;
+  recommendedCname?: string | null;
+}
+
+/** Connects a new custom domain: validates format, checks it isn't already
+ *  claimed by another agency, adds it to the Vercel project, and stores it
+ *  unverified pending DNS verification. */
+export async function connectDomain(domainInput: string): Promise<ConnectDomainResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  if (!isAgencyPlanOrHigher(session.agency.plan)) {
+    return { success: false, error: "Custom domains are available on the Agency plan." };
+  }
+
+  const domain = domainInput.trim().toLowerCase();
+  if (!DOMAIN_REGEX.test(domain)) {
+    return { success: false, error: "Enter a valid domain, e.g. portal.youragency.com." };
+  }
+
+  // RLS scopes agencies to the caller's own row, so a cross-tenant
+  // uniqueness check needs the admin client. The unique index from the
+  // migration is the real backstop against a race between two agencies.
+  const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("agencies")
+    .select("id")
+    .eq("custom_domain", domain)
+    .neq("id", session.agency.id)
+    .maybeSingle();
+  if (existing) {
+    return { success: false, error: "That domain is already connected to another agency." };
+  }
+
+  const result = await addDomainToProject(domain);
+  if (!result.ok) {
+    return { success: false, error: result.error };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("agencies")
+    .update({ custom_domain: domain, custom_domain_verified: false })
+    .eq("id", session.agency.id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/domain");
+  return {
+    success: true,
+    ownershipChallenge: result.status.ownershipChallenge,
+    recommendedCname: result.status.recommendedCname,
+  };
+}
+
+/** Triggers Vercel's verification check for the agency's connected domain and
+ *  flips custom_domain_verified on success. */
+export async function checkDomainVerification(): Promise<{ verified: boolean }> {
+  const session = await getSessionContext();
+  if (!session) return { verified: false };
+
+  const domain = session.agency.custom_domain;
+  if (!domain) return { verified: false };
+
+  const result = await verifyDomain(domain);
+  if (result.verified) {
+    const supabase = await createServerSupabaseClient();
+    await supabase
+      .from("agencies")
+      .update({ custom_domain_verified: true })
+      .eq("id", session.agency.id);
+    revalidatePath("/settings/domain");
+  }
+  return result;
+}
+
+/** Removes the agency's custom domain from Vercel and clears the DB fields. */
+export async function removeDomain(): Promise<ActionResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const domain = session.agency.custom_domain;
+  if (!domain) return { success: false, error: "No domain connected." };
+
+  const result = await removeDomainFromProject(domain);
+  if (!result.ok) return { success: false, error: result.error };
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("agencies")
+    .update({ custom_domain: null, custom_domain_verified: false })
+    .eq("id", session.agency.id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/domain");
+  return { success: true };
 }
