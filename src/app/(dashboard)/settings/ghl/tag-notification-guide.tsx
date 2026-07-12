@@ -52,20 +52,20 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
       />
       <div className="space-y-4 p-6">
         <div className="overflow-x-auto rounded-md border border-white/10">
-          <table className="w-full text-left text-sm">
+          <table className="w-full table-fixed text-left text-sm">
             <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Event</th>
-                <th className="px-3 py-2 font-medium">Tag to watch</th>
-                <th className="px-3 py-2 font-medium">Data fields available</th>
+                <th className="w-[28%] px-3 py-2 font-medium">Event</th>
+                <th className="w-[27%] px-3 py-2 font-medium">Tag to watch</th>
+                <th className="w-[45%] px-3 py-2 font-medium">Data fields available</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
               {ROWS.map((r) => (
                 <tr key={r.key}>
-                  <td className="px-3 py-2 text-slate-100">{r.event}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-blue-400">{NOTIFICATION_TAGS[r.key]}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-slate-500">{r.fields}</td>
+                  <td className="break-words px-3 py-2 text-slate-100">{r.event}</td>
+                  <td className="break-words px-3 py-2 font-mono text-xs text-blue-400">{NOTIFICATION_TAGS[r.key]}</td>
+                  <td className="break-words px-3 py-2 font-mono text-xs text-slate-500">{r.fields}</td>
                 </tr>
               ))}
             </tbody>

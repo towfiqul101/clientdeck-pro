@@ -209,7 +209,7 @@ export function ItemsManager({ clientId, items }: ItemsManagerProps) {
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setQuickAdd((q) => !q)}
             className={cn(

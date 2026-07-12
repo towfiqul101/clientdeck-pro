@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardHeader } from "@/components/ui/card";
+import { ScrollFadeX } from "@/components/ui/scroll-fade";
 import { cn, formatCurrency, formatDate, getStatusColor } from "@/lib/utils/helpers";
 import { planMonthly } from "@/lib/admin/mrr";
 import { PaymentForm, RowActions } from "./payment-controls";
@@ -73,7 +74,7 @@ export default async function AdminPaymentsPage({
             </div>
           }
         />
-        <div className="overflow-x-auto">
+        <ScrollFadeX>
           <table className="w-full min-w-[820px] text-sm">
             <thead className="border-b border-white/10 text-left text-xs uppercase text-slate-500">
               <tr>
@@ -127,7 +128,7 @@ export default async function AdminPaymentsPage({
               )}
             </tbody>
           </table>
-        </div>
+        </ScrollFadeX>
       </Card>
     </div>
   );

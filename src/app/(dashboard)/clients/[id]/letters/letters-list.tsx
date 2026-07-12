@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ScrollFadeX } from "@/components/ui/scroll-fade";
 import {
   formatDate,
   getBureauLabel,
@@ -43,7 +44,7 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
   return (
     <>
       <div className="overflow-hidden rounded-lg border border-white/10 bg-[#1a1a2e] shadow-sm">
-        <div className="overflow-x-auto">
+        <ScrollFadeX>
           <table className="min-w-full divide-y divide-white/[0.08] text-sm">
             <thead className="bg-white/[0.03] text-left text-xs font-medium uppercase tracking-wide text-slate-500">
               <tr>
@@ -104,7 +105,7 @@ export function LettersList({ letters }: { letters: LetterRow[] }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollFadeX>
       </div>
 
       <Modal

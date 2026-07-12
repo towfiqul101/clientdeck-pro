@@ -155,14 +155,14 @@ export default async function ClientsPage({
     <ClientSelectionProvider>
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-slate-100">Clients</h2>
           <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-sm font-medium text-slate-400 ring-1 ring-white/10">
             {total}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <ExportButton />
           <Link
             href="/clients/import"

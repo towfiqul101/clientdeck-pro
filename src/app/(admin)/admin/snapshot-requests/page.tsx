@@ -29,6 +29,11 @@ export default async function SnapshotRequestsAdminPage() {
           title="Snapshot Requests"
           description={`${pendingCount} pending · queue for delivering the GHL snapshot.`}
         />
+        {requests.length === 0 ? (
+          <p className="px-5 py-10 text-center text-sm text-slate-500">
+            No requests yet.
+          </p>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] text-sm">
             <thead className="border-b border-white/10 text-left text-xs uppercase text-slate-500">
@@ -43,14 +48,7 @@ export default async function SnapshotRequestsAdminPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
-              {requests.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
-                    No requests yet.
-                  </td>
-                </tr>
-              ) : (
-                requests.map((r) => (
+              {requests.map((r) => (
                   <tr key={r.id} className="hover:bg-white/[0.03]">
                     <td className="px-5 py-3 font-medium text-slate-100">{r.name}</td>
                     <td className="px-5 py-3 text-slate-400">{r.email}</td>
@@ -73,11 +71,11 @@ export default async function SnapshotRequestsAdminPage() {
                       <StatusButtons id={r.id} status={r.status} />
                     </td>
                   </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
+        )}
       </Card>
     </div>
   );

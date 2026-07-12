@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils/helpers";
+import { ScrollFadeX } from "@/components/ui/scroll-fade";
 import { FaqAccordion } from "./faq-accordion";
 import { FAQS } from "./faq-data";
 import { Reveal } from "./reveal";
@@ -228,7 +229,7 @@ function HeroDashboardMockup() {
               key={label}
               className="rounded-lg border border-white/8 bg-white/[0.02] px-2.5 py-2"
             >
-              <p className="text-[9px] uppercase tracking-wide text-slate-500">
+              <p className="truncate text-[9px] uppercase tracking-wide text-slate-500">
                 {label}
               </p>
               <p className="mt-0.5 text-sm font-semibold text-slate-200">
@@ -912,7 +913,7 @@ export default function LandingPage() {
           </Reveal>
 
           <Reveal delay={80}>
-            <div className="mt-12 overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+            <ScrollFadeX className="mt-12 rounded-2xl border border-slate-200 shadow-sm">
               <table className="w-full min-w-[640px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50">
@@ -958,7 +959,7 @@ export default function LandingPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollFadeX>
           </Reveal>
 
           <p className="mt-6 text-center text-xs text-slate-400">

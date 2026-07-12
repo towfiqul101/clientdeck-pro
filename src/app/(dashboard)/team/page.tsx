@@ -248,15 +248,15 @@ export default async function TeamPage() {
         ) : (
           <ul className="divide-y divide-white/[0.06]">
             {members.map((m) => (
-              <li key={m.id} className="flex items-center gap-4 px-5 py-4">
+              <li key={m.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-800 text-sm font-medium text-white">
                   {getInitials(
                     m.name.split(" ")[0] ?? m.name,
                     m.name.split(" ")[1] ?? ""
                   )}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-slate-100">{m.name}</p>
+                <div className="min-w-0 flex-1 basis-40">
+                  <p className="truncate font-medium text-slate-100">{m.name}</p>
                   <p className="truncate text-sm text-slate-500">{m.email}</p>
                 </div>
                 <MemberGhlContactField

@@ -546,7 +546,7 @@ export default async function DashboardPage() {
       <div className="glass-panel p-5">
         <h3 className="text-sm font-semibold text-slate-100">Quick Actions</h3>
         <p className="text-sm text-slate-400">Common tasks, one click away.</p>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (

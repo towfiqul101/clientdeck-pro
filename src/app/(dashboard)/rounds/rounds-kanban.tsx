@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn, formatDate, getInitials, daysRemaining } from "@/lib/utils/helpers";
+import { ScrollFadeX } from "@/components/ui/scroll-fade";
 import { FileText, CheckSquare, Send, Clock, CheckCircle } from "lucide-react";
 import type { RoundStatus, Bureau } from "@/types";
 import type { LucideIcon } from "lucide-react";
@@ -196,7 +197,7 @@ export function RoundsKanban({ rounds }: { rounds: KanbanRound[] }) {
       </div>
 
       {/* Desktop/tablet: horizontal-scroll columns */}
-      <div className="hidden gap-4 overflow-x-auto pb-2 sm:flex">
+      <ScrollFadeX className="hidden gap-4 pb-2 sm:flex">
         {byStage.map(({ status, config, rounds: stageRounds }) => {
           const Icon = config.icon;
           return (
@@ -226,7 +227,7 @@ export function RoundsKanban({ rounds }: { rounds: KanbanRound[] }) {
             </div>
           );
         })}
-      </div>
+      </ScrollFadeX>
 
       {/* Mobile: single-column accordion, one stage expanded at a time */}
       <div className="space-y-2 sm:hidden">

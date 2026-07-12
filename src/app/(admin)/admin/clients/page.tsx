@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardHeader } from "@/components/ui/card";
+import { ScrollFadeX } from "@/components/ui/scroll-fade";
 import { cn, getStatusColor, formatDate } from "@/lib/utils/helpers";
 import { CLIENT_STATUSES } from "@/lib/constants";
 import type { Client } from "@/types";
@@ -80,7 +81,12 @@ export default async function AdminClientsPage({
           </button>
         </form>
 
-        <div className="overflow-x-auto">
+        {clients.length === 0 ? (
+          <p className="px-5 py-10 text-center text-sm text-slate-500">
+            No clients found.
+          </p>
+        ) : (
+        <ScrollFadeX>
           <table className="w-full min-w-[820px] text-sm">
             <thead className="border-b border-white/10 text-left text-xs uppercase text-slate-500">
               <tr>
@@ -94,14 +100,7 @@ export default async function AdminClientsPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
-              {clients.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
-                    No clients found.
-                  </td>
-                </tr>
-              ) : (
-                clients.map((c) => (
+              {clients.map((c) => (
                   <tr key={c.id} className="hover:bg-white/[0.03]">
                     <td className="px-5 py-3 font-medium text-slate-100">
                       {c.first_name} {c.last_name}
@@ -136,11 +135,11 @@ export default async function AdminClientsPage({
                       {c.created_at ? formatDate(c.created_at) : "—"}
                     </td>
                   </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
-        </div>
+        </ScrollFadeX>
+        )}
       </Card>
     </div>
   );

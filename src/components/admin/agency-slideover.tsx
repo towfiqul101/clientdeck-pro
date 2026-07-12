@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { X, Copy, Loader2, Wrench, Database, RefreshCw, Mail } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
@@ -35,6 +35,56 @@ const primaryBtn =
   "rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50";
 const secondaryBtn =
   "rounded-md border border-white/10 bg-[#1a1a2e] px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/[0.03] disabled:opacity-50";
+
+function SlideoverTabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLButtonElement>(null);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(false);
+
+  const updateFades = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setShowLeftFade(el.scrollLeft > 4);
+    setShowRightFade(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ inline: "nearest", block: "nearest" });
+    updateFades();
+  }, [tab]);
+
+  const maskStops = [
+    showLeftFade ? "transparent 0, black 24px" : "black 0",
+    showRightFade ? "black calc(100% - 24px), transparent 100%" : "black 100%",
+  ].join(", ");
+  const maskImage = `linear-gradient(to right, ${maskStops})`;
+
+  return (
+    <div
+      ref={scrollerRef}
+      onScroll={updateFades}
+      className="flex gap-1 overflow-x-auto border-b border-white/10 px-3"
+      style={{ WebkitMaskImage: maskImage, maskImage }}
+    >
+      {TABS.map((t) => (
+        <button
+          key={t}
+          ref={t === tab ? activeRef : undefined}
+          onClick={() => setTab(t)}
+          className={cn(
+            "shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
+            tab === t
+              ? "border-blue-600 text-blue-400"
+              : "border-transparent text-slate-500 hover:text-slate-300"
+          )}
+        >
+          {t}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function webhookUrl(): string {
   const base = process.env.NEXT_PUBLIC_APP_URL || "https://roundtrackpro.com";
@@ -164,7 +214,7 @@ export function AgencySlideover({
               </div>
               <button
                 onClick={onClose}
-                className="rounded-md p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-slate-300"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-slate-500 hover:bg-white/[0.06] hover:text-slate-300"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
@@ -172,22 +222,7 @@ export function AgencySlideover({
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 overflow-x-auto border-b border-white/10 px-3">
-              {TABS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={cn(
-                    "whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
-                    tab === t
-                      ? "border-blue-600 text-blue-400"
-                      : "border-transparent text-slate-500 hover:text-slate-300"
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
+            <SlideoverTabs tab={tab} setTab={setTab} />
 
             {/* Body — keyed by agency id so per-tab form state resets when the
                 selected agency changes (useState initializers only run on mount). */}
