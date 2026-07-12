@@ -69,11 +69,11 @@ export const PLANS: PlanConfig[] = [
     name: "Agency",
     priceMonthly: 249,
     priceLabel: "$249",
-    maxClients: 9999,
+    maxClients: 3000,
     maxTeamMembers: 20,
-    clientsLabel: "Unlimited clients + custom domain + API",
+    clientsLabel: "Up to 3,000 active clients + custom domain + API",
     features: [
-      "Unlimited clients",
+      "Up to 3,000 active clients",
       "20 team members",
       "API access",
       "Custom portal domain",
@@ -96,7 +96,7 @@ export const PLAN_BY_ID: Record<Plan, PlanConfig | undefined> = {
 const PLAN_MAX_CLIENTS: Record<Plan, number> = {
   solo: 100,
   pro: 700,
-  agency: 9999,
+  agency: 3000,
   enterprise: 9999,
 };
 
