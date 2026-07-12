@@ -101,11 +101,11 @@ export async function addDomainToProject(
     return { ok: false, error: message };
   }
 
-  const ownershipChallenge = extractOwnershipChallenge(body.verification);
+  const ownershipChallenge = extractOwnershipChallenge(body?.verification);
   return {
     ok: true,
     status: {
-      verified: Boolean(body.verified),
+      verified: Boolean(body?.verified),
       ownershipChallenge,
       recommendedCname: ownershipChallenge
         ? null
@@ -126,9 +126,9 @@ export async function getDomainVerification(
   if (!ok) {
     return { verified: false, ownershipChallenge: null, recommendedCname: null };
   }
-  const ownershipChallenge = extractOwnershipChallenge(body.verification);
+  const ownershipChallenge = extractOwnershipChallenge(body?.verification);
   return {
-    verified: Boolean(body.verified),
+    verified: Boolean(body?.verified),
     ownershipChallenge,
     recommendedCname: ownershipChallenge
       ? null

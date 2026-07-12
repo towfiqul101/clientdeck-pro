@@ -58,7 +58,11 @@ export function DomainForm({ initial }: DomainFormProps) {
   }
 
   async function handleRemove() {
-    if (!window.confirm(`Remove ${domain}? Portal links will go back to using the default domain.`)) {
+    if (
+      !window.confirm(
+        `This will remove ${domain} from your account. Portal links will go back to using the default domain. Continue?`
+      )
+    ) {
       return;
     }
     setRemoving(true);
