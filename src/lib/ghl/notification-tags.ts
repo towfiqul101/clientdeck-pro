@@ -31,3 +31,18 @@ export const NOTIFICATION_TAGS: Record<GHLNotificationType, string> = {
   staff_monthly_progress: "cdp-staff-monthly-update",
   monthly_progress: "cdp-monthly-update",
 };
+
+/**
+ * The GHL tag an agency's form workflow adds to fire `/api/ghl/onboarding`.
+ *
+ * Namespaced deliberately. Credit-repair agencies commonly already run a
+ * generic `onboarding-complete` tag for their own (or another product's)
+ * automations — in a GHL location shared with TaxIntake Pro / Due Diligence
+ * Pro, an unrelated workflow adding that tag would fire client creation in
+ * RoundTrack Pro. Prefixing scopes it to us.
+ *
+ * NOTE: nothing in this codebase reads this tag — the onboarding route acts on
+ * whatever `contactId`/`locationId` it is POSTed. It is purely the GHL-side
+ * trigger name, surfaced here so the setup UI and docs can't drift apart.
+ */
+export const ONBOARDING_COMPLETE_TAG = "rtp-onboarding-completed";

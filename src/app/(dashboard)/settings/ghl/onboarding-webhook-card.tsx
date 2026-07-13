@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils/helpers";
 import { Copy, Check } from "lucide-react";
+import { ONBOARDING_COMPLETE_TAG } from "@/lib/ghl/notification-tags";
 
 export function OnboardingWebhookCard({ webhookUrl }: { webhookUrl: string }) {
   const [copied, setCopied] = useState<string | null>(null);
@@ -40,13 +41,23 @@ export function OnboardingWebhookCard({ webhookUrl }: { webhookUrl: string }) {
           <li>GHL → Automations → New Workflow</li>
           <li>
             Trigger: <span className="font-medium">Tag added</span> —{" "}
-            <code className="rounded bg-white/[0.06] px-1">onboarding-complete</code>
+            <code className="rounded bg-white/[0.06] px-1">{ONBOARDING_COMPLETE_TAG}</code>
           </li>
           <li>
             Action: <span className="font-medium">Webhook (POST)</span> to the URL
             below, with the JSON body below
           </li>
         </ol>
+
+        <p className="rounded-md border border-white/10 bg-white/[0.03] p-3 text-xs text-slate-500">
+          The tag is namespaced on purpose. A bare{" "}
+          <code className="rounded bg-white/[0.06] px-1">onboarding-complete</code>{" "}
+          is a common tag in credit-repair accounts — if another product or
+          workflow in this GHL location adds it, it would create clients in
+          RoundTrack Pro unexpectedly. Use{" "}
+          <code className="rounded bg-white/[0.06] px-1">{ONBOARDING_COMPLETE_TAG}</code>{" "}
+          and nothing else will trip it.
+        </p>
 
         <CopyRow
           label="URL"
