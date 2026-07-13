@@ -556,7 +556,7 @@ export async function syncClientCompleted(
 // Custom fields + pipelines. Used by /api/admin/tools/*.
 // ============================================
 
-export type GHLFieldDataType = "TEXT" | "NUMERICAL" | "DATE";
+export type GHLFieldDataType = "TEXT" | "NUMERICAL" | "DATE" | "FILE_UPLOAD";
 
 export interface GHLCustomFieldSpec {
   name: string;
@@ -564,10 +564,12 @@ export interface GHLCustomFieldSpec {
   dataType: GHLFieldDataType;
 }
 
-interface GHLExistingField {
+export interface GHLExistingField {
   id: string;
   name: string;
   fieldKey?: string;
+  /** Needed by field-detect's type gating — a score field must be NUMERICAL. */
+  dataType?: string;
 }
 
 /** Lists existing contact custom fields so setup can skip ones already present. */

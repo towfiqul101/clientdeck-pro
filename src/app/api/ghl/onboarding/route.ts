@@ -7,7 +7,7 @@ import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
 import { moveClientPipelineStage } from "@/lib/ghl/pipeline";
 import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
-import type { Agency, GHLContact, GHLContactCustomField } from "@/types";
+import type { Agency, GHLContact, GHLContactCustomField, GhlFieldKeys } from "@/types";
 
 // Hobby plan caps at 60s. Client creation runs inline; Drive/GHL sync run via
 // after() so GHL gets a fast 200 while the heavier work still completes.
@@ -16,13 +16,20 @@ export const dynamic = "force-dynamic";
 
 // ── Field extraction ─────────────────────────────────────────────────────────
 
-/** Reads a mapped GHL custom-field value by our internal key. */
+/**
+ * Reads a GHL custom-field value by key. GHL reports a field's key prefixed
+ * (`contact.cdp__ssn_last4`) while GHL_FIELD_KEYS stores it bare
+ * (`cdp__ssn_last4`), so both forms are accepted. An id is also accepted,
+ * since agency-configured mappings may hold either.
+ */
 function getFieldValue(contact: GHLContact, ghlKey: string | undefined): string | null {
   if (!ghlKey) return null;
+  const bare = ghlKey.replace(/^contact\./, "");
   const fields = contact.customFields ?? [];
-  const match = fields.find(
-    (f: GHLContactCustomField) => f.id === ghlKey || f.fieldKey === ghlKey
-  );
+  const match = fields.find((f: GHLContactCustomField) => {
+    const fieldKey = f.fieldKey?.replace(/^contact\./, "");
+    return f.id === ghlKey || fieldKey === bare;
+  });
   const value = match?.value;
   return value === undefined || value === null ? null : String(value);
 }
@@ -34,26 +41,30 @@ function toInt(value: string | null): number | null {
 }
 
 function extractClientData(contact: GHLContact, agency: Agency) {
+  // Bureau scores stay agency-configurable (the one thing an agency legitimately
+  // captures on their own intake form). Everything identity-related is read from
+  // RTP-owned fixed keys — see CDP_IDENTITY_FIELDS.
   const map = agency.ghl_field_keys ?? {};
-  const get = (key: keyof typeof map) => getFieldValue(contact, map[key]);
+  const mapped = (key: keyof GhlFieldKeys) => getFieldValue(contact, map[key]);
+  const fixed = (key: string) => getFieldValue(contact, key);
 
-  const eq = toInt(get("score_eq"));
-  const exp = toInt(get("score_exp"));
-  const tu = toInt(get("score_tu"));
-  const dobRaw = get("dob");
-  const signatureRaw = get("signature_status");
+  const eq = toInt(mapped("score_eq"));
+  const exp = toInt(mapped("score_exp"));
+  const tu = toInt(mapped("score_tu"));
+
+  const dobRaw = fixed(GHL_FIELD_KEYS.DOB);
+  const signatureRaw = fixed(GHL_FIELD_KEYS.SIGNATURE_STATUS);
   const isSigned = signatureRaw
     ? /^(signed|yes|true|complete)/i.test(signatureRaw)
     : false;
 
-  // NEVER store a full SSN. The mapped GHL field is frequently a full
-  // "SSN"/"Social Security Number" field (the auto-detect heuristic in
-  // field-detect.ts matches those names), so strip to digits and keep only
-  // the last 4 — the dashboard form and CSV import already enforce this, and
-  // this webhook is the least-trusted of the three entry points. Anything
-  // that can't yield exactly 4 digits is dropped rather than stored short,
-  // which would violate the ssn_last4 CHECK constraint (migration 030).
-  const ssnDigits = get("ssn_last4")?.replace(/\D/g, "") ?? "";
+  // NEVER store a full SSN. Even reading from our own fixed field, strip to
+  // digits and keep only the last 4 — the agency's GHL form writes into this
+  // field and could well put a full SSN there. The dashboard form and CSV
+  // import enforce the same rule; this webhook is the least-trusted entry
+  // point. Anything that can't yield 4 digits is dropped rather than stored
+  // short, which would violate the ssn_last4 CHECK constraint (migration 030).
+  const ssnDigits = fixed(GHL_FIELD_KEYS.SSN_LAST4)?.replace(/\D/g, "") ?? "";
   const ssnLast4 = ssnDigits.length >= 4 ? ssnDigits.slice(-4) : null;
 
   return {
@@ -75,7 +86,9 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     score_tu_current: tu,
     signature_status: (isSigned ? "signed" : "pending") as "signed" | "pending",
     signature_type: (isSigned ? "electronic" : null) as "electronic" | null,
-    signed_at: isSigned ? get("signed_at") || new Date().toISOString() : null,
+    signed_at: isSigned
+      ? fixed(GHL_FIELD_KEYS.SIGNATURE_DATE) || new Date().toISOString()
+      : null,
   };
 }
 
@@ -88,19 +101,19 @@ async function syncOnboardingDocsToDrive(
   if (!agency.google_drive_enabled) return;
 
   const clientName = `${contact.firstName ?? ""} ${contact.lastName ?? ""}`.trim();
-  const map = agency.ghl_field_keys ?? {};
 
-  const docTypes: { key: keyof typeof map; label: string }[] = [
-    { key: "credit_report_eq", label: "Credit_Report_Equifax" },
-    { key: "credit_report_exp", label: "Credit_Report_Experian" },
-    { key: "credit_report_tu", label: "Credit_Report_TransUnion" },
-    { key: "id_document", label: "ID_Document" },
-    { key: "proof_of_address", label: "Proof_of_Address" },
+  // Fixed RTP-owned FILE_UPLOAD fields — no longer agency-mapped.
+  const docTypes: { key: string; label: string }[] = [
+    { key: GHL_FIELD_KEYS.CREDIT_REPORT_EQ, label: "Credit_Report_Equifax" },
+    { key: GHL_FIELD_KEYS.CREDIT_REPORT_EXP, label: "Credit_Report_Experian" },
+    { key: GHL_FIELD_KEYS.CREDIT_REPORT_TU, label: "Credit_Report_TransUnion" },
+    { key: GHL_FIELD_KEYS.ID_DOCUMENT, label: "ID_Document" },
+    { key: GHL_FIELD_KEYS.PROOF_OF_ADDRESS, label: "Proof_of_Address" },
   ];
 
   for (const doc of docTypes) {
     try {
-      const fileUrl = getFieldValue(contact, map[doc.key]);
+      const fileUrl = getFieldValue(contact, doc.key);
       if (!fileUrl || !/^https?:\/\//.test(fileUrl)) continue;
 
       const fileRes = await fetch(fileUrl, {

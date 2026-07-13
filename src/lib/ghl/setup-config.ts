@@ -42,10 +42,38 @@ export const CDP_NOTIFICATION_FIELDS: GHLCustomFieldSpec[] = [
   { name: "CDP - Google Review Link", fieldKey: GHL_FIELD_KEYS.GOOGLE_REVIEW_LINK, dataType: "TEXT" },
 ];
 
-/** All 16 fields — used by both the admin and agency-self-service setup tools. */
+/**
+ * Identity / intake fields RoundTrack Pro OWNS and READS from (Option B).
+ *
+ * Previously these were agency-configurable mapping rows pointed at whatever
+ * field the agency already had. In a GHL location shared with TaxIntake Pro
+ * (`ti__*`) and Due Diligence Pro (`dd_*`) that produced real cross-product
+ * contamination — auto-detect resolved "Equifax Score" to a field named
+ * "Equifax Password", and "SSN Last 4" to a *dependent's* SSN. Fixed keys make
+ * the collision impossible.
+ *
+ * The agency must update their own GHL onboarding form/workflow to write into
+ * these fields; creating them here does not populate them.
+ */
+export const CDP_IDENTITY_FIELDS: GHLCustomFieldSpec[] = [
+  { name: "CDP - SSN Last 4", fieldKey: GHL_FIELD_KEYS.SSN_LAST4, dataType: "TEXT" },
+  { name: "CDP - DOB", fieldKey: GHL_FIELD_KEYS.DOB, dataType: "DATE" },
+  // TEXT, not a boolean/option type: extractClientData derives signed-ness with
+  // /^(signed|yes|true|complete)/i against the raw string value.
+  { name: "CDP - Signature Status", fieldKey: GHL_FIELD_KEYS.SIGNATURE_STATUS, dataType: "TEXT" },
+  { name: "CDP - Signature Date", fieldKey: GHL_FIELD_KEYS.SIGNATURE_DATE, dataType: "DATE" },
+  { name: "CDP - ID Document", fieldKey: GHL_FIELD_KEYS.ID_DOCUMENT, dataType: "FILE_UPLOAD" },
+  { name: "CDP - Proof of Address", fieldKey: GHL_FIELD_KEYS.PROOF_OF_ADDRESS, dataType: "FILE_UPLOAD" },
+  { name: "CDP - Credit Report EQ", fieldKey: GHL_FIELD_KEYS.CREDIT_REPORT_EQ, dataType: "FILE_UPLOAD" },
+  { name: "CDP - Credit Report EXP", fieldKey: GHL_FIELD_KEYS.CREDIT_REPORT_EXP, dataType: "FILE_UPLOAD" },
+  { name: "CDP - Credit Report TU", fieldKey: GHL_FIELD_KEYS.CREDIT_REPORT_TU, dataType: "FILE_UPLOAD" },
+];
+
+/** All 25 fields — used by both the admin and agency-self-service setup tools. */
 export const CDP_ALL_CUSTOM_FIELDS: GHLCustomFieldSpec[] = [
   ...CDP_CUSTOM_FIELDS,
   ...CDP_NOTIFICATION_FIELDS,
+  ...CDP_IDENTITY_FIELDS,
 ];
 
 /** The two pipelines the CDP snapshot sets up. */

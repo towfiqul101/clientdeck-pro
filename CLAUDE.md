@@ -55,7 +55,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 
 ### Key Flows
 1. **Client Intake:** GHL webhook → auto-create client in app OR manual creation
-2. **GHL-Native Onboarding:** Lead pays → GHL onboarding form (+ e-signature) → tag `onboarding-complete` fires webhook → `/api/ghl/onboarding` pulls the contact, upserts the client (via `ghl_field_keys` mapping), generates the portal link, syncs docs to Drive + writes back to GHL. Always returns 200 to GHL.
+2. **GHL-Native Onboarding:** Lead pays → GHL onboarding form (+ e-signature) → tag `onboarding-complete` fires webhook → `/api/ghl/onboarding` pulls the contact, upserts the client (identity/docs from the fixed `cdp__*` keys; scores from the `ghl_field_keys` mapping), generates the portal link, syncs docs to Drive + writes back to GHL. Always returns 200 to GHL.
 3. **Dispute Round:** Select items → generate letters with Claude → review/edit → finalize → export PDF → mark sent → GHL sync + Drive letter backup fires
 4. **Results Logging:** Staff logs results per item → deletions update client stats → GHL gets win notification
 5. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload (mirrored to Drive)
@@ -128,8 +128,18 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - **Signature request:** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow.
 - **Outbound sync:** Uses per-agency `ghl_api_key` stored in `agencies` table
 - **Sync events:** Round sent → pipeline move (`round_N_sent`) + tag + note. Results logged → pipeline move (`round_N_results`). Deletion → tag + field update. Score update → custom fields. Completion → `goal_achieved` stage + tag.
-- **GHL custom fields** the snapshot expects: `dispute_round_current`, `items_deleted_total`, `total_negative_items`, `next_dispute_date`, `credit_score_eq_current`, `credit_score_exp_current`, `credit_score_tu_current`, `clientdeck_portal_link`, `clientdeck_client_id`
-- **Field mapping (`agencies.ghl_field_keys` JSONB):** because GHL field IDs are unique per location, each agency maps its keys (SSN, DOB, scores, signature status/date, credit-report/ID/proof-of-address uploads) in Settings → GHL. Manual entry or heuristic "Auto-detect" (`field-detect.ts`).
+- **GHL custom fields — single source of truth is `src/lib/ghl/field-keys.ts`.** GHL derives a field's stored key from its NAME ("CDP - Portal Link" → `cdp__portal_link`; the `" - "` collapses to a **double** underscore). The setup tool (`CDP_ALL_CUSTOM_FIELDS` in `setup-config.ts`) creates **25** fields in three groups:
+  - **9 core tracking** (`CDP_CUSTOM_FIELDS`): `cdp__round_number`, `cdp__items_deleted`, `cdp__total_items`, `cdp__next_dispute_date`, `cdp__eq_score`, `cdp__exp_score`, `cdp__tu_score`, `cdp__portal_link`, `cdp__client_id`
+  - **7 notification** (`CDP_NOTIFICATION_FIELDS`): `cdp__items_disputed`, `cdp__deletions_this_round`, `cdp__deleted_items_list`, `cdp__score_improvement`, `cdp__monthly_fee`, `cdp__agency_phone`, `cdp__google_review_link`
+  - **9 identity/intake** (`CDP_IDENTITY_FIELDS`, Session 10 — the **read** side): `cdp__ssn_last_4` (TEXT — note `_last_4`, since "CDP - SSN Last 4" turns *each* space into an underscore), `cdp__dob` (DATE), `cdp__signature_status` (TEXT), `cdp__signature_date` (DATE), `cdp__id_document`, `cdp__proof_of_address`, `cdp__credit_report_eq`, `cdp__credit_report_exp`, `cdp__credit_report_tu` (all FILE_UPLOAD)
+
+  > **Note:** earlier revisions of this file listed names like `dispute_round_current` / `credit_score_eq_current` / `clientdeck_portal_link`. Those were **never** the real keys — always trust `field-keys.ts`.
+
+- **Field mapping (`agencies.ghl_field_keys` JSONB) — scores ONLY.** Only `score_eq` / `score_exp` / `score_tu` are agency-configurable (Settings → GHL), because an agency captures starting scores on its own intake form. Everything identity-related is read from the fixed `cdp__*` keys above.
+
+  **Why (Session 10):** these 9 were previously agency-mapped by name via `field-detect.ts`. In a live GHL location shared with TaxIntake Pro (`ti__*`) and Due Diligence Pro (`dd_*`), auto-detect resolved **"Equifax Score" → a field named "Equifax Password"**, **"SSN Last 4" → a *dependent's* SSN**, and "Proof of Address" → a yes/no radio. Caught before any client onboarded through it. Fixed keys make the collision structurally impossible. Auto-detect (scores only) is now **propose-and-confirm** and gated: credential denylist (password/login/PIN/secret), dependent/spouse exclusion, `NUMERICAL`-type requirement, `cdp__` preferred over `dd_`/`ti__`, and **no guess when nothing passes**.
+
+  ⚠️ Creating the identity fields does **not** populate them — each agency must point their own GHL onboarding form/workflow at the new `cdp__` fields. Surfaced by the `IdentityFieldsNotice` banner in Settings → GHL.
 
 ## GHL Notifications & Pipeline Sync (Session 6)
 - **Independent channel, additive to outbound sync above.** `src/lib/ghl/notifications.ts` POSTs to an agency-configured GHL "Custom Webhook" trigger URL per event (`agencies.settings.ghl_webhook_triggers`, one URL per `GHLNotificationType`), falling back to Resend email (only 4 of 10 types have a template — `round_sent`/`deletion_win`/`goal_achieved`/`payment_failed`), falling back to a log-only no-op. Every send is logged to `activity_log` (`action: "notification_sent"`) and never throws past its caller.

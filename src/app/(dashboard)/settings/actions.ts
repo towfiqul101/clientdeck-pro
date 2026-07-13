@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { verifyGHLConnection, getGHLCustomFields } from "@/lib/ghl/api";
-import { detectFieldKeys } from "@/lib/ghl/field-detect";
+import { detectFieldProposals, type FieldProposal } from "@/lib/ghl/field-detect";
 import { markOnboardingStep } from "@/lib/onboarding/mark";
 import { isMaskedSecret } from "@/lib/utils/secrets";
 import type { AgencySettings, GhlFieldKeys } from "@/types";
@@ -254,14 +254,16 @@ export async function updatePipelineConfig(input: {
 }
 
 /**
- * Reads the agency's GHL custom fields and heuristically maps them onto CDP
- * data keys by name, merging into the saved mapping. Returns the merged keys
- * so the form can update in place.
+ * PROPOSES score-field mappings for the user to approve. Deliberately does NOT
+ * save: the previous version silently wrote whatever the name heuristic matched
+ * straight into ghl_field_keys, which is how a live agency ended up with
+ * "Equifax Score" pointing at a field named "Equifax Password". Nothing is
+ * persisted until the user explicitly confirms and saves.
  */
-export async function autoDetectGhlFields(): Promise<{
+export async function proposeGhlFieldMappings(): Promise<{
   ok: boolean;
   message: string;
-  keys?: GhlFieldKeys;
+  proposals?: FieldProposal[];
 }> {
   const session = await getSessionContext();
   if (!session) return { ok: false, message: "Not authenticated." };
@@ -281,24 +283,13 @@ export async function autoDetectGhlFields(): Promise<{
     return { ok: false, message: "Could not read GHL custom fields. Check the API key." };
   }
 
-  const detected = detectFieldKeys(fields);
-  const merged: GhlFieldKeys = { ...(session.agency.ghl_field_keys ?? {}), ...detected };
-
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
-    .from("agencies")
-    .update({ ghl_field_keys: merged })
-    .eq("id", session.agency.id);
-  if (error) return { ok: false, message: error.message };
-
-  revalidatePath("/settings/ghl");
-  const count = Object.keys(detected).length;
+  const proposals = detectFieldProposals(fields);
   return {
     ok: true,
-    message: count
-      ? `Auto-detected ${count} field${count === 1 ? "" : "s"} by name. Review and save.`
-      : "No matching fields found — enter the keys manually.",
-    keys: merged,
+    proposals,
+    message: proposals.length
+      ? `Found ${proposals.length} candidate field${proposals.length === 1 ? "" : "s"}. Review each one before applying.`
+      : "No field passed the safety checks — enter the keys manually. (Credential, dependent/spouse, and non-numeric fields are never suggested.)",
   };
 }
 

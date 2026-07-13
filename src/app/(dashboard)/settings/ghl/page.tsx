@@ -6,6 +6,8 @@ import { maskSecret } from "@/lib/utils/secrets";
 import { GHLForm } from "./ghl-form";
 import { GHLSyncActivity } from "./sync-activity";
 import { GhlFieldMapping } from "./ghl-field-mapping";
+import { IdentityFieldsNotice } from "./identity-fields-notice";
+import { getGhlFieldStatus } from "@/lib/ghl/field-status";
 import { GhlSetupTools } from "./setup-tools";
 import { OnboardingWebhookCard } from "./onboarding-webhook-card";
 import { TagNotificationGuide } from "./tag-notification-guide";
@@ -21,6 +23,10 @@ export default async function GHLSettingsPage() {
     "https://app.roundtrackpro.com";
   const webhookUrl = `${appUrl}/api/ghl/webhook`;
   const onboardingWebhookUrl = `${appUrl}/api/ghl/onboarding`;
+
+  // Best-effort: resolves mapped keys to human-readable GHL names and reports
+  // whether the RTP-owned identity fields exist. No-ops if GHL isn't connected.
+  const fieldStatus = await getGhlFieldStatus(agency);
 
   return (
     <div className="space-y-6">
@@ -39,7 +45,15 @@ export default async function GHLSettingsPage() {
         }}
         webhookUrl={webhookUrl}
       />
-      <GhlFieldMapping initial={agency.ghl_field_keys ?? {}} />
+      <IdentityFieldsNotice
+        present={fieldStatus.identityPresent}
+        missing={fieldStatus.identityMissing}
+        available={fieldStatus.available}
+      />
+      <GhlFieldMapping
+        initial={agency.ghl_field_keys ?? {}}
+        namesByKey={fieldStatus.namesByKey}
+      />
       <GhlSetupTools />
       <OnboardingWebhookCard webhookUrl={onboardingWebhookUrl} />
       <TagNotificationGuide ownerGhlContactId={agency.settings?.owner_ghl_contact_id ?? ""} />

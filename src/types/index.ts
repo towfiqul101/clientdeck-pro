@@ -31,20 +31,23 @@ export type CreditMonitoringPullStatus = "success" | "failed" | "pending";
 /**
  * Per-agency map of GHL custom-field keys → CDP data. Values are the GHL
  * custom-field id/fieldKey for that location (which is unique per location).
+ *
+ * ONLY the three bureau scores remain agency-configurable. The 9 identity /
+ * intake fields (SSN, DOB, signature status+date, ID document, proof of
+ * address, the 3 credit-report uploads) are now RTP-owned fixed `cdp__` keys
+ * (see CDP_IDENTITY_FIELDS in lib/ghl/setup-config.ts) and are read directly
+ * by the onboarding webhook — they are deliberately NOT mappable, because
+ * name-based mapping in a GHL location shared with other products resolved
+ * them to the wrong fields (a dependent's SSN, a bureau *password*).
+ *
+ * The index signature is retained only so legacy keys already persisted in
+ * `agencies.ghl_field_keys` (e.g. `ssn_last4`) deserialize without error.
+ * Nothing reads them any more.
  */
 export interface GhlFieldKeys {
-  ssn_last4?: string;
-  dob?: string;
   score_eq?: string;
   score_exp?: string;
   score_tu?: string;
-  signature_status?: string;
-  signed_at?: string;
-  credit_report_eq?: string;
-  credit_report_exp?: string;
-  credit_report_tu?: string;
-  id_document?: string;
-  proof_of_address?: string;
   [key: string]: string | undefined;
 }
 

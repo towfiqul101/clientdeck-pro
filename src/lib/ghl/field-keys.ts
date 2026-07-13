@@ -48,6 +48,33 @@ export const GHL_FIELD_KEYS = {
   MONTHLY_FEE: "cdp__monthly_fee",
   AGENCY_PHONE: "cdp__agency_phone",
   GOOGLE_REVIEW_LINK: "cdp__google_review_link",
+
+  // ── Identity / onboarding intake (RTP-owned, READ side) ───────────────────
+  // These 9 were previously agency-configurable rows in Settings → GHL, mapped
+  // onto whatever field the agency happened to have. In a GHL location shared
+  // with other products (TaxIntake Pro `ti__*`, Due Diligence Pro `dd_*`) the
+  // name-matching heuristic collided catastrophically — "Equifax Score" resolved
+  // to a field literally named "Equifax Password", and "SSN Last 4" to a
+  // *dependent's* SSN. Owning these keys ourselves removes the ambiguity: the
+  // onboarding webhook now reads them by fixed key, never by agency mapping.
+  //
+  // NOTE: the agency's GHL onboarding form/workflow must be updated to WRITE
+  // into these fields — that part cannot be automated (see the banner in
+  // Settings → GHL).
+  // NOTE the key is `..._last_4`, not `..._last4`: GHL derives the key from the
+  // NAME "CDP - SSN Last 4", turning each space into an underscore. Verified
+  // against the same derivation that produces `cdp__eq_score` from "CDP - EQ
+  // Score". Getting this wrong creates the field fine and then reads it as
+  // permanently empty.
+  SSN_LAST4: "cdp__ssn_last_4",
+  DOB: "cdp__dob",
+  SIGNATURE_STATUS: "cdp__signature_status",
+  SIGNATURE_DATE: "cdp__signature_date",
+  ID_DOCUMENT: "cdp__id_document",
+  PROOF_OF_ADDRESS: "cdp__proof_of_address",
+  CREDIT_REPORT_EQ: "cdp__credit_report_eq",
+  CREDIT_REPORT_EXP: "cdp__credit_report_exp",
+  CREDIT_REPORT_TU: "cdp__credit_report_tu",
 } as const;
 
 export type GHLFieldKey = (typeof GHL_FIELD_KEYS)[keyof typeof GHL_FIELD_KEYS];
