@@ -19,6 +19,11 @@ const ERROR_MESSAGES: Record<string, string> = {
   exchange: "Could not complete the Google connection. Please try again.",
   not_configured:
     "Google Drive isn't set up on this deployment yet (missing GOOGLE_CLIENT_ID).",
+  // Google's consent screen shows Drive access as an optional checkbox — leaving
+  // it unticked still "succeeds", handing back a token that can't touch Drive.
+  // Say exactly what to do; a generic "try again" leaves the user stuck in a loop.
+  drive_scope:
+    "Google didn't grant access to your Drive, so nothing was connected. Click Connect again and make sure you tick the Google Drive permission checkbox on the consent screen.",
 };
 
 export default async function DocumentsSettingsPage({

@@ -74,6 +74,20 @@ export async function syncDocumentToDrive(
 }
 
 /**
+ * Creates (or finds) the "RoundTrack Pro" root folder and THROWS on failure.
+ *
+ * Used by the OAuth callback as a live proof that the granted token can
+ * actually write to Drive, before the connection is recorded. `ensureRootFolder`
+ * below deliberately swallows errors (it runs inside non-blocking sync paths),
+ * which is what let a broken connection sit there looking healthy — so connect
+ * needs a version that fails loudly.
+ */
+export async function createRootFolderOrThrow(refreshToken: string): Promise<string> {
+  const accessToken = await getAccessToken(refreshToken);
+  return getOrCreateFolder(accessToken, null, "RoundTrack Pro");
+}
+
+/**
  * Ensures the "RoundTrack Pro" root folder exists and is cached on the agency
  * row so later syncs skip the lookup. Returns the folder id or null.
  */

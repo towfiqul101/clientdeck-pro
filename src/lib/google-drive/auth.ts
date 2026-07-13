@@ -53,10 +53,36 @@ export function parseOAuthState(raw: string | null): OAuthState | null {
   }
 }
 
+/** The scope that actually lets us create/upload anything. */
+export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+
+/**
+ * Thrown when Google returns a token that lacks Drive access.
+ *
+ * Google's consent screen shows Drive as an OPTIONAL checkbox — if the user
+ * doesn't tick it (or `drive.file` isn't registered on the Cloud Console
+ * consent screen), OAuth still SUCCEEDS and returns a perfectly valid token
+ * that can read the account email and nothing else. That is exactly what
+ * happened to the first live agency: Drive showed as "Connected" while every
+ * Drive call 403'd with ACCESS_TOKEN_SCOPE_INSUFFICIENT, the error was
+ * swallowed as non-blocking, and no folder or document ever synced.
+ */
+export class MissingDriveScopeError extends Error {
+  constructor(readonly grantedScopes: string[]) {
+    super("Google did not grant the Drive permission (drive.file).");
+    this.name = "MissingDriveScopeError";
+  }
+}
+
+export function hasDriveScope(scopes: string[]): boolean {
+  return scopes.includes(DRIVE_FILE_SCOPE);
+}
+
 export async function exchangeCodeForTokens(code: string): Promise<{
   access_token: string;
   refresh_token: string;
   email: string;
+  scopes: string[];
 }> {
   const response = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
@@ -75,6 +101,14 @@ export async function exchangeCodeForTokens(code: string): Promise<{
     throw new Error("No refresh token returned — re-consent required.");
   }
 
+  // Google reports what it ACTUALLY granted, which is not necessarily what we
+  // asked for. Reject a token that can't touch Drive rather than storing it and
+  // discovering the problem later as a swallowed 403.
+  const scopes: string[] = (tokens.scope ?? "").split(" ").filter(Boolean);
+  if (!hasDriveScope(scopes)) {
+    throw new MissingDriveScopeError(scopes);
+  }
+
   const userInfo = await fetch(
     "https://www.googleapis.com/oauth2/v2/userinfo",
     { headers: { Authorization: `Bearer ${tokens.access_token}` } }
@@ -84,6 +118,7 @@ export async function exchangeCodeForTokens(code: string): Promise<{
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
     email: userInfo.email ?? "",
+    scopes,
   };
 }
 
