@@ -120,6 +120,11 @@ export function isAgencyPlanOrHigher(plan: Plan): boolean {
   return plan === "agency" || plan === "enterprise";
 }
 
+/** True for the plans that unlock API access (Agency and Enterprise). */
+export function hasApiAccess(plan: Plan): boolean {
+  return plan === "agency" || plan === "enterprise";
+}
+
 export function stripePriceIdForPlan(plan: Plan): string | undefined {
   const config = PLAN_BY_ID[plan];
   if (!config) return undefined;

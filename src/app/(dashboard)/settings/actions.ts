@@ -12,7 +12,9 @@ import type { PipelineStageKey } from "@/lib/ghl/pipeline";
 import { testConnection } from "@/lib/credit-monitoring";
 import type { CreditMonitoringService } from "@/types";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
+import { isAgencyPlanOrHigher, hasApiAccess } from "@/lib/billing/plans";
+import { generateApiKey } from "@/lib/api/auth";
+import type { AgencyApiKey } from "@/types";
 import {
   addDomainToProject,
   verifyDomain,
@@ -499,5 +501,54 @@ export async function removeDomain(): Promise<ActionResult> {
   if (error) return { success: false, error: error.message };
 
   revalidatePath("/settings/domain");
+  return { success: true };
+}
+
+export interface GenerateApiKeyResult extends ActionResult {
+  /** The raw key — only ever returned once, at creation time. */
+  rawKey?: string;
+  key?: AgencyApiKey;
+}
+
+/** Issues a new agency API key. The raw value is returned once for display
+ *  and never persisted — only its sha256 hash is stored. */
+export async function generateAgencyApiKey(): Promise<GenerateApiKeyResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  if (!hasApiAccess(session.agency.plan)) {
+    return { success: false, error: "API access is available on the Agency plan." };
+  }
+
+  const { raw, prefix, hash } = generateApiKey();
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("agency_api_keys")
+    .insert({ agency_id: session.agency.id, key_hash: hash, key_prefix: prefix })
+    .select()
+    .single();
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/api");
+  return { success: true, rawKey: raw, key: data as AgencyApiKey };
+}
+
+/** Revokes an agency API key — it stops authenticating immediately. */
+export async function revokeAgencyApiKey(keyId: string): Promise<ActionResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("agency_api_keys")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", keyId)
+    .eq("agency_id", session.agency.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/settings/api");
   return { success: true };
 }

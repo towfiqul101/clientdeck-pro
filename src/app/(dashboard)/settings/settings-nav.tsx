@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/helpers";
-import { Building2, Plug, Palette, CreditCard, FolderOpen, LineChart, Globe } from "lucide-react";
+import { Building2, Plug, Palette, CreditCard, FolderOpen, LineChart, Globe, Key } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const TABS: { label: string; href: string; icon: LucideIcon }[] = [
@@ -13,6 +13,7 @@ const TABS: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Documents", href: "/settings/documents", icon: FolderOpen },
   { label: "Credit Monitoring", href: "/settings/credit-monitoring", icon: LineChart },
   { label: "Domain", href: "/settings/domain", icon: Globe },
+  { label: "API", href: "/settings/api", icon: Key },
   { label: "Branding", href: "/settings/branding", icon: Palette },
   { label: "Billing", href: "/settings/billing", icon: CreditCard },
 ];
