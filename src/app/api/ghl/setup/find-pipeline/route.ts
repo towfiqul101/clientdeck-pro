@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getGHLPipelines } from "@/lib/ghl/api";
@@ -76,6 +77,11 @@ export async function POST() {
     .update({ settings: nextSettings })
     .eq("id", session.agency.id);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  // Without this the Settings page keeps serving its cached render, so the
+  // stage inputs still look EMPTY even though the ids saved fine — which reads
+  // as "the tool didn't work" when it actually did.
+  revalidatePath("/settings/ghl");
 
   const mappedCount = Object.keys(stages).length;
   const totalStages = PIPELINE_STAGE_KEYS.length;
