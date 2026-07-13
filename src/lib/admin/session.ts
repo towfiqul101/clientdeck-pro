@@ -12,15 +12,15 @@ import { createHash } from "crypto";
  * database lookup, no dependency on which agency user (if any) is signed in.
  */
 
-export const ADMIN_COOKIE = "cdp_admin_session";
+export const ADMIN_COOKIE = "rtp_admin_session";
 
 /** Label written to activity_log / recorded_by for admin-initiated writes. */
 export const ADMIN_ACTOR = "super-admin";
 
-/** The value we store in the cookie: sha256("cdp-admin-<password>"). */
+/** The value we store in the cookie: sha256("rtp-admin-<password>"). */
 export function getAdminSessionToken(): string {
   const password = process.env.ADMIN_PASSWORD || "";
-  return createHash("sha256").update(`cdp-admin-${password}`).digest("hex");
+  return createHash("sha256").update(`rtp-admin-${password}`).digest("hex");
 }
 
 /**

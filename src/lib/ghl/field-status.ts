@@ -1,6 +1,6 @@
 import "server-only";
 import { getGHLCustomFields } from "@/lib/ghl/api";
-import { CDP_IDENTITY_FIELDS } from "@/lib/ghl/setup-config";
+import { RTP_IDENTITY_FIELDS } from "@/lib/ghl/setup-config";
 import type { Agency } from "@/types";
 
 export interface GhlFieldStatus {
@@ -28,7 +28,7 @@ export async function getGhlFieldStatus(agency: Agency): Promise<GhlFieldStatus>
   const empty: GhlFieldStatus = {
     namesByKey: {},
     identityPresent: [],
-    identityMissing: CDP_IDENTITY_FIELDS.map((f) => f.fieldKey),
+    identityMissing: RTP_IDENTITY_FIELDS.map((f) => f.fieldKey),
     available: false,
   };
 
@@ -49,10 +49,10 @@ export async function getGhlFieldStatus(agency: Agency): Promise<GhlFieldStatus>
       if (key) present.add(key);
     }
 
-    const identityPresent = CDP_IDENTITY_FIELDS.filter((f) => present.has(f.fieldKey)).map(
+    const identityPresent = RTP_IDENTITY_FIELDS.filter((f) => present.has(f.fieldKey)).map(
       (f) => f.fieldKey
     );
-    const identityMissing = CDP_IDENTITY_FIELDS.filter((f) => !present.has(f.fieldKey)).map(
+    const identityMissing = RTP_IDENTITY_FIELDS.filter((f) => !present.has(f.fieldKey)).map(
       (f) => f.fieldKey
     );
 

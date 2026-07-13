@@ -29,13 +29,13 @@ export type CreditMonitoringService = "myfreescorenow" | "identityiq" | "smartcr
 export type CreditMonitoringPullStatus = "success" | "failed" | "pending";
 
 /**
- * Per-agency map of GHL custom-field keys → CDP data. Values are the GHL
+ * Per-agency map of GHL custom-field keys → RoundTrack Pro data. Values are the GHL
  * custom-field id/fieldKey for that location (which is unique per location).
  *
  * ONLY the three bureau scores remain agency-configurable. The 9 identity /
  * intake fields (SSN, DOB, signature status+date, ID document, proof of
- * address, the 3 credit-report uploads) are now RTP-owned fixed `cdp__` keys
- * (see CDP_IDENTITY_FIELDS in lib/ghl/setup-config.ts) and are read directly
+ * address, the 3 credit-report uploads) are now RTP-owned fixed `rtp__` keys
+ * (see RTP_IDENTITY_FIELDS in lib/ghl/setup-config.ts) and are read directly
  * by the onboarding webhook — they are deliberately NOT mappable, because
  * name-based mapping in a GHL location shared with other products resolved
  * them to the wrong fields (a dependent's SSN, a bureau *password*).

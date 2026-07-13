@@ -1,14 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminApi, loadAgencyGhl, hasGhlCreds } from "@/lib/admin/tool-helpers";
 import { getGHLPipelines, createGHLPipeline } from "@/lib/ghl/api";
-import { CDP_PIPELINES } from "@/lib/ghl/setup-config";
+import { RTP_PIPELINES } from "@/lib/ghl/setup-config";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Creates the Credit Sales + Active Client pipelines in the agency's GHL
  * location. Pipeline creation isn't available on every GHL plan via the public
- * API, so failures are reported clearly (fall back to the CDP snapshot).
+ * API, so failures are reported clearly (fall back to the RoundTrack Pro snapshot).
  */
 export async function POST(request: NextRequest) {
   const unauthorized = await requireAdminApi();
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   let skipped = 0;
   const errors: string[] = [];
 
-  for (const pipeline of CDP_PIPELINES) {
+  for (const pipeline of RTP_PIPELINES) {
     if (existingNames.has(pipeline.name.toLowerCase())) {
       skipped++;
       continue;
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     ok,
     message: ok
       ? `Created ${created} pipeline(s), skipped ${skipped} already present.`
-      : "GHL rejected pipeline creation — use the CDP snapshot to install pipelines instead.",
+      : "GHL rejected pipeline creation — use the RoundTrack Pro snapshot to install pipelines instead.",
     created,
     skipped,
     errors,

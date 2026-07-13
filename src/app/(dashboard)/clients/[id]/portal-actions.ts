@@ -18,7 +18,7 @@ type PortalLinkResult = { success: true; url: string } | { success: false; error
 
 /**
  * Rotates the client's portal token and (best-effort) pushes it into the GHL
- * `cdp__portal_link` custom field. Does NOT fire any client-facing
+ * `rtp__portal_link` custom field. Does NOT fire any client-facing
  * notification — that's each channel action's own job, so the three portal-
  * link delivery options stay genuinely independent.
  */
@@ -96,7 +96,7 @@ export async function copyPortalLink(clientId: string): Promise<PortalLinkResult
   return { success: true, url: rotated.url };
 }
 
-/** Rotates the link and fires the GHL `cdp-portal-sent` tag so the agency's own workflow SMS's it. */
+/** Rotates the link and fires the GHL `rtp-portal-sent` tag so the agency's own workflow SMS's it. */
 export async function sendPortalLinkViaGHL(clientId: string): Promise<PortalLinkResult> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };

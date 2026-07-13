@@ -24,7 +24,7 @@ const ThemeContext = createContext<ThemeContextValue>({
   mounted: false,
 });
 
-const STORAGE_KEY = "cdp-theme";
+const STORAGE_KEY = "rtp-theme";
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;

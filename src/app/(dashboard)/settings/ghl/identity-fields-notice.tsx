@@ -1,6 +1,6 @@
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { CDP_IDENTITY_FIELDS } from "@/lib/ghl/setup-config";
+import { RTP_IDENTITY_FIELDS } from "@/lib/ghl/setup-config";
 
 interface Props {
   present: string[];
@@ -12,7 +12,7 @@ interface Props {
  * Explains the one part of the identity-field migration that CANNOT be
  * automated: creating the fields in the agency's GHL location doesn't populate
  * them. The agency has to point their own onboarding form / workflow at the new
- * `cdp__` fields, inside their own GHL account.
+ * `rtp__` fields, inside their own GHL account.
  */
 export function IdentityFieldsNotice({ present, missing, available }: Props) {
   if (!available) return null;
@@ -49,7 +49,7 @@ export function IdentityFieldsNotice({ present, missing, available }: Props) {
 
         {missing.length > 0 && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300">
-            {missing.length} of {CDP_IDENTITY_FIELDS.length} fields don&apos;t exist
+            {missing.length} of {RTP_IDENTITY_FIELDS.length} fields don&apos;t exist
             in your GHL location yet. Run{" "}
             <strong>Create Custom Fields</strong> below to create them.
           </div>
@@ -65,7 +65,7 @@ export function IdentityFieldsNotice({ present, missing, available }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
-              {CDP_IDENTITY_FIELDS.map((f) => {
+              {RTP_IDENTITY_FIELDS.map((f) => {
                 const exists = present.includes(f.fieldKey);
                 return (
                   <tr key={f.fieldKey}>
@@ -90,7 +90,7 @@ export function IdentityFieldsNotice({ present, missing, available }: Props) {
         <p className="text-xs text-slate-500">
           In GHL: open your onboarding form → for each question above, set its
           mapped custom field to the matching{" "}
-          <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono">cdp__</code>{" "}
+          <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono">rtp__</code>{" "}
           field. Until you do, new clients will onboard without SSN, DOB,
           signature, or documents.
         </p>

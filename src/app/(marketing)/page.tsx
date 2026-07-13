@@ -480,8 +480,8 @@ function StepVisual({ n }: { n: string }) {
           </span>
         </div>
         {[
-          ["cdp__round_number", "2"],
-          ["cdp__items_deleted", "5"],
+          ["rtp__round_number", "2"],
+          ["rtp__items_deleted", "5"],
           ["Tag added", "round-2-sent"],
         ].map(([k, v]) => (
           <div

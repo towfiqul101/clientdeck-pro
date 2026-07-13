@@ -15,13 +15,13 @@ import {
 import { updateOwnerGhlContactId } from "../actions";
 
 const ROWS: { key: GHLNotificationType; event: string; fields: string }[] = [
-  { key: "round_sent", event: "Round Sent", fields: "cdp__round_number, cdp__items_disputed, cdp__portal_link" },
-  { key: "deletion_win", event: "Deletion Win", fields: "cdp__deletions_this_round, cdp__items_deleted, cdp__deleted_items_list" },
-  { key: "round_results_in", event: "Round Complete", fields: "cdp__round_number, cdp__items_deleted, cdp__total_items" },
-  { key: "goal_achieved", event: "Goal Achieved", fields: "cdp__score_improvement, cdp__google_review_link" },
-  { key: "payment_failed", event: "Payment Failed", fields: "cdp__monthly_fee, cdp__agency_phone" },
-  { key: "portal_link", event: "Portal Link Sent", fields: "cdp__portal_link" },
-  { key: "monthly_progress", event: "Monthly Update", fields: "cdp__eq_score, cdp__exp_score, cdp__tu_score" },
+  { key: "round_sent", event: "Round Sent", fields: "rtp__round_number, rtp__items_disputed, rtp__portal_link" },
+  { key: "deletion_win", event: "Deletion Win", fields: "rtp__deletions_this_round, rtp__items_deleted, rtp__deleted_items_list" },
+  { key: "round_results_in", event: "Round Complete", fields: "rtp__round_number, rtp__items_deleted, rtp__total_items" },
+  { key: "goal_achieved", event: "Goal Achieved", fields: "rtp__score_improvement, rtp__google_review_link" },
+  { key: "payment_failed", event: "Payment Failed", fields: "rtp__monthly_fee, rtp__agency_phone" },
+  { key: "portal_link", event: "Portal Link Sent", fields: "rtp__portal_link" },
+  { key: "monthly_progress", event: "Monthly Update", fields: "rtp__eq_score, rtp__exp_score, rtp__tu_score" },
   { key: "staff_new_client", event: "Staff: New Client", fields: "(fires on your owner contact — no fields written)" },
   { key: "staff_round_overdue", event: "Staff: Round Overdue", fields: "(fires on your owner contact — no fields written)" },
   { key: "staff_next_round_ready", event: "Staff: Next Round Ready", fields: "(fires on your owner contact — no fields written)" },
@@ -52,7 +52,7 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
     <Card>
       <CardHeader
         title="GHL Notifications (Free — No Per-Execution Cost)"
-        description='RoundTrack Pro notifies clients using GHL contact tags. When an event happens, we update the contact’s custom fields with the event data, then add a tag like "cdp-round-sent" — your GHL workflow (Tag trigger, free in GHL) picks it up and sends SMS/email from your own number.'
+        description='RoundTrack Pro notifies clients using GHL contact tags. When an event happens, we update the contact’s custom fields with the event data, then add a tag like "rtp-round-sent" — your GHL workflow (Tag trigger, free in GHL) picks it up and sends SMS/email from your own number.'
       />
       <div className="space-y-4 p-6">
         <div className="overflow-x-auto rounded-md border border-white/10">

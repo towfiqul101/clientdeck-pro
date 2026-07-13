@@ -17,15 +17,15 @@ import {
 const SNAPSHOT_URL = "https://roundtrackpro.com/snapshot"; // Week 7: final URL
 
 const CUSTOM_FIELDS = [
-  "cdp__round_number",
-  "cdp__items_deleted",
-  "cdp__total_items",
-  "cdp__next_dispute_date",
-  "cdp__eq_score",
-  "cdp__exp_score",
-  "cdp__tu_score",
-  "cdp__portal_link",
-  "cdp__client_id",
+  "rtp__round_number",
+  "rtp__items_deleted",
+  "rtp__total_items",
+  "rtp__next_dispute_date",
+  "rtp__eq_score",
+  "rtp__exp_score",
+  "rtp__tu_score",
+  "rtp__portal_link",
+  "rtp__client_id",
 ];
 
 export default async function OnboardingPage() {

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getAdminSessionToken, ADMIN_COOKIE } from "@/lib/admin/session";
 
 /**
- * Password-only admin login. On success, sets the httpOnly cdp_admin_session
+ * Password-only admin login. On success, sets the httpOnly rtp_admin_session
  * cookie and sends the operator to the admin dashboard. On failure, bounces
  * back to the login page with ?error=1 (redirect() throws, so it must stay
  * outside any try/catch).

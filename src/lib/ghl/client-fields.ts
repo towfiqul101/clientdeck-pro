@@ -3,7 +3,7 @@ import type { Client } from "@/types";
 
 /**
  * Builds the GHL custom-field payload for a single client's current state,
- * keyed by the real `cdp__*` GHL field keys. Shared by the bulk sync-clients
+ * keyed by the real `rtp__*` GHL field keys. Shared by the bulk sync-clients
  * tools and the per-client "Force Sync to GHL" action so they never drift.
  * Score/portal fields are omitted when absent so we don't overwrite a good
  * value in GHL with a blank.

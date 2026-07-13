@@ -13,7 +13,7 @@ type ForceSyncResult =
 
 /**
  * "Fix it now" action: writes ALL of a client's current values (round, item
- * counts, scores, portal link, client id) to their GHL contact's `cdp__*`
+ * counts, scores, portal link, client id) to their GHL contact's `rtp__*`
  * custom fields in one call. Regenerates the portal link so GHL always holds a
  * fresh one. Used to backfill contacts whose fields were left empty by the old
  * key/format bug.

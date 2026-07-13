@@ -110,7 +110,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2a. Admin panel — completely separate auth. It self-guards via the
-  //     cdp_admin_session cookie (see @/lib/admin/session) and has NO dependency
+  //     rtp_admin_session cookie (see @/lib/admin/session) and has NO dependency
   //     on Supabase Auth, so let every /admin route (including /admin/login)
   //     through untouched.
   if (pathname.startsWith("/admin")) {

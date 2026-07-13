@@ -1,6 +1,6 @@
 // ============================================
 // Vercel Domains API wrapper
-// Manages custom domains on the clientdeck-pro Vercel project for the
+// Manages custom domains on the Vercel project for the
 // Agency-plan "custom portal domain" feature. Plain fetch() — no SDK
 // dependency (mirrors the shape of src/lib/ghl/api.ts).
 // ============================================

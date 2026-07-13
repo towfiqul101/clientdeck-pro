@@ -20,7 +20,7 @@ const TOOLS = [
     key: "fields",
     icon: Wrench,
     title: "Create Custom Fields",
-    desc: "Creates all 25 CDP custom fields in your GHL location automatically (16 tracking/notification + 9 identity).",
+    desc: "Creates all 25 RTP custom fields in your GHL location automatically (16 tracking/notification + 9 identity).",
     path: "/api/ghl/setup/create-fields",
   },
   {
@@ -124,7 +124,7 @@ export function GhlSetupTools() {
           );
         })}
 
-        {/* Diagnostics — compares CDP's expected field keys against GHL's actual keys. */}
+        {/* Diagnostics — compares RoundTrack Pro's expected field keys against GHL's actual keys. */}
         <div className="rounded-lg border border-white/10 p-4">
           <button
             onClick={() => {
@@ -138,7 +138,7 @@ export function GhlSetupTools() {
           </button>
           <p className="mt-2 text-xs text-slate-500">
             Fields empty in GHL? This checks whether the custom fields in your GHL location have the
-            keys RoundTrack Pro writes to (<code className="text-slate-400">cdp__*</code>).
+            keys RoundTrack Pro writes to (<code className="text-slate-400">rtp__*</code>).
           </p>
 
           {debugOpen && (
@@ -195,7 +195,7 @@ export function GhlSetupTools() {
                   </div>
                   <p className="mt-2 text-[11px] text-slate-500">
                     Missing or mismatched? Run <span className="text-slate-400">Create Custom Fields</span>{" "}
-                    above — GHL derives each key from the field name, so the CDP-named fields resolve to
+                    above — GHL derives each key from the field name, so the RTP-named fields resolve to
                     the expected keys automatically.
                   </p>
                 </>

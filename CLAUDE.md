@@ -8,7 +8,34 @@ RoundTrack Pro is a B2B SaaS dispute management platform for credit repair agenc
 **Short tagline:** "Run every dispute round from one connected platform."
 **Positioning:** "Practice management software for credit professionals" — NOT credit repair software (legal distinction).
 
-> **Rename note (2026-07-10):** The product was renamed from **ClientDeck Pro → RoundTrack Pro** (domain `clientdeckpro.com → roundtrackpro.com`). This was a branding-only change — no schema, API, or logic changes. GHL custom-field keys (`cdp__*`), notification tags (`cdp-*`), the `cdp_admin_session` cookie, and the `x-clientdeck-secret` webhook header **intentionally keep their old identifiers** for backward compatibility with live agency GHL installs. See the "Post-Rename Manual Steps" section at the bottom.
+> **Rename note (2026-07-10):** The product was renamed from **ClientDeck Pro → RoundTrack Pro** (domain `clientdeckpro.com → roundtrackpro.com`).
+>
+> **Identifier rename (2026-07-14) — CLEAN BREAK, no dual-support.** Every `cdp`
+> identifier is now `rtp`. Written with the old prefix spelled out so this note
+> survives future find-and-replace:
+>
+> | Was | Now |
+> |---|---|
+> | GHL field keys `c`+`dp__*` | `rtp__*` (driven by renaming field NAMES "CDP - …" → "RTP - …") |
+> | Notification + inbound tags `c`+`dp-*` | `rtp-*` |
+> | Admin cookie `c`+`dp_admin_session` | `rtp_admin_session` |
+> | Webhook header `x-clientdeck-secret` | `x-rtp-secret` |
+> | localStorage `c`+`dp-theme` / `c`+`dp-rounds-view` | `rtp-theme` / `rtp-rounds-view` |
+>
+> ⚠️ **This renames nothing inside an agency's GHL account.** It changes what RTP
+> writes to and reads from; the old fields and tags still physically exist in GHL
+> and are now orphaned. Each agency must, by hand:
+> 1. Re-run **Create Custom Fields** — creates 25 new `RTP - …` fields. It does
+>    **not** rename the old ones.
+> 2. Repoint every old merge tag in their GHL workflows to `{{contact.rtp__*}}` —
+>    otherwise the message renders **blank**.
+> 3. Change every workflow **Tag Added** trigger to the `rtp-` tag — otherwise it
+>    **silently never fires** (no error, notifications just stop).
+> 4. Repoint the onboarding form's field mappings to the new `RTP - …` fields.
+>
+> Then the old fields/tags/pipeline can be deleted. Exception: `find-pipeline`
+> still accepts a legacy `CDP - ` **pipeline** name prefix alongside `RTP - `, so
+> stage mapping keeps working until the pipeline itself is renamed.
 
 ## Tech Stack
 - **Framework:** Next.js 16 (App Router, React 19, TypeScript, `src/` directory)
@@ -55,7 +82,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 
 ### Key Flows
 1. **Client Intake:** GHL webhook → auto-create client in app OR manual creation
-2. **GHL-Native Onboarding:** Lead pays → GHL onboarding form (+ e-signature) → tag `rtp-onboarding-completed` fires webhook → `/api/ghl/onboarding` pulls the contact, upserts the client (identity/docs from the fixed `cdp__*` keys; scores from the `ghl_field_keys` mapping), generates the portal link, syncs docs to Drive + writes back to GHL. Always returns 200 to GHL.
+2. **GHL-Native Onboarding:** Lead pays → GHL onboarding form (+ e-signature) → tag `rtp-onboarding-completed` fires webhook → `/api/ghl/onboarding` pulls the contact, upserts the client (identity/docs from the fixed `rtp__*` keys; scores from the `ghl_field_keys` mapping), generates the portal link, syncs docs to Drive + writes back to GHL. Always returns 200 to GHL.
 3. **Dispute Round:** Select items → generate letters with Claude → review/edit → finalize → export PDF → mark sent → GHL sync + Drive letter backup fires
 4. **Results Logging:** Staff logs results per item → deletions update client stats → GHL gets win notification
 5. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload (mirrored to Drive)
@@ -107,7 +134,7 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - `src/lib/ghl/notifications.ts` — GHL webhook notification service (10 `GHLNotificationType`s → agency's own GHL workflow, Resend email fallback, log-only no-op; never throws)
 - `src/lib/ghl/pipeline.ts` — best-effort GHL opportunity/pipeline-stage sync (`moveClientPipelineStage`)
 - `src/lib/google-drive/{auth,client,sync,letter-sync}.ts` — OAuth, Drive API, non-blocking sync
-- `src/lib/admin/session.ts` — super-admin password/cookie auth (`cdp_admin_session`)
+- `src/lib/admin/session.ts` — super-admin password/cookie auth (`rtp_admin_session`)
 - `src/lib/admin/{mrr,avatar,agency-panel,tool-helpers}.ts` — admin dashboard helpers
 - `src/lib/billing/plans.ts` — **single source of truth for plans/pricing/limits**
 - `src/lib/team/limits.ts` — team-member limit enforcement
@@ -139,28 +166,28 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 ## GHL Integration Details
 - **Inbound webhook auth (Session 10):** both inbound webhooks authenticate with the agency's own `agencies.webhook_token`, passed as `?secret=<token>` (or the `x-clientdeck-secret` / `x-wh-secret` header). Settings → GHL renders each agency's tokenized URL for copy-paste — **the URL is a live credential**. Auth **fails closed**, and the request is **tenant-bound**: the payload's `locationId` must belong to the token's agency, otherwise a valid token for agency A could write into agency B. The old global `GHL_WEBHOOK_SECRET` is still accepted *if set* (legacy migration path) but identifies no agency and so can't be tenant-bound — **keep it unset**. Rejections return **200** with `processed: false` (GHL retry-storms on non-2xx), so a misconfigured URL **fails silently** — verify with a real contact edit, not by looking for errors in GHL.
 - **Inbound webhook URL:** `/api/ghl/webhook` — handles ContactCreate, ContactUpdate, ContactTagUpdate. ⚠️ `ContactCreate` creates a RoundTrack client for **every** contact it receives — in a GHL location shared with other products, trigger it from a *targeted* workflow, never a blanket "contact created".
-- **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `rtp-onboarding-completed` (`ONBOARDING_COMPLETE_TAG` in `notification-tags.ts`; namespaced because a bare `onboarding-complete` is a common tag in credit-repair GHL accounts and another product's workflow adding it would create clients here. **Nothing in the code reads the tag** — the route acts on whatever `contactId`/`locationId` it is POSTed; the tag is purely the GHL-side trigger). This is the primary client-creation path. Upserts the client (identity/docs from the fixed `cdp__*` keys; scores from `ghl_field_keys`), generates the portal link, syncs docs to Drive + writes `clientdeck_client_id`/`clientdeck_portal_link` back. Heavy work runs in Next `after()`; always 200.
+- **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `rtp-onboarding-completed` (`ONBOARDING_COMPLETE_TAG` in `notification-tags.ts`; namespaced because a bare `onboarding-complete` is a common tag in credit-repair GHL accounts and another product's workflow adding it would create clients here. **Nothing in the code reads the tag** — the route acts on whatever `contactId`/`locationId` it is POSTed; the tag is purely the GHL-side trigger). This is the primary client-creation path. Upserts the client (identity/docs from the fixed `rtp__*` keys; scores from `ghl_field_keys`), generates the portal link, syncs docs to Drive + writes `clientdeck_client_id`/`clientdeck_portal_link` back. Heavy work runs in Next `after()`; always 200.
 - **Signature request:** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow.
 - **Outbound sync:** Uses per-agency `ghl_api_key` stored in `agencies` table
 - **Sync events:** Round sent → pipeline move (`round_N_sent`) + tag + note. Results logged → pipeline move (`round_N_results`). Deletion → tag + field update. Score update → custom fields. Completion → `goal_achieved` stage + tag.
-- **GHL custom fields — single source of truth is `src/lib/ghl/field-keys.ts`.** GHL derives a field's stored key from its NAME ("CDP - Portal Link" → `cdp__portal_link`; the `" - "` collapses to a **double** underscore). The setup tool (`CDP_ALL_CUSTOM_FIELDS` in `setup-config.ts`) creates **25** fields in three groups:
-  - **9 core tracking** (`CDP_CUSTOM_FIELDS`): `cdp__round_number`, `cdp__items_deleted`, `cdp__total_items`, `cdp__next_dispute_date`, `cdp__eq_score`, `cdp__exp_score`, `cdp__tu_score`, `cdp__portal_link`, `cdp__client_id`
-  - **7 notification** (`CDP_NOTIFICATION_FIELDS`): `cdp__items_disputed`, `cdp__deletions_this_round`, `cdp__deleted_items_list`, `cdp__score_improvement`, `cdp__monthly_fee`, `cdp__agency_phone`, `cdp__google_review_link`
-  - **9 identity/intake** (`CDP_IDENTITY_FIELDS`, Session 10 — the **read** side): `cdp__ssn_last_4` (TEXT — note `_last_4`, since "CDP - SSN Last 4" turns *each* space into an underscore), `cdp__dob` (DATE), `cdp__signature_status` (TEXT), `cdp__signature_date` (DATE), `cdp__id_document`, `cdp__proof_of_address`, `cdp__credit_report_eq`, `cdp__credit_report_exp`, `cdp__credit_report_tu` (all FILE_UPLOAD)
+- **GHL custom fields — single source of truth is `src/lib/ghl/field-keys.ts`.** GHL derives a field's stored key from its NAME ("RTP - Portal Link" → `rtp__portal_link`; the `" - "` collapses to a **double** underscore). The setup tool (`RTP_ALL_CUSTOM_FIELDS` in `setup-config.ts`) creates **25** fields in three groups:
+  - **9 core tracking** (`RTP_CUSTOM_FIELDS`): `rtp__round_number`, `rtp__items_deleted`, `rtp__total_items`, `rtp__next_dispute_date`, `rtp__eq_score`, `rtp__exp_score`, `rtp__tu_score`, `rtp__portal_link`, `rtp__client_id`
+  - **7 notification** (`RTP_NOTIFICATION_FIELDS`): `rtp__items_disputed`, `rtp__deletions_this_round`, `rtp__deleted_items_list`, `rtp__score_improvement`, `rtp__monthly_fee`, `rtp__agency_phone`, `rtp__google_review_link`
+  - **9 identity/intake** (`RTP_IDENTITY_FIELDS`, Session 10 — the **read** side): `rtp__ssn_last_4` (TEXT — note `_last_4`, since "RTP - SSN Last 4" turns *each* space into an underscore), `rtp__dob` (DATE), `rtp__signature_status` (TEXT), `rtp__signature_date` (DATE), `rtp__id_document`, `rtp__proof_of_address`, `rtp__credit_report_eq`, `rtp__credit_report_exp`, `rtp__credit_report_tu` (all FILE_UPLOAD)
 
   > **Note:** earlier revisions of this file listed names like `dispute_round_current` / `credit_score_eq_current` / `clientdeck_portal_link`. Those were **never** the real keys — always trust `field-keys.ts`.
 
-- **Field mapping (`agencies.ghl_field_keys` JSONB) — scores ONLY.** Only `score_eq` / `score_exp` / `score_tu` are agency-configurable (Settings → GHL), because an agency captures starting scores on its own intake form. Everything identity-related is read from the fixed `cdp__*` keys above.
+- **Field mapping (`agencies.ghl_field_keys` JSONB) — scores ONLY.** Only `score_eq` / `score_exp` / `score_tu` are agency-configurable (Settings → GHL), because an agency captures starting scores on its own intake form. Everything identity-related is read from the fixed `rtp__*` keys above.
 
-  **Why (Session 10):** these 9 were previously agency-mapped by name via `field-detect.ts`. In a live GHL location shared with TaxIntake Pro (`ti__*`) and Due Diligence Pro (`dd_*`), auto-detect resolved **"Equifax Score" → a field named "Equifax Password"**, **"SSN Last 4" → a *dependent's* SSN**, and "Proof of Address" → a yes/no radio. Caught before any client onboarded through it. Fixed keys make the collision structurally impossible. Auto-detect (scores only) is now **propose-and-confirm** and gated: credential denylist (password/login/PIN/secret), dependent/spouse exclusion, `NUMERICAL`-type requirement, `cdp__` preferred over `dd_`/`ti__`, and **no guess when nothing passes**.
+  **Why (Session 10):** these 9 were previously agency-mapped by name via `field-detect.ts`. In a live GHL location shared with TaxIntake Pro (`ti__*`) and Due Diligence Pro (`dd_*`), auto-detect resolved **"Equifax Score" → a field named "Equifax Password"**, **"SSN Last 4" → a *dependent's* SSN**, and "Proof of Address" → a yes/no radio. Caught before any client onboarded through it. Fixed keys make the collision structurally impossible. Auto-detect (scores only) is now **propose-and-confirm** and gated: credential denylist (password/login/PIN/secret), dependent/spouse exclusion, `NUMERICAL`-type requirement, `rtp__` preferred over `dd_`/`ti__`, and **no guess when nothing passes**.
 
-  ⚠️ Creating the identity fields does **not** populate them — each agency must point their own GHL onboarding form/workflow at the new `cdp__` fields. Surfaced by the `IdentityFieldsNotice` banner in Settings → GHL.
+  ⚠️ Creating the identity fields does **not** populate them — each agency must point their own GHL onboarding form/workflow at the new `rtp__` fields. Surfaced by the `IdentityFieldsNotice` banner in Settings → GHL.
 
 ## GHL Notifications & Pipeline Sync (Session 6)
 - **Independent channel, additive to outbound sync above.** `src/lib/ghl/notifications.ts` POSTs to an agency-configured GHL "Custom Webhook" trigger URL per event (`agencies.settings.ghl_webhook_triggers`, one URL per `GHLNotificationType`), falling back to Resend email (only 4 of 10 types have a template — `round_sent`/`deletion_win`/`goal_achieved`/`payment_failed`), falling back to a log-only no-op. Every send is logged to `activity_log` (`action: "notification_sent"`) and never throws past its caller.
 - **10 notification types**, each wired into one event: `round_sent`, `deletion_win`, `round_results_in` (round lifecycle), `goal_achieved` (client completed), `payment_failed` (Stripe webhook — client's own `stripe_customer_id`, distinct from the agency's SaaS subscription), `portal_link` (regeneration), `staff_new_client` (onboarding webhook), `staff_round_overdue` / `staff_next_round_ready` (crons), `monthly_progress` (new monthly cron, `/api/cron/monthly-progress`, `0 9 1 * *`). Staff-facing types need `agencies.settings.owner_ghl_contact_id` configured.
 - **Configure at Settings → GHL:** "Notification Webhooks" (per-type URL + Test button, backed by `/api/ghl/test-webhook`), "Pipeline Configuration", and a link to the full setup guide at `/onboarding/ghl-setup`.
-- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through the **9-stage** "Active Client" pipeline — `analysis`, `ready_to_dispute`, `round_1_sent`, `round_1_results`, `round_2_sent`, `round_2_results`, `round_3_plus`, `round_3_plus_results`, `goal_achieved` (configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`; labels + `stageForRoundSent`/`stageForRoundResults`/`stageForClientState` helpers live in `pipeline.ts`). Wired into round events in `clients/[id]/rounds/actions.ts` (round sent → `round_N_sent`, results logged → `round_N_results`, completion → `goal_achieved`); lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()`, caching it on `clients.ghl_opportunity_id`. New clients are placed in `analysis` at onboarding; `/api/ghl/setup/create-opportunities` backfills opportunities for all synced clients; `/api/ghl/setup/find-pipeline` auto-maps stage ids by name (GHL never exposes stage ids in its UI — this tool is the only way to get them) and **prefers a `CDP - ` prefixed pipeline** over any other name containing "active client". Best-effort, no-ops cleanly if unconfigured; unmapped stages just no-op. (Session 6; 3 → 8 stages in Session 8; rounds 3+ gained their own results stage in Session 10.)
+- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through the **9-stage** "Active Client" pipeline — `analysis`, `ready_to_dispute`, `round_1_sent`, `round_1_results`, `round_2_sent`, `round_2_results`, `round_3_plus`, `round_3_plus_results`, `goal_achieved` (configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`; labels + `stageForRoundSent`/`stageForRoundResults`/`stageForClientState` helpers live in `pipeline.ts`). Wired into round events in `clients/[id]/rounds/actions.ts` (round sent → `round_N_sent`, results logged → `round_N_results`, completion → `goal_achieved`); lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()`, caching it on `clients.ghl_opportunity_id`. New clients are placed in `analysis` at onboarding; `/api/ghl/setup/create-opportunities` backfills opportunities for all synced clients; `/api/ghl/setup/find-pipeline` auto-maps stage ids by name (GHL never exposes stage ids in its UI — this tool is the only way to get them) and **prefers an `RTP - ` (or legacy `CDP - `) prefixed pipeline** over any other name containing "active client". Best-effort, no-ops cleanly if unconfigured; unmapped stages just no-op. (Session 6; 3 → 8 stages in Session 8; rounds 3+ gained their own results stage in Session 10.)
   - `PipelineStageKey` (pipeline.ts) and `AgencySettings.ghl_pipeline_stages` (types/index.ts) duplicate the same key union — they can't import each other (circular). A **compile-time assertion in `pipeline.ts` makes any drift a build error**; don't "fix" it by deleting the assertion.
   - After changing the stage model, agencies must **re-run Find & Connect Pipeline** — existing `ghl_pipeline_stages` rows won't contain the new key until they do.
 - **Visibility:** client Timeline tab shows a "✓ GHL" / "⚠ Email fallback" badge on notification entries; admin agency slide-over's GHL Config tab shows a 10-row configured/not-set breakdown.
@@ -173,7 +200,7 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - Also surfaced in Reports ("Credit Score Analytics" section) and the admin agency slide-over (status + test-connection tool, `/api/admin/tools/test-credit-monitoring`).
 
 ## Super-Admin Panel (`/admin`)
-- **Auth is standalone** — password (`ADMIN_PASSWORD`) → SHA-256 → httpOnly `cdp_admin_session` cookie. NO Supabase Auth. Middleware lets all `/admin/*` through; `(admin)/layout.tsx` guards via `requireAdmin()`; `/admin/login` lives in a separate `(admin-auth)` group. `ADMIN_EMAIL` is only an optional audit label.
+- **Auth is standalone** — password (`ADMIN_PASSWORD`) → SHA-256 → httpOnly `rtp_admin_session` cookie. NO Supabase Auth. Middleware lets all `/admin/*` through; `(admin)/layout.tsx` guards via `requireAdmin()`; `/admin/login` lives in a separate `(admin-auth)` group. `ADMIN_EMAIL` is only an optional audit label.
 - **Features:** dashboard (agencies, MRR, pending-setup), agency **slide-over panel** (Status / GHL Config / Tools / Branding / Payments), Pending Setup queue, manual payments, snapshot requests, activity + system health (Supabase/Vercel/GHL sync failures).
 - **GHL setup tools** (`/api/admin/tools/*`): create 9 custom fields, create pipelines (best-effort), sync clients, resend welcome email.
 - All admin reads use `createAdminClient()` (service role, cross-agency).
@@ -307,14 +334,11 @@ analytics, landing page.
   `clientdeckpro.com → roundtrackpro.com`). Branding-only text sweep across
   `src/`, docs, and config (`package.json` name → `roundtrack-pro`, marketing
   metadata, logo wordmark, email FROM addresses, legal/portal/onboarding copy).
-  **Zero** schema/API/logic changes. Intentionally preserved for backward
-  compatibility with live GHL installs: `cdp__*` field keys, `cdp-*` notification
-  tags, the `cdp_admin_session` cookie, theme/view storage keys, and the
-  `x-clientdeck-secret` webhook header. GHL field NAMES keep the `"CDP - "`
-  prefix because GHL derives the stored `cdp__` key from the name — renaming to
-  `"RTP - "` would generate `rtp__` keys and break the mapping (see the REBRAND
-  NOTE comments in `field-keys.ts`/`setup-config.ts`). See "Post-Rename Manual
-  Steps" below for the outstanding infra/domain cutover checklist.
+  **Zero** schema/API/logic changes. At the time, the ClientDeck-era identifiers
+  (field keys, notification tags, admin cookie, webhook header) were deliberately
+  left alone for backward compatibility with live GHL installs.
+  **Superseded 2026-07-14** — see the Identifier rename note at the top of this
+  file: they have since ALL been renamed to `rtp*` in a clean break.
 - **Session 10 — Agency API, security audit + remediation, GHL field/webhook hardening.**
   - **Agency API** (Agency plan only, gated by `hasApiAccess()`): key generation with
     sha256 hashing + one-time reveal (Settings → API, migration 027); Bearer auth
@@ -332,16 +356,16 @@ analytics, landing page.
     with TaxIntake Pro (`ti__*`) and Due Diligence Pro (`dd_*`), name-based auto-detect had
     mapped **"Equifax Score" → a field named "Equifax Password"** and **"SSN Last 4" → a
     *dependent's* SSN**. Zero clients had onboarded through it. Fixed by making the 9
-    identity fields RTP-owned (`CDP_IDENTITY_FIELDS`) instead of agency-mapped, and
+    identity fields RTP-owned (`RTP_IDENTITY_FIELDS`) instead of agency-mapped, and
     hardening the score suggester (credential denylist, dependent/spouse exclusion,
-    `NUMERICAL` type gate, `cdp__` preferred, **no guess when nothing passes**,
+    `NUMERICAL` type gate, `rtp__` preferred, **no guess when nothing passes**,
     propose-and-confirm instead of silent-fill, human-readable field names in the UI).
   - **Webhook auth.** Both GHL webhooks were **fail-open** (`if (secret) { check }`) and
     production had no secret set — unauthenticated writes were possible using only the
     `locationId` (which is not a secret). Now fail-closed with a **per-agency
     `webhook_token`** (migration 031) plus **tenant binding**, so a valid token for one
     agency cannot write into another.
-  - Pipeline: 9th stage `round_3_plus_results`; `find-pipeline` prefers the `CDP - `
+  - Pipeline: 9th stage `round_3_plus_results`; `find-pipeline` prefers the RTP/CDP-prefixed
     pipeline; setup tools now `router.refresh()` so saved config stops rendering stale.
   - PWA install fix (manifest/`sw.js` were being auth-redirected by middleware).
 
@@ -353,7 +377,7 @@ analytics, landing page.
   exists: enroll clients through the credit-monitoring provider (`src/lib/credit-monitoring/`)
   and pull reports by API instead of holding client passwords.
 - **Per-agency GHL setup still manual:** each agency must (a) run *Create Custom Fields*,
-  (b) point their GHL onboarding form at the new `cdp__` identity fields (creating them does
+  (b) point their GHL onboarding form at the new `rtp__` identity fields (creating them does
   **not** populate them), (c) re-run *Find & Connect Pipeline* for the 9th stage, and
   (d) re-copy their tokenized webhook URLs into GHL.
 - **Low-severity, open:** plan-limit checks are check-then-act (concurrent imports can
@@ -403,11 +427,10 @@ steps are manual and happen outside the codebase:
 
 **Existing GHL agencies (notify beta users):**
 - [ ] Update webhook URLs in their Settings → GHL (`.../api/ghl/webhook`, `.../api/ghl/onboarding`) to `roundtrackpro.com`
-- [ ] GHL custom fields keep the `cdp__` key prefix — **no action needed** (field NAMES stay "CDP - ...")
-- [ ] GHL notification tags keep the `cdp-` prefix — **no action needed**
-- [ ] The `x-clientdeck-secret` webhook header is unchanged — **no action needed**
+- [ ] GHL custom fields renamed to `rtp__*` (names "RTP - ...") — **re-run Create Custom Fields, then repoint merge tags + the onboarding form**
+- [ ] GHL notification tags renamed to `rtp-*` — **update every workflow Tag-Added trigger**
+- [ ] Webhooks now authenticate with the per-agency token in the URL (`?secret=`) — re-copy both URLs from Settings → GHL
 - [ ] Only the webhook URL (domain) needs updating on the agency side
 
 **Not changed (intentionally):** GitHub repo URL, Supabase project name, Vercel
-project name (`clientdeck-pro`), DB schema/table/column names, the `cdp_*`/`cdp-*`
-code identifiers, and `x-clientdeck-secret`. Rename these later if desired.
+project name (`clientdeck-pro`), and DB schema/table/column names. Rename these later if desired.

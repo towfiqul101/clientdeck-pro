@@ -19,17 +19,17 @@ export type GHLNotificationType =
 
 /** GHL contact tags that fire each event's agency-built workflow. Removed 5s after being added so they can refire next time. */
 export const NOTIFICATION_TAGS: Record<GHLNotificationType, string> = {
-  round_sent: "cdp-round-sent",
-  deletion_win: "cdp-deletion-win",
-  round_results_in: "cdp-round-complete",
-  goal_achieved: "cdp-goal-achieved",
-  payment_failed: "cdp-payment-failed",
-  portal_link: "cdp-portal-sent",
-  staff_new_client: "cdp-staff-new-client",
-  staff_round_overdue: "cdp-staff-overdue",
-  staff_next_round_ready: "cdp-next-round-ready",
-  staff_monthly_progress: "cdp-staff-monthly-update",
-  monthly_progress: "cdp-monthly-update",
+  round_sent: "rtp-round-sent",
+  deletion_win: "rtp-deletion-win",
+  round_results_in: "rtp-round-complete",
+  goal_achieved: "rtp-goal-achieved",
+  payment_failed: "rtp-payment-failed",
+  portal_link: "rtp-portal-sent",
+  staff_new_client: "rtp-staff-new-client",
+  staff_round_overdue: "rtp-staff-overdue",
+  staff_next_round_ready: "rtp-next-round-ready",
+  staff_monthly_progress: "rtp-staff-monthly-update",
+  monthly_progress: "rtp-monthly-update",
 };
 
 /**

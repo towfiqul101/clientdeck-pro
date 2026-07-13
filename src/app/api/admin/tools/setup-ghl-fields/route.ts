@@ -4,11 +4,11 @@ import {
   getGHLCustomFields,
   createGHLCustomField,
 } from "@/lib/ghl/api";
-import { CDP_ALL_CUSTOM_FIELDS } from "@/lib/ghl/setup-config";
+import { RTP_ALL_CUSTOM_FIELDS } from "@/lib/ghl/setup-config";
 
 export const dynamic = "force-dynamic";
 
-/** Creates all 16 CDP custom fields in the agency's GHL location (skips existing). */
+/** Creates all 25 RTP custom fields in the agency's GHL location (skips existing). */
 export async function POST(request: NextRequest) {
   const unauthorized = await requireAdminApi();
   if (unauthorized) return unauthorized;
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   let skipped = 0;
   const errors: string[] = [];
 
-  for (const field of CDP_ALL_CUSTOM_FIELDS) {
+  for (const field of RTP_ALL_CUSTOM_FIELDS) {
     if (existingNames.has(field.name.toLowerCase())) {
       skipped++;
       continue;

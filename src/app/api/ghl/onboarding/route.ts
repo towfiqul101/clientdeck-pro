@@ -19,8 +19,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Reads a GHL custom-field value by key. GHL reports a field's key prefixed
- * (`contact.cdp__ssn_last4`) while GHL_FIELD_KEYS stores it bare
- * (`cdp__ssn_last4`), so both forms are accepted. An id is also accepted,
+ * (`contact.rtp__ssn_last4`) while GHL_FIELD_KEYS stores it bare
+ * (`rtp__ssn_last4`), so both forms are accepted. An id is also accepted,
  * since agency-configured mappings may hold either.
  */
 function getFieldValue(contact: GHLContact, ghlKey: string | undefined): string | null {
@@ -44,7 +44,7 @@ function toInt(value: string | null): number | null {
 function extractClientData(contact: GHLContact, agency: Agency) {
   // Bureau scores stay agency-configurable (the one thing an agency legitimately
   // captures on their own intake form). Everything identity-related is read from
-  // RTP-owned fixed keys — see CDP_IDENTITY_FIELDS.
+  // RTP-owned fixed keys — see RTP_IDENTITY_FIELDS.
   const map = agency.ghl_field_keys ?? {};
   const mapped = (key: keyof GhlFieldKeys) => getFieldValue(contact, map[key]);
   const fixed = (key: string) => getFieldValue(contact, key);

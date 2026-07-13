@@ -11,8 +11,8 @@ import type { FieldProposal } from "@/lib/ghl/field-detect";
 
 /**
  * Only the 3 bureau scores are mappable. Identity fields (SSN, DOB, signature,
- * ID/address/credit-report uploads) are RTP-owned fixed `cdp__` keys and are
- * deliberately NOT listed here — see CDP_IDENTITY_FIELDS.
+ * ID/address/credit-report uploads) are RTP-owned fixed `rtp__` keys and are
+ * deliberately NOT listed here — see RTP_IDENTITY_FIELDS.
  */
 const FIELDS: { key: keyof GhlFieldKeys; label: string }[] = [
   { key: "score_eq", label: "Equifax Score" },
@@ -106,7 +106,7 @@ export function GhlFieldMapping({ initial, namesByKey }: Props) {
             SSN, date of birth, signature, and document uploads are no longer
             mapped here — RoundTrack Pro now reads them from its own{" "}
             <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-xs">
-              cdp__
+              rtp__
             </code>{" "}
             fields, so they can&apos;t be accidentally pointed at another
             product&apos;s field in a shared GHL location.

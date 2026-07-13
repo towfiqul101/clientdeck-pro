@@ -29,7 +29,7 @@ export type GhlWebhookAuth =
 
 function extractToken(req: Request): string | null {
   return (
-    req.headers.get("x-clientdeck-secret") ||
+    req.headers.get("x-rtp-secret") ||
     req.headers.get("x-wh-secret") ||
     new URL(req.url).searchParams.get("secret")
   );

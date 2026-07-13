@@ -4,7 +4,7 @@ import { useSyncExternalStore, type ReactNode } from "react";
 import { List, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils/helpers";
 
-const STORAGE_KEY = "cdp-rounds-view";
+const STORAGE_KEY = "rtp-rounds-view";
 type View = "list" | "pipeline";
 
 // Minimal external store wrapping localStorage, read via useSyncExternalStore

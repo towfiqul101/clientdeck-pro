@@ -507,7 +507,7 @@ function GhlTab({
         </h4>
         <p className="mt-2 text-sm text-slate-400">
           Notifications fire automatically via free GHL contact tags (e.g.{" "}
-          <code className="rounded bg-white/[0.06] px-1 text-xs">cdp-round-sent</code>) once GHL
+          <code className="rounded bg-white/[0.06] px-1 text-xs">rtp-round-sent</code>) once GHL
           is connected — no per-type setup needed here. The agency configures their own GHL
           workflows to watch these tags.
         </p>

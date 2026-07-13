@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { getGHLCustomFields } from "@/lib/ghl/api";
-import { CDP_ALL_CUSTOM_FIELDS } from "@/lib/ghl/setup-config";
+import { RTP_ALL_CUSTOM_FIELDS } from "@/lib/ghl/setup-config";
 
 export const dynamic = "force-dynamic";
 
-/** GHL returns keys as `contact.cdp__x`; we compare on the bare `cdp__x`. */
+/** GHL returns keys as `contact.rtp__x`; we compare on the bare `rtp__x`. */
 function bareKey(k: string | undefined): string {
   return (k ?? "").replace(/^contact\./, "");
 }
 
 /**
  * Diagnostics for the "fields exist but are empty" problem: compares the
- * `cdp__*` keys RoundTrack Pro writes to against the custom fields that actually
+ * `rtp__*` keys RoundTrack Pro writes to against the custom fields that actually
  * exist in the signed-in agency's GHL location. Match on field NAME (GHL derives
  * the key from the name), then flag any key mismatch or missing field.
  */
@@ -42,7 +42,7 @@ export async function GET() {
 
   const byName = new Map(ghlFields.map((f) => [f.name?.toLowerCase(), f]));
 
-  const comparison = CDP_ALL_CUSTOM_FIELDS.map((spec) => {
+  const comparison = RTP_ALL_CUSTOM_FIELDS.map((spec) => {
     const actual = byName.get(spec.name.toLowerCase());
     const actualKey = actual ? bareKey(actual.fieldKey) : null;
     let status: "ok" | "key_mismatch" | "missing";

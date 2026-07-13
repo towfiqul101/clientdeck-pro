@@ -14,50 +14,50 @@ const WORKFLOWS: WorkflowDoc[] = [
   {
     key: "round_sent",
     title: "Round Sent to Bureaus (Client SMS)",
-    mergeFields: ["{{contact.first_name}}", "{{contact.cdp__round_number}}", "{{contact.cdp__items_disputed}}", "{{contact.cdp__portal_link}}"],
+    mergeFields: ["{{contact.first_name}}", "{{contact.rtp__round_number}}", "{{contact.rtp__items_disputed}}", "{{contact.rtp__portal_link}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}! Your Round {{contact.cdp__round_number}} dispute letters have been sent to all 3 bureaus ({{contact.cdp__items_disputed}} items). Track your progress: {{contact.cdp__portal_link}}",
+      "Hi {{contact.first_name}}! Your Round {{contact.rtp__round_number}} dispute letters have been sent to all 3 bureaus ({{contact.rtp__items_disputed}} items). Track your progress: {{contact.rtp__portal_link}}",
   },
   {
     key: "deletion_win",
     title: "Deletion Win (Client SMS)",
-    mergeFields: ["{{contact.cdp__deletions_this_round}}", "{{contact.cdp__items_deleted}}", "{{contact.cdp__deleted_items_list}}", "{{contact.cdp__portal_link}}"],
+    mergeFields: ["{{contact.rtp__deletions_this_round}}", "{{contact.rtp__items_deleted}}", "{{contact.rtp__deleted_items_list}}", "{{contact.rtp__portal_link}}"],
     suggestedCopy:
-      "Great news, {{contact.first_name}}! {{contact.cdp__deletions_this_round}} item(s) were removed this round. Total deleted so far: {{contact.cdp__items_deleted}}. View your progress: {{contact.cdp__portal_link}}",
+      "Great news, {{contact.first_name}}! {{contact.rtp__deletions_this_round}} item(s) were removed this round. Total deleted so far: {{contact.rtp__items_deleted}}. View your progress: {{contact.rtp__portal_link}}",
   },
   {
     key: "round_results_in",
     title: "Round Results In (Client SMS)",
-    mergeFields: ["{{contact.cdp__round_number}}", "{{contact.cdp__items_deleted}}", "{{contact.cdp__total_items}}", "{{contact.cdp__portal_link}}"],
+    mergeFields: ["{{contact.rtp__round_number}}", "{{contact.rtp__items_deleted}}", "{{contact.rtp__total_items}}", "{{contact.rtp__portal_link}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}, your Round {{contact.cdp__round_number}} results are in. Full details: {{contact.cdp__portal_link}}",
+      "Hi {{contact.first_name}}, your Round {{contact.rtp__round_number}} results are in. Full details: {{contact.rtp__portal_link}}",
   },
   {
     key: "goal_achieved",
     title: "Goal Achieved (Client SMS + Email)",
-    mergeFields: ["{{contact.cdp__items_deleted}}", "{{contact.cdp__score_improvement}}", "{{contact.cdp__google_review_link}}"],
+    mergeFields: ["{{contact.rtp__items_deleted}}", "{{contact.rtp__score_improvement}}", "{{contact.rtp__google_review_link}}"],
     suggestedCopy:
-      "Congratulations {{contact.first_name}}! You've reached your credit goal — {{contact.cdp__items_deleted}} items removed, +{{contact.cdp__score_improvement}} points. Mind leaving us a review? {{contact.cdp__google_review_link}}",
+      "Congratulations {{contact.first_name}}! You've reached your credit goal — {{contact.rtp__items_deleted}} items removed, +{{contact.rtp__score_improvement}} points. Mind leaving us a review? {{contact.rtp__google_review_link}}",
   },
   {
     key: "payment_failed",
     title: "Payment Failed (Client SMS)",
-    mergeFields: ["{{contact.cdp__monthly_fee}}", "{{contact.cdp__portal_link}}", "{{contact.cdp__agency_phone}}"],
+    mergeFields: ["{{contact.rtp__monthly_fee}}", "{{contact.rtp__portal_link}}", "{{contact.rtp__agency_phone}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}, your payment of ${{contact.cdp__monthly_fee}}/month didn't go through. Update it here: {{contact.cdp__portal_link}} or call {{contact.cdp__agency_phone}}.",
+      "Hi {{contact.first_name}}, your payment of ${{contact.rtp__monthly_fee}}/month didn't go through. Update it here: {{contact.rtp__portal_link}} or call {{contact.rtp__agency_phone}}.",
   },
   {
     key: "portal_link",
     title: "Portal Link Sent (Client SMS)",
-    mergeFields: ["{{contact.cdp__portal_link}}"],
-    suggestedCopy: "Hi {{contact.first_name}}, here's your client portal link: {{contact.cdp__portal_link}}",
+    mergeFields: ["{{contact.rtp__portal_link}}"],
+    suggestedCopy: "Hi {{contact.first_name}}, here's your client portal link: {{contact.rtp__portal_link}}",
   },
   {
     key: "monthly_progress",
     title: "Monthly Progress Update (Client SMS)",
-    mergeFields: ["{{contact.cdp__eq_score}}", "{{contact.cdp__exp_score}}", "{{contact.cdp__tu_score}}", "{{contact.cdp__items_deleted}}", "{{contact.cdp__round_number}}"],
+    mergeFields: ["{{contact.rtp__eq_score}}", "{{contact.rtp__exp_score}}", "{{contact.rtp__tu_score}}", "{{contact.rtp__items_deleted}}", "{{contact.rtp__round_number}}"],
     suggestedCopy:
-      "Hi {{contact.first_name}}, your monthly update: {{contact.cdp__items_deleted}} items resolved, currently on Round {{contact.cdp__round_number}}. Details: {{contact.cdp__portal_link}}",
+      "Hi {{contact.first_name}}, your monthly update: {{contact.rtp__items_deleted}} items resolved, currently on Round {{contact.rtp__round_number}}. Details: {{contact.rtp__portal_link}}",
   },
   {
     key: "staff_new_client",
@@ -99,7 +99,7 @@ export default function GHLSetupGuidePage() {
       <Card>
         <CardHeader title="How it works" />
         <div className="space-y-2 p-6 text-sm text-slate-400">
-          <p>1. Run <strong>Create Custom Fields</strong> from Settings → GHL (or use the CDP snapshot).</p>
+          <p>1. Run <strong>Create Custom Fields</strong> from Settings → GHL (or use the RoundTrack Pro snapshot).</p>
           <p>2. In GHL, create a workflow with <strong>Tag Added</strong> as the trigger, watching the tag listed below for each event.</p>
           <p>3. Build SMS/email actions using the contact merge fields listed below.</p>
           <p>

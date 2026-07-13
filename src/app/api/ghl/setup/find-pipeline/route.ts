@@ -39,16 +39,26 @@ function mapStageNameToKey(stageName: string): PipelineStageKey | null {
 
 /**
  * Picks the agency's active-client pipeline. A location can hold several
- * pipelines whose names contain "active client" — Acme has both
- * "CDP - Active Clients" (ours) and a stale "Active Client" from the original
- * snapshot. Relying on API return order picked the right one by luck; prefer
- * the explicit `CDP -` prefix instead, mirroring the same "prefer the specific
- * signal over the ambiguous one" fix applied to field-detect.ts.
+ * pipelines whose names contain "active client" — Acme has both a prefixed one
+ * (ours) and a stale bare "Active Client" from the original snapshot. Relying on
+ * API return order picked the right one by luck; prefer the explicit prefix,
+ * mirroring the "prefer the specific signal over the ambiguous one" fix in
+ * field-detect.ts.
+ *
+ * BOTH prefixes are accepted on purpose. The cdp__ → rtp__ rename does NOT
+ * rename anything inside GHL, so an agency's pipeline is still called
+ * "CDP - Active Clients" until they rename it by hand. Matching only `RTP -`
+ * here would silently fall back to the stale bare pipeline — mapping every
+ * stage id to the wrong pipeline. Drop `cdp` once no location uses it.
  */
+const OUR_PIPELINE_PREFIX = /^\s*(rtp|cdp)\s*-/i;
+
 function pickActiveClientPipeline<T extends { name: string }>(pipelines: T[]): T | undefined {
   const candidates = pipelines.filter((p) => p.name.toLowerCase().includes("active client"));
   if (candidates.length === 0) return undefined;
-  const ours = candidates.find((p) => /^\s*cdp\s*-/i.test(p.name));
+  // Prefer RTP over CDP when both somehow exist.
+  const rtp = candidates.find((p) => /^\s*rtp\s*-/i.test(p.name));
+  const ours = rtp ?? candidates.find((p) => OUR_PIPELINE_PREFIX.test(p.name));
   return ours ?? candidates[0];
 }
 
@@ -73,7 +83,7 @@ export async function POST() {
     return NextResponse.json({
       ok: false,
       error:
-        'No pipeline named "Active Client" found. Install the CDP snapshot or create it manually in GHL, then run this again.',
+        'No pipeline named "Active Client" found. Install the RoundTrack Pro snapshot or create it manually in GHL, then run this again.',
     });
   }
 

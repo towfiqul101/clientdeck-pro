@@ -20,7 +20,7 @@ export interface FieldProposal {
 
 /**
  * Only the three bureau scores remain agency-configurable. Every identity /
- * intake field is now an RTP-owned fixed `cdp__` key (see CDP_IDENTITY_FIELDS)
+ * intake field is now an RTP-owned fixed `rtp__` key (see RTP_IDENTITY_FIELDS)
  * and is not mapped at all.
  *
  * Why: in a GHL location shared with TaxIntake Pro (`ti__*`) and Due Diligence
@@ -60,7 +60,7 @@ const REQUIRED_DATA_TYPE = "NUMERICAL";
 /** Foreign products sharing the same GHL location. Deprioritized, not banned. */
 const FOREIGN_PREFIX = /^(contact\.)?(dd_|ti__)/i;
 /** Our own fields — always preferred when several candidates pass the gates. */
-const OWN_PREFIX = /^(contact\.)?cdp__/i;
+const OWN_PREFIX = /^(contact\.)?rtp__/i;
 
 function fieldId(f: RawField): string {
   return f.fieldKey || f.id || "";
@@ -78,7 +78,7 @@ function isDisqualified(f: RawField): boolean {
   return false;
 }
 
-/** Prefer our own `cdp__` fields, then neutral ones, then foreign `dd_`/`ti__`. */
+/** Prefer our own `rtp__` fields, then neutral ones, then foreign `dd_`/`ti__`. */
 function preference(f: RawField): number {
   const id = fieldId(f);
   if (OWN_PREFIX.test(id)) return 0;
