@@ -70,11 +70,29 @@ export const RTP_IDENTITY_FIELDS: GHLCustomFieldSpec[] = [
   { name: "RTP - Credit Report TU", fieldKey: GHL_FIELD_KEYS.CREDIT_REPORT_TU, dataType: "FILE_UPLOAD" },
 ];
 
-/** All 25 fields — used by both the admin and agency-self-service setup tools. */
+/**
+ * Staff-alert data fields. The 3 staff alerts (new client / round overdue /
+ * next round ready) tag the CLIENT's GHL contact, so the agency's workflow can
+ * personalise the message with that client's merge fields while still sending
+ * to a fixed staff number. These carry the values the client's own fields
+ * don't already hold.
+ *
+ * Client name/email/phone need no field here — on the client's own contact
+ * they're the NATIVE {{contact.first_name}} / {{contact.email}} /
+ * {{contact.phone}}.
+ */
+export const RTP_STAFF_ALERT_FIELDS: GHLCustomFieldSpec[] = [
+  { name: "RTP - Alert Round Number", fieldKey: GHL_FIELD_KEYS.ALERT_ROUND_NUMBER, dataType: "NUMERICAL" },
+  { name: "RTP - Alert Days Overdue", fieldKey: GHL_FIELD_KEYS.ALERT_DAYS_OVERDUE, dataType: "NUMERICAL" },
+  { name: "RTP - Alert Dashboard Link", fieldKey: GHL_FIELD_KEYS.ALERT_DASHBOARD_LINK, dataType: "TEXT" },
+];
+
+/** All 28 fields — used by both the admin and agency-self-service setup tools. */
 export const RTP_ALL_CUSTOM_FIELDS: GHLCustomFieldSpec[] = [
   ...RTP_CUSTOM_FIELDS,
   ...RTP_NOTIFICATION_FIELDS,
   ...RTP_IDENTITY_FIELDS,
+  ...RTP_STAFF_ALERT_FIELDS,
 ];
 
 /** The two pipelines the RoundTrack Pro snapshot sets up. */

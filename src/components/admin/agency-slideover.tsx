@@ -511,10 +511,16 @@ function GhlTab({
           is connected — no per-type setup needed here. The agency configures their own GHL
           workflows to watch these tags.
         </p>
+        <p className="mt-2 text-xs text-slate-500">
+          The 3 staff alerts (new client, round overdue, next round ready) tag the{" "}
+          <strong className="text-slate-400">client&apos;s</strong> contact, so the agency&apos;s
+          workflow can merge that client&apos;s details into the alert — it sends to their own
+          staff number, not to the contact.
+        </p>
         {!a.settings?.owner_ghl_contact_id && (
-          <p className="mt-2 text-xs text-amber-400">
-            No owner GHL contact set — staff alerts (overdue rounds, new clients) won&apos;t
-            fire until the agency sets one in Settings → GHL.
+          <p className="mt-2 text-xs text-slate-500">
+            No owner GHL contact set — only affects the monthly staff digest and clients with
+            no GHL contact. The 3 staff alerts above don&apos;t need it.
           </p>
         )}
       </div>

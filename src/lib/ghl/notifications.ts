@@ -139,9 +139,16 @@ export async function sendGHLNotification(
 
 /**
  * Maps each notification's payload data onto the GHL custom-field keys a
- * workflow can read via merge tags. Staff alerts fire on the OWNER's own GHL
- * contact (not the client's) — writing client-specific data there would
- * clobber the owner's own field values, so those three are tag-only.
+ * workflow can read via merge tags.
+ *
+ * The 3 CLIENT_TAGGED_STAFF_TYPES write here too, because they now land on the
+ * CLIENT's contact — see the note on that constant. They use the dedicated
+ * ALERT_* keys so staff-alert values can never bleed into the client-facing
+ * merge tags (`rtp__round_number` especially).
+ *
+ * `staff_monthly_progress` still fires on a staff member's own contact, so it
+ * stays field-less: writing client data onto a staff contact would clobber that
+ * staff member's own field values.
  */
 function buildNotificationFields(
   type: GHLNotificationType,
@@ -201,8 +208,20 @@ function buildNotificationFields(
         [GHL_FIELD_KEYS.PORTAL_LINK]: String(data.portal_link),
       };
     case "staff_new_client":
+      return {
+        [GHL_FIELD_KEYS.ALERT_DASHBOARD_LINK]: String(data.dashboard_link),
+      };
     case "staff_round_overdue":
+      return {
+        [GHL_FIELD_KEYS.ALERT_ROUND_NUMBER]: Number(data.round_number),
+        [GHL_FIELD_KEYS.ALERT_DAYS_OVERDUE]: Number(data.days_overdue),
+        [GHL_FIELD_KEYS.ALERT_DASHBOARD_LINK]: String(data.dashboard_link),
+      };
     case "staff_next_round_ready":
+      return {
+        [GHL_FIELD_KEYS.ALERT_ROUND_NUMBER]: Number(data.round_number),
+        [GHL_FIELD_KEYS.ALERT_DASHBOARD_LINK]: String(data.dashboard_link),
+      };
     case "staff_monthly_progress":
       return {};
     default:
@@ -484,8 +503,34 @@ type StaffFacingType =
   | "staff_next_round_ready"
   | "staff_monthly_progress";
 
-/** The subset of a client row notifyStaffSubscribers needs to resolve recipients. */
-type StaffTargetClient = Pick<NotifiableClient, "id" | "assigned_to" | "notify_team_member_ids">;
+/** The subset of a client row notifyStaffSubscribers needs to resolve recipients + tag the client. */
+type StaffTargetClient = Pick<
+  NotifiableClient,
+  "id" | "first_name" | "last_name" | "ghl_contact_id" | "assigned_to" | "notify_team_member_ids"
+>;
+
+/**
+ * Staff alerts whose GHL tag lands on the CLIENT's contact rather than on a
+ * staff member's own contact.
+ *
+ * Tagging a staff member's contact meant the workflow that fired had no client
+ * on it, so `{{contact.first_name}}` was the staff member and there were no
+ * client fields to merge — the alert could only ever say "a client's round is
+ * overdue, go look at the dashboard". Tagging the client's contact gives the
+ * workflow the full client record. The message is still SENT to staff: a GHL
+ * workflow triggered on a client's contact can send SMS/email to a fixed
+ * number/address, which is where the staff routing now lives.
+ *
+ * BREAKING for agencies that already built these 3 workflows against a staff
+ * contact — the trigger contact changes, so those workflows must be rebuilt.
+ * `staff_monthly_progress` is deliberately NOT in this set; it still fires per
+ * staff member on their own contact.
+ */
+const CLIENT_TAGGED_STAFF_TYPES: ReadonlySet<StaffFacingType> = new Set([
+  "staff_new_client",
+  "staff_round_overdue",
+  "staff_next_round_ready",
+]);
 
 type StaffMember = Pick<
   TeamMember,
@@ -537,14 +582,48 @@ function resolveStaffRecipients(
 }
 
 /**
- * Sends a staff-facing notification to every recipient resolveStaffRecipients
- * picks out for `type`/`client`. Each recipient's own GHL contact id
- * (team_members.ghl_contact_id, migration 024) is used when set; the owner
- * additionally falls back to the legacy agencies.settings.owner_ghl_contact_id
- * for agencies that configured that before per-staff contact ids existed.
- * Anyone without a resolvable contact id still gets Resend via their own
- * email. Falls back to the single legacy owner-contact target only when
- * nobody at all resolves — e.g. an agency that hasn't touched any of this.
+ * Emails each staff recipient directly, bypassing GHL. Passing an empty
+ * contactId makes sendGHLNotification's `hasGhl` check fail, so it skips the
+ * tag and goes straight to the Resend fallback with that member's own address.
+ */
+async function emailStaffRecipients(
+  agency: Agency,
+  type: StaffFacingType,
+  data: GHLNotificationPayload["data"],
+  logging: NotificationLogIds,
+  recipients: StaffMember[]
+) {
+  if (recipients.length === 0) return { success: false, method: "none" as const };
+
+  const results = await Promise.all(
+    recipients.map((m) =>
+      sendGHLNotification(
+        agency,
+        type,
+        { contactId: "", firstName: m.name, lastName: "", email: m.email, data },
+        logging
+      )
+    )
+  );
+
+  return results.find((r) => r.success) ?? { success: false, method: "none" as const };
+}
+
+/**
+ * Sends a staff-facing notification for `type`/`client`.
+ *
+ * For the 3 CLIENT_TAGGED_STAFF_TYPES the GHL channel is a single tag on the
+ * CLIENT's contact, so the agency's workflow can merge that client's fields
+ * into the message it sends to staff. When the client has no GHL contact (never
+ * synced) or the tag fails, we email the resolved staff recipients instead — we
+ * deliberately do NOT fall back to tagging their contacts, because the
+ * workflow's merge tags now resolve against the trigger contact: firing the same
+ * tag on a staff member would send an alert full of blank client fields.
+ *
+ * `staff_monthly_progress` keeps the original per-recipient behaviour: each
+ * recipient's own GHL contact id (team_members.ghl_contact_id, migration 024)
+ * when set, with the owner falling back to the legacy
+ * agencies.settings.owner_ghl_contact_id, and Resend for anyone without one.
  */
 async function notifyStaffSubscribers(
   agency: Agency,
@@ -561,6 +640,28 @@ async function notifyStaffSubscribers(
     .eq("is_active", true);
 
   const recipients = resolveStaffRecipients(type, members ?? [], client);
+
+  if (CLIENT_TAGGED_STAFF_TYPES.has(type)) {
+    if (client.ghl_contact_id) {
+      const tagged = await sendGHLNotification(
+        agency,
+        type,
+        {
+          contactId: client.ghl_contact_id,
+          firstName: client.first_name,
+          lastName: client.last_name,
+          // No email on purpose. This payload describes the CLIENT, so if GHL
+          // failed and the Resend fallback picked it up, a staff-only alert
+          // ("Round 2 is 6 days overdue, go chase it") would be emailed to the
+          // client themselves.
+          data,
+        },
+        logging
+      );
+      if (tagged.method === "ghl_tag") return tagged;
+    }
+    return emailStaffRecipients(agency, type, data, logging, recipients);
+  }
 
   if (recipients.length === 0) {
     const ownerContactId = agency.settings?.owner_ghl_contact_id;
@@ -626,7 +727,7 @@ export async function notifyStaffRoundOverdue(
 
 export async function notifyStaffNextRoundReady(
   agency: Agency,
-  client: Pick<NotifiableClient, "id" | "first_name" | "last_name" | "assigned_to" | "notify_team_member_ids">,
+  client: StaffTargetClient,
   roundNumber: number
 ) {
   return notifyStaffSubscribers(

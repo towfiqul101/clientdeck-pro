@@ -77,6 +77,21 @@ export const GHL_FIELD_KEYS = {
   CREDIT_REPORT_EQ: "rtp__credit_report_eq",
   CREDIT_REPORT_EXP: "rtp__credit_report_exp",
   CREDIT_REPORT_TU: "rtp__credit_report_tu",
+
+  // ── Staff-alert data ──────────────────────────────────────────────────────
+  // Staff alerts (new client / round overdue / next round ready) now tag the
+  // CLIENT's contact rather than a staff member's, so the agency's workflow can
+  // read that client's merge fields. These three carry the alert-specific values
+  // the client's own fields don't have.
+  //
+  // They are deliberately NOT reusing ROUND_NUMBER. `staff_next_round_ready`
+  // carries the round about to be prepared (N+1), which has not been sent — and
+  // ROUND_NUMBER is the field the client-facing "Round Sent" and "Monthly
+  // Update" messages read. Writing a future round there would make the CLIENT's
+  // own SMS quote a round that hasn't happened yet.
+  ALERT_ROUND_NUMBER: "rtp__alert_round_number",
+  ALERT_DAYS_OVERDUE: "rtp__alert_days_overdue",
+  ALERT_DASHBOARD_LINK: "rtp__alert_dashboard_link",
 } as const;
 
 export type GHLFieldKey = (typeof GHL_FIELD_KEYS)[keyof typeof GHL_FIELD_KEYS];

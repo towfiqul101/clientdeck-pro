@@ -22,9 +22,16 @@ const ROWS: { key: GHLNotificationType; event: string; fields: string }[] = [
   { key: "payment_failed", event: "Payment Failed", fields: "rtp__monthly_fee, rtp__agency_phone" },
   { key: "portal_link", event: "Portal Link Sent", fields: "rtp__portal_link" },
   { key: "monthly_progress", event: "Monthly Update", fields: "rtp__eq_score, rtp__exp_score, rtp__tu_score" },
-  { key: "staff_new_client", event: "Staff: New Client", fields: "(fires on your owner contact — no fields written)" },
-  { key: "staff_round_overdue", event: "Staff: Round Overdue", fields: "(fires on your owner contact — no fields written)" },
-  { key: "staff_next_round_ready", event: "Staff: Next Round Ready", fields: "(fires on your owner contact — no fields written)" },
+  { key: "staff_new_client", event: "Staff: New Client", fields: "rtp__alert_dashboard_link + the client's native name/email/phone" },
+  { key: "staff_round_overdue", event: "Staff: Round Overdue", fields: "rtp__alert_round_number, rtp__alert_days_overdue, rtp__alert_dashboard_link" },
+  { key: "staff_next_round_ready", event: "Staff: Next Round Ready", fields: "rtp__alert_round_number, rtp__alert_dashboard_link" },
+];
+
+/** The 3 staff alerts whose trigger contact moved from the owner to the client. */
+const RETARGETED_STAFF_TYPES: GHLNotificationType[] = [
+  "staff_new_client",
+  "staff_round_overdue",
+  "staff_next_round_ready",
 ];
 
 export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId: string }) {
@@ -130,6 +137,34 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
           </p>
         </div>
 
+        {/* Standing instruction, not a one-time migration notice — a brand-new
+            agency building these 3 workflows for the first time needs to know
+            they trigger on the client too, or they'll text the alert to the
+            client. Kept neutral rather than an alert for that reason. */}
+        <div className="rounded-md border border-white/10 bg-white/[0.03] p-4">
+          <h4 className="text-sm font-semibold text-slate-100">
+            The 3 staff alerts fire on the CLIENT&apos;s contact
+          </h4>
+          <p className="mt-1 text-xs text-slate-500">
+            <span className="font-mono text-blue-400">
+              {RETARGETED_STAFF_TYPES.map((t) => NOTIFICATION_TAGS[t]).join(", ")}
+            </span>{" "}
+            land on the client&apos;s GHL contact, not on yours — that&apos;s what gives
+            your workflow the client&apos;s name, round number and days-overdue to put in
+            the message. So in each of those 3 workflows, address the SMS/email to{" "}
+            <strong className="text-slate-300">your team&apos;s own number</strong>: if it
+            sends to &quot;Contact&quot;, the staff alert goes to the{" "}
+            <strong className="text-amber-300">client</strong>.
+          </p>
+          <p className="mt-2 text-xs text-slate-500">
+            Built these before? They used to fire on your owner contact. Re-run{" "}
+            <strong className="text-slate-300">Create Custom Fields</strong> (the{" "}
+            <code className="rounded bg-white/[0.06] px-1">rtp__alert_*</code> fields are
+            new), then rebuild the 3 messages using the fields above. The 7 client-facing
+            alerts are unaffected.
+          </p>
+        </div>
+
         <div className="flex items-center gap-3">
           <Button type="button" variant="secondary" onClick={copyAllTags}>
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -146,7 +181,7 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
         <Field
           label="Owner GHL Contact ID"
           htmlFor="ownerGhlContactId"
-          hint="Your own contact in GHL — staff alert tags (overdue rounds, new clients) land here. Find it: GHL → Contacts → your profile → copy the id from the URL."
+          hint="Your own contact in GHL. Used by the monthly staff digest, and as the fallback target when a client has no GHL contact. The 3 staff alerts above no longer land here — they fire on the client's contact. Find it: GHL → Contacts → your profile → copy the id from the URL."
         >
           <Input
             id="ownerGhlContactId"
