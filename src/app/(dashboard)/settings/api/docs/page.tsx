@@ -144,7 +144,7 @@ const STATUS_CODES: { code: string; meaning: string; when: string }[] = [
   {
     code: "402",
     meaning: "Payment Required",
-    when: "Your agency has reached its plan's active-client limit. Kept distinct from 400 so it's easy to handle separately — this isn't a validation error, it's a plan limit.",
+    when: "Either your agency has reached its plan's active-client limit (on POST), or your agency is no longer entitled to API access at all — the plan was downgraded off Agency, or the subscription is cancelled/past_due/paused. Entitlement is re-checked on every request, so keys stop working as soon as the plan lapses. Kept distinct from 400: this isn't a validation error.",
   },
   {
     code: "404",

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { toCSV, forceCsvText } from "@/lib/utils/csv";
+import { toCSV, forceCsvText, type CsvCell } from "@/lib/utils/csv";
 import { formatPhone } from "@/lib/utils/helpers";
 
 const HEADERS = [
@@ -32,7 +32,7 @@ const HEADERS = [
  * untouched — still a plain digit string Excel will mangle into scientific
  * notation on open. Force-text that case too.
  */
-function csvSafePhone(phone: string): string {
+function csvSafePhone(phone: string): CsvCell {
   const formatted = formatPhone(phone);
   return /^\d+$/.test(formatted) ? forceCsvText(formatted) : formatted;
 }

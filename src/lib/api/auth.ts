@@ -1,6 +1,8 @@
 import { randomBytes, createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { hasApiAccess } from "@/lib/billing/plans";
+import type { Plan, PlanStatus } from "@/types";
 
 const KEY_PREFIX = "rtp_live_";
 
@@ -25,14 +27,24 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 export type ApiKeyAuthResult =
   | { ok: true; agencyId: string; keyId: string }
   | { ok: false; status: 401 }
+  | { ok: false; status: 402; reason: string }
   | { ok: false; status: 429; limit: number; current: number; resetAt: string };
+
+/** Subscription states that still entitle an agency to use the API. */
+const ACTIVE_PLAN_STATUSES: PlanStatus[] = ["active", "trialing"];
 
 /**
  * Validates the `Authorization: Bearer <key>` header against agency_api_keys,
- * then enforces the per-key rate limit before any endpoint logic runs. Uses
- * the admin client — there is no Supabase Auth session on these requests, so
- * RLS's get_user_agency_id() has nothing to resolve against. Updates
- * last_used_at on success.
+ * re-checks that the agency is still *entitled* to API access, then enforces
+ * the per-key rate limit — all before any endpoint logic runs. Uses the admin
+ * client — there is no Supabase Auth session on these requests, so RLS's
+ * get_user_agency_id() has nothing to resolve against. Updates last_used_at
+ * on success.
+ *
+ * Entitlement is re-checked on every request, not just at key generation:
+ * plans change after a key is issued. An agency that downgrades off the
+ * Agency plan, or whose subscription lapses to cancelled/past_due/paused,
+ * must stop being able to use keys it already holds.
  */
 export async function validateApiKey(req: Request): Promise<ApiKeyAuthResult> {
   const auth = req.headers.get("authorization");
@@ -44,14 +56,39 @@ export async function validateApiKey(req: Request): Promise<ApiKeyAuthResult> {
   const hash = hashApiKey(raw);
   const admin = createAdminClient();
 
+  // Join the agency in so entitlement costs no extra round-trip.
   const { data: key } = await admin
     .from("agency_api_keys")
-    .select("id, agency_id")
+    .select("id, agency_id, agency:agencies(plan, plan_status)")
     .eq("key_hash", hash)
     .is("revoked_at", null)
     .maybeSingle();
 
   if (!key) return { ok: false, status: 401 };
+
+  const agency = key.agency as unknown as {
+    plan: Plan;
+    plan_status: PlanStatus;
+  } | null;
+
+  // Fail closed: a key whose agency can't be resolved gets no access.
+  if (!agency) return { ok: false, status: 401 };
+
+  if (!hasApiAccess(agency.plan)) {
+    return {
+      ok: false,
+      status: 402,
+      reason: "API access requires the Agency plan. This agency's plan no longer includes it.",
+    };
+  }
+
+  if (!ACTIVE_PLAN_STATUSES.includes(agency.plan_status)) {
+    return {
+      ok: false,
+      status: 402,
+      reason: `API access is unavailable while the subscription is ${agency.plan_status}.`,
+    };
+  }
 
   await admin
     .from("agency_api_keys")
@@ -103,6 +140,9 @@ export function apiAuthErrorResponse(
       },
       { status: 429 }
     );
+  }
+  if (auth.status === 402) {
+    return NextResponse.json({ error: auth.reason }, { status: 402 });
   }
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }

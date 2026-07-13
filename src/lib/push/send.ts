@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAllowedPushEndpoint } from "./endpoint";
 
 interface WebPushSubscriptionJSON {
   endpoint: string;
@@ -47,9 +48,17 @@ export async function sendPushToClient(clientId: string, payload: PushPayload): 
 
   await Promise.all(
     subs.map(async (row) => {
+      const sub = row.subscription as WebPushSubscriptionJSON;
+      // Defense in depth: the subscribe route rejects non-push-service
+      // endpoints, but rows predating that check could still name an
+      // arbitrary host. Never let webpush POST to one.
+      if (!isAllowedPushEndpoint(sub?.endpoint ?? "")) {
+        console.error("[push] skipping subscription with disallowed endpoint", { id: row.id });
+        return;
+      }
       try {
         await webpush.sendNotification(
-          row.subscription as WebPushSubscriptionJSON,
+          sub,
           JSON.stringify(payload)
         );
       } catch (err) {

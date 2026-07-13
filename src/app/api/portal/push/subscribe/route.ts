@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getPortalSession } from "@/lib/portal/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit, getClientIp } from "@/lib/utils/rate-limit";
+import { isAllowedPushEndpoint } from "@/lib/push/endpoint";
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
@@ -24,6 +25,15 @@ export async function POST(req: Request) {
   const subscription = body.subscription;
   if (!subscription?.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
     return NextResponse.json({ ok: false, error: "Invalid push subscription." }, { status: 400 });
+  }
+
+  // web-push will POST to whatever host the endpoint names, so an
+  // unvalidated endpoint here is an SSRF primitive. Only real push services.
+  if (!isAllowedPushEndpoint(subscription.endpoint)) {
+    return NextResponse.json(
+      { ok: false, error: "Unrecognized push service endpoint." },
+      { status: 400 }
+    );
   }
 
   const { client, agency } = session;
