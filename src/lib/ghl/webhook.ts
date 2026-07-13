@@ -4,6 +4,7 @@
 // ============================================
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { INBOUND_TAGS } from "@/lib/ghl/notification-tags";
 
 export type GHLWebhookEvent =
   | "ContactCreate"
@@ -117,34 +118,47 @@ async function handleContactUpdate(agencyId: string, payload: any, supabase: any
   return { success: true, action: "client_updated" };
 }
 
+/**
+ * Acts on RoundTrack Pro's own inbound tags.
+ *
+ * Only the namespaced `rtp-*` forms are honored — see INBOUND_TAGS. These
+ * previously matched the bare `enrolled` / `payment-failed` / `services-paused`,
+ * which are names another product sharing the GHL location could easily use for
+ * its own contacts, silently mutating a credit client's status or payment state
+ * here.
+ *
+ * Tag matching is case-insensitive: GHL normalizes tags to lowercase, but a tag
+ * typed with capitals in a workflow shouldn't silently no-op.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleTagUpdate(agencyId: string, payload: any, supabase: any) {
-  const tags: string[] = payload.tags || [];
+  const raw: string[] = payload.tags || [];
+  const tags = new Set(raw.map((t) => String(t).trim().toLowerCase()));
 
-  // Handle specific tags
-  if (tags.includes("enrolled")) {
+  const applied: string[] = [];
+  const update = async (patch: Record<string, string>, tag: string) => {
     await supabase
       .from("clients")
-      .update({ status: "onboarding" })
+      .update(patch)
       .eq("agency_id", agencyId)
       .eq("ghl_contact_id", payload.contactId);
+    applied.push(tag);
+  };
+
+  if (tags.has(INBOUND_TAGS.ENROLLED)) {
+    await update({ status: "onboarding" }, INBOUND_TAGS.ENROLLED);
   }
 
-  if (tags.includes("payment-failed")) {
-    await supabase
-      .from("clients")
-      .update({ payment_status: "failed" })
-      .eq("agency_id", agencyId)
-      .eq("ghl_contact_id", payload.contactId);
+  if (tags.has(INBOUND_TAGS.PAYMENT_FAILED)) {
+    await update({ payment_status: "failed" }, INBOUND_TAGS.PAYMENT_FAILED);
   }
 
-  if (tags.includes("services-paused")) {
-    await supabase
-      .from("clients")
-      .update({ status: "on_hold", payment_status: "paused" })
-      .eq("agency_id", agencyId)
-      .eq("ghl_contact_id", payload.contactId);
+  if (tags.has(INBOUND_TAGS.SERVICES_PAUSED)) {
+    await update(
+      { status: "on_hold", payment_status: "paused" },
+      INBOUND_TAGS.SERVICES_PAUSED
+    );
   }
 
-  return { success: true, action: "tags_processed" };
+  return { success: true, action: "tags_processed", applied };
 }

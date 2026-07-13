@@ -46,3 +46,24 @@ export const NOTIFICATION_TAGS: Record<GHLNotificationType, string> = {
  * trigger name, surfaced here so the setup UI and docs can't drift apart.
  */
 export const ONBOARDING_COMPLETE_TAG = "rtp-onboarding-completed";
+
+/**
+ * INBOUND tags — GHL adds these, and `handleGHLWebhook` acts on them (unlike
+ * ONBOARDING_COMPLETE_TAG above, these ARE read by code).
+ *
+ * Namespaced for the same reason, but the stakes are higher: these mutate a
+ * client's status and payment state. They were previously the bare `enrolled`,
+ * `payment-failed`, and `services-paused` — names another product in a shared
+ * GHL location would plausibly use for its own contacts. A TaxIntake Pro or
+ * Due Diligence Pro workflow adding `payment-failed` to a contact who is also a
+ * credit client would have flipped that client to payment-failed in RoundTrack
+ * Pro, and `services-paused` would have put them on hold. Nothing prevented it.
+ *
+ * Only the `rtp-` forms are honored — matching a bare tag would keep the hole
+ * open, which defeats the point.
+ */
+export const INBOUND_TAGS = {
+  ENROLLED: "rtp-enrolled",
+  PAYMENT_FAILED: "rtp-payment-failed",
+  SERVICES_PAUSED: "rtp-services-paused",
+} as const;

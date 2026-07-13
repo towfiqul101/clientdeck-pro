@@ -7,7 +7,11 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { NOTIFICATION_TAGS, type GHLNotificationType } from "@/lib/ghl/notification-tags";
+import {
+  NOTIFICATION_TAGS,
+  INBOUND_TAGS,
+  type GHLNotificationType,
+} from "@/lib/ghl/notification-tags";
 import { updateOwnerGhlContactId } from "../actions";
 
 const ROWS: { key: GHLNotificationType; event: string; fields: string }[] = [
@@ -70,6 +74,60 @@ export function TagNotificationGuide({ ownerGhlContactId }: { ownerGhlContactId:
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Inbound tags — the opposite direction: GHL adds these, and they
+            CHANGE client data here. Undocumented until now, which is how a
+            generic tag name could quietly mutate a client's status. */}
+        <div className="rounded-md border border-white/10 bg-white/[0.03] p-4">
+          <h4 className="text-sm font-semibold text-slate-100">
+            Tags YOU add that change a client in RoundTrack Pro
+          </h4>
+          <p className="mt-1 text-xs text-slate-500">
+            The tags above are ones we add for your workflows to react to. These
+            three work the other way: add one in GHL and it updates the client
+            here. They&apos;re prefixed{" "}
+            <code className="rounded bg-white/[0.06] px-1">rtp-</code> on purpose
+            — a bare <code className="rounded bg-white/[0.06] px-1">payment-failed</code>{" "}
+            is a tag another product in this GHL location could easily use, and it
+            would have changed your credit clients&apos; billing status.
+          </p>
+          <div className="mt-3 overflow-x-auto rounded-md border border-white/10">
+            <table className="w-full table-fixed text-left text-sm">
+              <thead className="border-b border-white/10 bg-white/[0.03] text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="w-[45%] px-3 py-2 font-medium">Add this tag in GHL</th>
+                  <th className="w-[55%] px-3 py-2 font-medium">Effect on the client</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.06]">
+                <tr>
+                  <td className="px-3 py-2 font-mono text-xs text-blue-400">
+                    {INBOUND_TAGS.ENROLLED}
+                  </td>
+                  <td className="px-3 py-2 text-slate-400">Status → Onboarding</td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 font-mono text-xs text-blue-400">
+                    {INBOUND_TAGS.PAYMENT_FAILED}
+                  </td>
+                  <td className="px-3 py-2 text-slate-400">Payment status → Failed</td>
+                </tr>
+                <tr>
+                  <td className="px-3 py-2 font-mono text-xs text-blue-400">
+                    {INBOUND_TAGS.SERVICES_PAUSED}
+                  </td>
+                  <td className="px-3 py-2 text-slate-400">
+                    Status → On hold, payment → Paused
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Requires the inbound webhook (top of this page) to be wired up in a
+            GHL workflow.
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
