@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getGHLContact, updateGHLContactFields } from "@/lib/ghl/api";
 import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
+import { verifyGhlWebhookSecret } from "@/lib/ghl/webhook-auth";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
@@ -143,19 +144,12 @@ async function syncOnboardingDocsToDrive(
 // ── Webhook ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
-  // Shared-secret check (same GHL_WEBHOOK_SECRET as /api/ghl/webhook). When
-  // configured, callers MUST present it — absent counts as invalid. Rejections
-  // still return 200 so GHL doesn't spin on retries.
-  const secret = process.env.GHL_WEBHOOK_SECRET;
-  if (secret) {
-    const provided =
-      req.headers.get("x-clientdeck-secret") ||
-      req.headers.get("x-wh-secret") ||
-      new URL(req.url).searchParams.get("secret");
-    if (!provided || provided !== secret) {
-      console.warn("GHL onboarding webhook rejected: missing or invalid secret");
-      return Response.json({ received: true, processed: false });
-    }
+  // Fails closed: an unset GHL_WEBHOOK_SECRET rejects everything (see
+  // lib/ghl/webhook-auth.ts) rather than waving every caller through.
+  const auth = verifyGhlWebhookSecret(req);
+  if (!auth.ok) {
+    console.warn(`GHL onboarding webhook rejected: ${auth.reason}`);
+    return Response.json({ received: true, processed: false });
   }
 
   try {

@@ -1,27 +1,21 @@
 import { NextResponse } from "next/server";
 import { handleGHLWebhook } from "@/lib/ghl/webhook";
+import { verifyGhlWebhookSecret } from "@/lib/ghl/webhook-auth";
 
 /**
  * Inbound GHL webhook receiver.
  *
- * Always returns 200 — GHL retries aggressively on any non-2xx, so we swallow
- * processing errors here and rely on server logs instead.
+ * Returns 200 even on rejection — GHL retries aggressively on any non-2xx, and
+ * a rejected forgery is not something we want it hammering. `processed: false`
+ * makes the outcome unambiguous, and the rejection is logged.
  */
 export async function POST(req: Request) {
-  // Shared-secret check. If GHL_WEBHOOK_SECRET is configured, callers MUST
-  // present it (via header or ?secret=) — absent counts as invalid, not a
-  // pass-through. Rejections still return 200 so GHL doesn't spin on retries.
-  const secret = process.env.GHL_WEBHOOK_SECRET;
-  if (secret) {
-    const url = new URL(req.url);
-    const provided =
-      req.headers.get("x-clientdeck-secret") ||
-      req.headers.get("x-wh-secret") ||
-      url.searchParams.get("secret");
-    if (!provided || provided !== secret) {
-      console.warn("GHL webhook rejected: missing or invalid secret");
-      return NextResponse.json({ received: true, processed: false });
-    }
+  // Fails closed: an unset GHL_WEBHOOK_SECRET rejects everything (see
+  // lib/ghl/webhook-auth.ts) rather than waving every caller through.
+  const auth = verifyGhlWebhookSecret(req);
+  if (!auth.ok) {
+    console.warn(`GHL webhook rejected: ${auth.reason}`);
+    return NextResponse.json({ received: true, processed: false });
   }
 
   let payload: unknown;
