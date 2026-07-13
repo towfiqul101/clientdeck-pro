@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Wrench, Database, RefreshCw, GitBranch, Stethoscope, Check, AlertTriangle, X } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
@@ -19,7 +20,7 @@ const TOOLS = [
     key: "fields",
     icon: Wrench,
     title: "Create Custom Fields",
-    desc: "Creates all 16 CDP custom fields in your GHL location automatically.",
+    desc: "Creates all 25 CDP custom fields in your GHL location automatically (16 tracking/notification + 9 identity).",
     path: "/api/ghl/setup/create-fields",
   },
   {
@@ -47,6 +48,7 @@ const TOOLS = [
 
 export function GhlSetupTools() {
   const { toast } = useToast();
+  const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, string>>({});
   const [debugOpen, setDebugOpen] = useState(false);
@@ -61,6 +63,12 @@ export function GhlSetupTools() {
       const msg = json.message || json.error || (json.ok ? "Done." : "Failed.");
       setResults((r) => ({ ...r, [key]: msg }));
       toast(msg, json.ok ? "success" : "error");
+
+      // The route revalidates the server cache, but the CLIENT router cache
+      // still holds the old RSC payload — so the Pipeline Config / identity
+      // status would keep rendering pre-run values (e.g. a stage id that saved
+      // fine but shows as an empty input). Re-fetch the server components.
+      if (json.ok) router.refresh();
     } catch {
       toast("Request failed.", "error");
     } finally {
