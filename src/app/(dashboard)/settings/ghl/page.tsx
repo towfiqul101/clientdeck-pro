@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { BookOpen, AlertTriangle } from "lucide-react";
+import { BookOpen, AlertTriangle, KeyRound } from "lucide-react";
 import { getSessionContext } from "@/lib/auth/session";
 import { maskSecret } from "@/lib/utils/secrets";
 import { GHLForm } from "./ghl-form";
@@ -47,17 +47,19 @@ export default async function GHLSettingsPage() {
       </Link>
 
       {webhookSecretConfigured ? (
-        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+        <div className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+          <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-blue-400" />
           <div className="text-sm">
-            <p className="font-semibold text-amber-300">
-              Your webhook URLs now carry a private key unique to your agency
+            <p className="font-semibold text-slate-100">
+              Your webhook URLs contain a private key — treat them as secrets
             </p>
-            <p className="mt-1 text-amber-300/90">
-              Re-copy both URLs below into GHL (the inbound webhook and the
-              onboarding webhook) — the old URLs will stop working once the
-              shared key is retired. Treat these URLs as secrets: anyone holding
-              one can post contact data into your account.
+            <p className="mt-1 text-slate-400">
+              Each URL below carries a key unique to your agency, so it
+              authenticates on its own. Anyone holding one can post contact data
+              into your account — don&apos;t share or screenshot them. Paste each
+              into the matching GHL workflow (inbound webhook, and the onboarding
+              webhook further down). If a URL is ever exposed, ask support to
+              rotate your key.
             </p>
           </div>
         </div>
