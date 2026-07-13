@@ -3,7 +3,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardHeader } from "@/components/ui/card";
 import { cn, formatDate } from "@/lib/utils/helpers";
 import type { ActivityLog, ActorType } from "@/types";
-import { Activity, User, Webhook, CreditCard, Cpu, UserCircle, Clock } from "lucide-react";
+import { Activity, User, Webhook, CreditCard, Cpu, UserCircle, Clock, Key } from "lucide-react";
 
 const ACTOR_META: Record<
   ActorType,
@@ -22,6 +22,7 @@ const ACTOR_META: Record<
     className: "bg-amber-500/10 text-amber-400",
     label: "Client",
   },
+  api: { icon: Key, className: "bg-cyan-500/10 text-cyan-400", label: "API" },
 };
 
 function formatTimestamp(iso: string): string {

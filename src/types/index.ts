@@ -20,7 +20,7 @@ export type LetterType = "initial_dispute" | "method_of_verification" | "escalat
 export type DisputeResult = "pending" | "deleted" | "updated" | "verified" | "no_response" | "in_progress";
 
 export type DocumentCategory = "id_document" | "proof_of_address" | "credit_report" | "dispute_letter" | "bureau_response" | "agreement" | "other";
-export type ActorType = "system" | "staff" | "client" | "ghl" | "stripe";
+export type ActorType = "system" | "staff" | "client" | "ghl" | "stripe" | "api";
 
 export type SignatureStatus = "pending" | "signed" | "not_required";
 export type SignatureType = "drawn" | "typed" | "electronic";
