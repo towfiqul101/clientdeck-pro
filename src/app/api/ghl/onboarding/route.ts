@@ -46,6 +46,16 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     ? /^(signed|yes|true|complete)/i.test(signatureRaw)
     : false;
 
+  // NEVER store a full SSN. The mapped GHL field is frequently a full
+  // "SSN"/"Social Security Number" field (the auto-detect heuristic in
+  // field-detect.ts matches those names), so strip to digits and keep only
+  // the last 4 — the dashboard form and CSV import already enforce this, and
+  // this webhook is the least-trusted of the three entry points. Anything
+  // that can't yield exactly 4 digits is dropped rather than stored short,
+  // which would violate the ssn_last4 CHECK constraint (migration 030).
+  const ssnDigits = get("ssn_last4")?.replace(/\D/g, "") ?? "";
+  const ssnLast4 = ssnDigits.length >= 4 ? ssnDigits.slice(-4) : null;
+
   return {
     first_name: contact.firstName || "",
     last_name: contact.lastName || "",
@@ -55,7 +65,7 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     city: contact.city || null,
     state: contact.state || null,
     zip: contact.postalCode || null,
-    ssn_last4: get("ssn_last4"),
+    ssn_last4: ssnLast4,
     dob: dobRaw ? new Date(dobRaw).toISOString().split("T")[0] : null,
     score_eq_start: eq,
     score_exp_start: exp,
