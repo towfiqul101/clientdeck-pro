@@ -22,21 +22,16 @@ export default async function GHLSettingsPage() {
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     "https://app.roundtrackpro.com";
 
-  // The webhook endpoints authenticate with a shared secret. Ship it inside the
-  // copyable URL so the agency pastes a URL that actually authenticates —
-  // previously the displayed URL carried no secret, so there was no way for an
-  // agency to configure an authenticated webhook at all, and the endpoints were
-  // left accepting unauthenticated callers.
-  //
-  // Server-only env var: this page is a Server Component, so the secret is
-  // rendered into the URL string rather than shipped as a client-side value.
-  const webhookSecret = process.env.GHL_WEBHOOK_SECRET ?? "";
-  const secretQuery = webhookSecret
-    ? `?secret=${encodeURIComponent(webhookSecret)}`
-    : "";
+  // Each agency authenticates its webhooks with its OWN token (migration 031),
+  // not the old global GHL_WEBHOOK_SECRET — that one was shown to every agency,
+  // so any of them could forge webhooks against another agency's locationId.
+  // The token is embedded in the copyable URL so the agency pastes a URL that
+  // actually authenticates. Server Component: the token is rendered into the
+  // URL string, not shipped as a separate client-side value.
+  const secretQuery = `?secret=${encodeURIComponent(agency.webhook_token)}`;
   const webhookUrl = `${appUrl}/api/ghl/webhook${secretQuery}`;
   const onboardingWebhookUrl = `${appUrl}/api/ghl/onboarding${secretQuery}`;
-  const webhookSecretConfigured = Boolean(webhookSecret);
+  const webhookSecretConfigured = Boolean(agency.webhook_token);
 
   // Best-effort: resolves mapped keys to human-readable GHL names and reports
   // whether the RTP-owned identity fields exist. No-ops if GHL isn't connected.
@@ -51,21 +46,31 @@ export default async function GHLSettingsPage() {
         <BookOpen className="h-4 w-4" /> View the full GHL workflow setup guide
       </Link>
 
-      {!webhookSecretConfigured && (
+      {webhookSecretConfigured ? (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="text-sm">
+            <p className="font-semibold text-amber-300">
+              Your webhook URLs now carry a private key unique to your agency
+            </p>
+            <p className="mt-1 text-amber-300/90">
+              Re-copy both URLs below into GHL (the inbound webhook and the
+              onboarding webhook) — the old URLs will stop working once the
+              shared key is retired. Treat these URLs as secrets: anyone holding
+              one can post contact data into your account.
+            </p>
+          </div>
+        </div>
+      ) : (
         <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
           <div className="text-sm">
             <p className="font-semibold text-red-300">
-              Webhook secret not configured — your webhooks are unauthenticated
+              Webhook token missing — contact support
             </p>
             <p className="mt-1 text-red-300/90">
-              <code className="rounded bg-black/30 px-1 py-0.5 font-mono text-xs">
-                GHL_WEBHOOK_SECRET
-              </code>{" "}
-              isn&apos;t set on the server, so the webhook URLs below carry no
-              secret and anyone who knows your GHL Location ID (it&apos;s in your
-              GHL dashboard URL) can post to them. Set it in your hosting
-              environment and redeploy, then re-copy the URLs below into GHL.
+              This agency has no webhook token, so the URLs below cannot
+              authenticate. Migration 031 should have issued one automatically.
             </p>
           </div>
         </div>

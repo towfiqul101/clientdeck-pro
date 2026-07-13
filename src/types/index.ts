@@ -70,6 +70,9 @@ export interface Agency {
   ghl_location_id: string | null;
   ghl_api_key: string | null;
   ghl_webhook_url: string | null;
+  /** Per-agency inbound webhook credential (migration 031). Secret — never
+   *  send to the browser except inside this agency's own webhook URL. */
+  webhook_token: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   plan: Plan;

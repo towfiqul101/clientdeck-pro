@@ -70,6 +70,10 @@ export async function GET(
       : null,
     google_drive_access_token: null,
     google_drive_refresh_token: null,
+    // The webhook token is a live inbound credential — anyone holding it can
+    // post contact data into this agency. The admin panel has no use for it,
+    // and `...a` would otherwise ship it to the browser.
+    webhook_token: maskSecret(a.webhook_token),
   };
 
   const payload: AgencyPanelData = {

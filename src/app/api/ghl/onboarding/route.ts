@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getGHLContact, updateGHLContactFields } from "@/lib/ghl/api";
 import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
-import { verifyGhlWebhookSecret } from "@/lib/ghl/webhook-auth";
+import { verifyGhlWebhook, locationBelongsToAgency } from "@/lib/ghl/webhook-auth";
 import { generatePortalLink } from "@/lib/utils/portal-token";
 import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
@@ -144,9 +144,8 @@ async function syncOnboardingDocsToDrive(
 // ── Webhook ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
-  // Fails closed: an unset GHL_WEBHOOK_SECRET rejects everything (see
-  // lib/ghl/webhook-auth.ts) rather than waving every caller through.
-  const auth = verifyGhlWebhookSecret(req);
+  // Fails closed: no valid per-agency token (or legacy global secret) => reject.
+  const auth = await verifyGhlWebhook(req);
   if (!auth.ok) {
     console.warn(`GHL onboarding webhook rejected: ${auth.reason}`);
     return Response.json({ received: true, processed: false });
@@ -162,6 +161,15 @@ export async function POST(req: Request) {
         { success: false, error: "Missing contactId or locationId" },
         { status: 200 }
       );
+    }
+
+    // Tenant binding: locationId is caller-controlled, so a token identifying
+    // agency A must not be usable to onboard a client into agency B.
+    if (!(await locationBelongsToAgency(auth, locationId))) {
+      console.warn(
+        "GHL onboarding webhook rejected: locationId does not belong to the token's agency"
+      );
+      return Response.json({ received: true, processed: false }, { status: 200 });
     }
 
     const supabase = createAdminClient();
