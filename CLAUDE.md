@@ -61,9 +61,12 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 5. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload (mirrored to Drive)
 
 ## Database Tables (Supabase)
-- `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB GHL field map), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `credit_monitoring_service`/`credit_monitoring_api_key`/`credit_monitoring_api_secret` (Agency-plan credit monitoring, migration 017), `max_clients`, `plan`/`plan_status`, `settings` (JSONB: onboarding_steps, admin_notes, etc.)
+- `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB — **bureau scores ONLY** since Session 10), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `webhook_token` (**per-agency inbound webhook credential**, migration 031 — secret, never sent to the browser except inside that agency's own webhook URL), `credit_monitoring_service`/`credit_monitoring_api_key`/`credit_monitoring_api_secret` (Agency-plan credit monitoring, migration 017), `custom_domain`/`custom_domain_verified` (migration 026), `max_clients`, `plan`/`plan_status`, `settings` (JSONB: onboarding_steps, admin_notes, `ghl_pipeline_id`/`ghl_pipeline_stages`, etc.)
 - `team_members` — Staff accounts linked to agencies (roles: owner/admin/staff/viewer)
-- `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`, `ghl_opportunity_id` (cached GHL pipeline opportunity id, migration 016)
+- `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`, `ghl_opportunity_id` (cached GHL pipeline opportunity id, migration 016), `ssn_last4` (**CHECK-constrained to exactly 4 digits**, migration 030)
+- `agency_api_keys` — Agency API keys: `key_hash` (sha256), `key_prefix` (display), `revoked_at` (migration 027)
+- `api_rate_limits` — Fixed-window counter for the Agency API, 100 req/hr per key (migration 029)
+- `push_subscriptions` — Web Push subscriptions for the portal PWA (migration 022)
 - `negative_items` — Items on credit reports to dispute (per bureau)
 - `dispute_rounds` — Round lifecycle (preparing → sent → awaiting → complete)
 - `disputes` — Individual item disputes within a round (with AI-generated letter content)
@@ -81,15 +84,26 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 006 score_history · 007 team RLS fix · 008 snapshot_requests · 009 manual_payments ·
 010 609/611/623 templates · 011 signature+onboarding+ghl_field_keys · 012 google_drive ·
 013 client_assignment · 014 personal_info_types · 015 personal_info_template ·
-016 ghl_opportunity_id · 017 credit_monitoring ·
-**018 security_hardening** (adds the missing `documents` UPDATE RLS policy)
+016 ghl_opportunity_id · 017 credit_monitoring · 018 security_hardening (`documents`
+UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
+021 notification_prefs_nullable · 022 push_subscriptions · 023 letter_compliance ·
+024 staff_notification_targeting · 025 agency_client_limit_backfill · 026 custom_domain ·
+027 agency_api_keys · 028 activity_log_api_actor (adds `'api'` actor type) ·
+029 agency_api_rate_limits (+ `increment_api_rate_limit()` fn) ·
+**030 ssn_last4_check** (`CHECK (ssn_last4 IS NULL OR ssn_last4 ~ '^\d{4}$')`) ·
+**031 agency_webhook_token** (per-agency inbound webhook credential)
 
 ## Key Libraries & Locations
 - `src/lib/supabase/{client,server,admin}.ts` — browser / SSR / service-role clients
 - `src/lib/claude/generate-letter.ts` — AI letter generation (single + bulk)
 - `src/lib/ghl/api.ts` — GHL API v2 wrapper (contacts, tags, pipeline, tasks, custom fields, pipelines, opportunity find-or-create)
 - `src/lib/ghl/webhook.ts` — Inbound GHL webhook handler
-- `src/lib/ghl/field-detect.ts` — heuristic GHL custom-field → CDP key mapping (auto-detect)
+- `src/lib/ghl/webhook-auth.ts` — **inbound webhook auth (Session 10).** `verifyGhlWebhook()` (per-agency `webhook_token`, falling back to the legacy global `GHL_WEBHOOK_SECRET` if still set) + `locationBelongsToAgency()` (tenant binding). **Fails closed.**
+- `src/lib/ghl/field-detect.ts` — hardened score-field suggester (Session 10; propose-only, never saves)
+- `src/lib/ghl/field-status.ts` — resolves GHL field keys → human names; reports which identity fields exist
+- `src/lib/api/{auth,log,clients}.ts` — Agency API: key hashing + Bearer auth + rate limit + plan entitlement; `activity_log` writer; shared client field scope
+- `src/lib/push/{send,endpoint}.ts` — Web Push sender + **push-service endpoint allowlist** (SSRF guard)
+- `src/lib/vercel/domains.ts` — Vercel Domains API wrapper (custom portal domains)
 - `src/lib/ghl/notifications.ts` — GHL webhook notification service (10 `GHLNotificationType`s → agency's own GHL workflow, Resend email fallback, log-only no-op; never throws)
 - `src/lib/ghl/pipeline.ts` — best-effort GHL opportunity/pipeline-stage sync (`moveClientPipelineStage`)
 - `src/lib/google-drive/{auth,client,sync,letter-sync}.ts` — OAuth, Drive API, non-blocking sync
@@ -123,8 +137,9 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - **Theming:** app defaults to the dark theme; a light-mode toggle (`src/lib/theme/theme-context.tsx`) sets `html.light`/`html.dark`. Light overrides are **scoped to `.app-content`** (the dashboard main column) in `globals.css` — the sidebar, `(auth)`, `portal`, and `(admin)` shells stay permanently dark. Content text should use `text-slate-*` (auto-remapped for light) and accent `-300/-400` text (auto-darkened for light); wrap any solid-dark banner in `.always-dark` so its light text isn't flipped. (Session 8.)
 
 ## GHL Integration Details
-- **Inbound webhook URL:** `/api/ghl/webhook` — handles ContactCreate, ContactUpdate, ContactTagUpdate
-- **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `onboarding-complete`. Upserts client from contact + `ghl_field_keys`, generates portal link, syncs docs to Drive + writes `clientdeck_client_id`/`clientdeck_portal_link` back. Heavy work runs in Next `after()`; always 200.
+- **Inbound webhook auth (Session 10):** both inbound webhooks authenticate with the agency's own `agencies.webhook_token`, passed as `?secret=<token>` (or the `x-clientdeck-secret` / `x-wh-secret` header). Settings → GHL renders each agency's tokenized URL for copy-paste — **the URL is a live credential**. Auth **fails closed**, and the request is **tenant-bound**: the payload's `locationId` must belong to the token's agency, otherwise a valid token for agency A could write into agency B. The old global `GHL_WEBHOOK_SECRET` is still accepted *if set* (legacy migration path) but identifies no agency and so can't be tenant-bound — **keep it unset**. Rejections return **200** with `processed: false` (GHL retry-storms on non-2xx), so a misconfigured URL **fails silently** — verify with a real contact edit, not by looking for errors in GHL.
+- **Inbound webhook URL:** `/api/ghl/webhook` — handles ContactCreate, ContactUpdate, ContactTagUpdate. ⚠️ `ContactCreate` creates a RoundTrack client for **every** contact it receives — in a GHL location shared with other products, trigger it from a *targeted* workflow, never a blanket "contact created".
+- **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `onboarding-complete`. This is the primary client-creation path. Upserts the client (identity/docs from the fixed `cdp__*` keys; scores from `ghl_field_keys`), generates the portal link, syncs docs to Drive + writes `clientdeck_client_id`/`clientdeck_portal_link` back. Heavy work runs in Next `after()`; always 200.
 - **Signature request:** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow.
 - **Outbound sync:** Uses per-agency `ghl_api_key` stored in `agencies` table
 - **Sync events:** Round sent → pipeline move (`round_N_sent`) + tag + note. Results logged → pipeline move (`round_N_results`). Deletion → tag + field update. Score update → custom fields. Completion → `goal_achieved` stage + tag.
@@ -145,7 +160,9 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - **Independent channel, additive to outbound sync above.** `src/lib/ghl/notifications.ts` POSTs to an agency-configured GHL "Custom Webhook" trigger URL per event (`agencies.settings.ghl_webhook_triggers`, one URL per `GHLNotificationType`), falling back to Resend email (only 4 of 10 types have a template — `round_sent`/`deletion_win`/`goal_achieved`/`payment_failed`), falling back to a log-only no-op. Every send is logged to `activity_log` (`action: "notification_sent"`) and never throws past its caller.
 - **10 notification types**, each wired into one event: `round_sent`, `deletion_win`, `round_results_in` (round lifecycle), `goal_achieved` (client completed), `payment_failed` (Stripe webhook — client's own `stripe_customer_id`, distinct from the agency's SaaS subscription), `portal_link` (regeneration), `staff_new_client` (onboarding webhook), `staff_round_overdue` / `staff_next_round_ready` (crons), `monthly_progress` (new monthly cron, `/api/cron/monthly-progress`, `0 9 1 * *`). Staff-facing types need `agencies.settings.owner_ghl_contact_id` configured.
 - **Configure at Settings → GHL:** "Notification Webhooks" (per-type URL + Test button, backed by `/api/ghl/test-webhook`), "Pipeline Configuration", and a link to the full setup guide at `/onboarding/ghl-setup`.
-- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through the **8-stage** "Active Client" pipeline — `analysis`, `ready_to_dispute`, `round_1_sent`, `round_1_results`, `round_2_sent`, `round_2_results`, `round_3_plus`, `goal_achieved` (configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`; labels + `stageForRoundSent`/`stageForRoundResults`/`stageForClientState` helpers live in `pipeline.ts`). Wired into round events in `clients/[id]/rounds/actions.ts` (round sent → `round_N_sent`, results logged → `round_N_results`, completion → `goal_achieved`); lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()`, caching it on `clients.ghl_opportunity_id`. New clients are placed in `analysis` at onboarding; `/api/ghl/setup/create-opportunities` backfills opportunities for all synced clients (each in the stage matching its progress); `/api/ghl/setup/find-pipeline` auto-maps stage ids by name. Best-effort, no-ops cleanly if unconfigured. **Requires the agency's GHL "Active Client" pipeline to actually contain all 8 stages** — unmapped stages just no-op. (Session 6; expanded from 3 to 8 stages in Session 8.)
+- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through the **9-stage** "Active Client" pipeline — `analysis`, `ready_to_dispute`, `round_1_sent`, `round_1_results`, `round_2_sent`, `round_2_results`, `round_3_plus`, `round_3_plus_results`, `goal_achieved` (configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`; labels + `stageForRoundSent`/`stageForRoundResults`/`stageForClientState` helpers live in `pipeline.ts`). Wired into round events in `clients/[id]/rounds/actions.ts` (round sent → `round_N_sent`, results logged → `round_N_results`, completion → `goal_achieved`); lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()`, caching it on `clients.ghl_opportunity_id`. New clients are placed in `analysis` at onboarding; `/api/ghl/setup/create-opportunities` backfills opportunities for all synced clients; `/api/ghl/setup/find-pipeline` auto-maps stage ids by name (GHL never exposes stage ids in its UI — this tool is the only way to get them) and **prefers a `CDP - ` prefixed pipeline** over any other name containing "active client". Best-effort, no-ops cleanly if unconfigured; unmapped stages just no-op. (Session 6; 3 → 8 stages in Session 8; rounds 3+ gained their own results stage in Session 10.)
+  - `PipelineStageKey` (pipeline.ts) and `AgencySettings.ghl_pipeline_stages` (types/index.ts) duplicate the same key union — they can't import each other (circular). A **compile-time assertion in `pipeline.ts` makes any drift a build error**; don't "fix" it by deleting the assertion.
+  - After changing the stage model, agencies must **re-run Find & Connect Pipeline** — existing `ghl_pipeline_stages` rows won't contain the new key until they do.
 - **Visibility:** client Timeline tab shows a "✓ GHL" / "⚠ Email fallback" badge on notification entries; admin agency slide-over's GHL Config tab shows a 10-row configured/not-set breakdown.
 
 ## Credit Monitoring Integration (Session 7)
@@ -182,12 +199,18 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - Bulk generation: processes 3 letters concurrently via `Promise.allSettled`
 
 ## Security Rules
-- NEVER store full SSN — only `ssn_last4`
+- **NEVER store full SSN — only `ssn_last4`.** Enforced in three places now: the dashboard form, the CSV import, and (since Session 10) the GHL onboarding webhook, which strips to digits and takes the last 4. Migration 030 adds a DB `CHECK` as the backstop, so no future code path can reintroduce it. A full SSN would otherwise flow into CSV exports and the Claude letter prompt.
 - NEVER store raw credit report data in the database
 - RLS on every table — `agency_id` isolation enforced at DB level
 - Portal uses `portal_token` (random 64-char hex) with expiry — NOT Supabase Auth
-- GHL API keys stored in `agencies` table — encrypted at rest by Supabase
-- All webhook endpoints verify source (GHL signature, Stripe signature)
+- Secrets (`ghl_api_key`, `credit_monitoring_*`, `webhook_token`) are **never sent to the browser** — Server Components send `maskSecret()` placeholders, and save actions treat a masked value as "keep the existing secret" (`src/lib/utils/secrets.ts`). Beware `{...agency}` spreads into client components.
+- **All webhook endpoints FAIL CLOSED.** A missing server-side secret must reject everything, never "skip the check". `if (secret) { check }` is the bug pattern — it shipped, and production accepted unauthenticated GHL webhooks for a period (Session 10). Stripe verifies its signature; crons check `CRON_SECRET`; GHL uses `verifyGhlWebhook()`.
+- **Tenant-bind anything the caller can name.** Both GHL webhooks pick the agency from the payload's `locationId`, which the caller controls — so authentication alone was not enough. `locationBelongsToAgency()` rejects a request whose `locationId` isn't owned by the token's agency.
+- **CSV: formula-guard all freeform text.** `toCSV()` prefixes any cell starting with `=`, `+`, `-`, `@`, tab, or CR. Quoting does NOT prevent Excel formula execution. Client names come from lead-submitted GHL forms — i.e. attacker-controlled. Only `RawCsvCell` (from `forceCsvText()`) bypasses the guard.
+- **Allowlist any URL the server will fetch.** Push subscription endpoints are checked against the real push services (`src/lib/push/endpoint.ts`) — `web-push` will POST to any host it's given, which made the portal an SSRF primitive.
+- **Re-check entitlement on every request, not just at issuance.** Agency API keys verify `hasApiAccess(plan)` + `plan_status` on each call, so a downgraded/cancelled agency's existing keys stop working.
+
+> ⚠️ **Known outstanding risk (not a code issue):** the live GHL onboarding form collects **full SSN + bureau login credentials, security-question answers, and PINs** into plaintext GHL custom fields. This is the single largest exposure in the system and the root cause behind several past bugs. The credential-free path already exists — enroll clients via the credit-monitoring provider (`src/lib/credit-monitoring/`) and pull reports by API instead of holding their passwords.
 
 ## Environment Variables Required
 See `.env.example` for the full annotated list. Notable:
@@ -199,15 +222,23 @@ STRIPE_SECRET_KEY / _WEBHOOK_SECRET / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_PRICE_SOLO                      # Starter plan ($49) — id stays "solo"
 STRIPE_PRICE_PRO                       # Pro ($129)
 STRIPE_PRICE_AGENCY                    # Agency ($249)
-GHL_WEBHOOK_SECRET
+GHL_WEBHOOK_SECRET                     # LEGACY/RETIRED — keep UNSET. Webhooks now use
+                                       # the per-agency agencies.webhook_token (migration
+                                       # 031). If set, it is still accepted as a global
+                                       # credential that cannot be tenant-bound.
 RESEND_API_KEY                         # emails logged to console if empty
 CRON_SECRET
 PORTAL_TOKEN_SECRET
 ADMIN_PASSWORD                         # super-admin /admin login (required for admin access)
 ADMIN_EMAIL                            # optional audit label only
 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET  # Google Drive OAuth (Drive no-ops if unset)
+VAPID_PRIVATE_KEY / VAPID_SUBJECT / NEXT_PUBLIC_VAPID_PUBLIC_KEY  # Web Push (portal PWA; no-ops if unset)
+VERCEL_TOKEN / VERCEL_PROJECT_ID / VERCEL_TEAM_ID  # custom portal domains (Agency plan)
 ```
 > Vercel env changes only apply to the **next deployment** — redeploy after editing.
+> ⚠️ Deleting a secret an endpoint depends on takes effect on the next deploy and, with
+> fail-closed auth, silently rejects live traffic. Sequence env changes with the code
+> that needs them.
 
 ## Build Status
 Core build complete (Weeks 1–7): schema, auth, clients/items, dispute rounds + AI
@@ -284,6 +315,51 @@ analytics, landing page.
   `"RTP - "` would generate `rtp__` keys and break the mapping (see the REBRAND
   NOTE comments in `field-keys.ts`/`setup-config.ts`). See "Post-Rename Manual
   Steps" below for the outstanding infra/domain cutover checklist.
+- **Session 10 — Agency API, security audit + remediation, GHL field/webhook hardening.**
+  - **Agency API** (Agency plan only, gated by `hasApiAccess()`): key generation with
+    sha256 hashing + one-time reveal (Settings → API, migration 027); Bearer auth
+    (`src/lib/api/auth.ts`) that re-checks plan entitlement on **every** request;
+    Postgres fixed-window rate limiting (100 req/hr per key, migration 029 — *not* the
+    in-memory helper, which doesn't hold across serverless instances); endpoints
+    `GET /api/v1/clients`, `/clients/:id`, `/clients/:id/rounds`, `POST /api/v1/clients`;
+    docs page at `/settings/api/docs`. Cross-agency reads 404 identically whether the id
+    exists elsewhere or not.
+  - **Security audit + fixes** — full SSN reachable via the onboarding webhook (**H1**,
+    migration 030); CSV formula injection in the client export; blind SSRF via portal push
+    subscription endpoints; API keys surviving plan downgrade/cancellation. See
+    "Security Rules" for the invariants each one established.
+  - **GHL field cross-contamination (real, caught pre-impact).** In a GHL location shared
+    with TaxIntake Pro (`ti__*`) and Due Diligence Pro (`dd_*`), name-based auto-detect had
+    mapped **"Equifax Score" → a field named "Equifax Password"** and **"SSN Last 4" → a
+    *dependent's* SSN**. Zero clients had onboarded through it. Fixed by making the 9
+    identity fields RTP-owned (`CDP_IDENTITY_FIELDS`) instead of agency-mapped, and
+    hardening the score suggester (credential denylist, dependent/spouse exclusion,
+    `NUMERICAL` type gate, `cdp__` preferred, **no guess when nothing passes**,
+    propose-and-confirm instead of silent-fill, human-readable field names in the UI).
+  - **Webhook auth.** Both GHL webhooks were **fail-open** (`if (secret) { check }`) and
+    production had no secret set — unauthenticated writes were possible using only the
+    `locationId` (which is not a secret). Now fail-closed with a **per-agency
+    `webhook_token`** (migration 031) plus **tenant binding**, so a valid token for one
+    agency cannot write into another.
+  - Pipeline: 9th stage `round_3_plus_results`; `find-pipeline` prefers the `CDP - `
+    pipeline; setup tools now `router.refresh()` so saved config stops rendering stale.
+  - PWA install fix (manifest/`sw.js` were being auth-redirected by middleware).
+
+## Outstanding (known, not yet done)
+- **Onboarding form collects bureau credentials.** The live GHL onboarding form asks for
+  full SSN, Experian/Equifax/TransUnion **logins, security-question answers, and PINs**,
+  all landing in plaintext GHL custom fields. This is the largest remaining exposure and
+  the root cause behind the field-mapping bugs above. The credential-free path already
+  exists: enroll clients through the credit-monitoring provider (`src/lib/credit-monitoring/`)
+  and pull reports by API instead of holding client passwords.
+- **Per-agency GHL setup still manual:** each agency must (a) run *Create Custom Fields*,
+  (b) point their GHL onboarding form at the new `cdp__` identity fields (creating them does
+  **not** populate them), (c) re-run *Find & Connect Pipeline* for the 9th stage, and
+  (d) re-copy their tokenized webhook URLs into GHL.
+- **Low-severity, open:** plan-limit checks are check-then-act (concurrent imports can
+  overshoot `max_clients`); the GHL onboarding webhook bypasses the plan limit entirely;
+  Agency API rate limiting fails open if the counter query errors; a push subscription row
+  can be taken over given a known endpoint URL (denial, not interception).
 
 ## Common Commands
 ```bash
