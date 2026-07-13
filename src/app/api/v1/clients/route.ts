@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateApiKey } from "@/lib/api/auth";
+import { validateApiKey, apiAuthErrorResponse } from "@/lib/api/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logApiRequest } from "@/lib/api/log";
 import { CLIENT_API_FIELDS, type ApiClient } from "@/lib/api/clients";
@@ -22,9 +22,7 @@ function parsePagination(url: URL): { limit: number; offset: number } {
 /** Lists clients for the agency resolved from the API key. Core fields only. */
 export async function GET(req: Request) {
   const auth = await validateApiKey(req);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!auth.ok) return apiAuthErrorResponse(auth);
 
   const url = new URL(req.url);
   const { limit, offset } = parsePagination(url);
@@ -72,9 +70,7 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   const auth = await validateApiKey(req);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!auth.ok) return apiAuthErrorResponse(auth);
 
   let body: unknown;
   try {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateApiKey } from "@/lib/api/auth";
+import { validateApiKey, apiAuthErrorResponse } from "@/lib/api/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logApiRequest } from "@/lib/api/log";
 import { findAgencyClient } from "@/lib/api/clients";
@@ -13,9 +13,7 @@ const ROUND_FIELDS =
  *  client-detail route does when the client isn't in this agency. */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await validateApiKey(req);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!auth.ok) return apiAuthErrorResponse(auth);
 
   const { id } = await params;
   const client = await findAgencyClient(id, auth.agencyId);

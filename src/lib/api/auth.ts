@@ -1,4 +1,5 @@
 import { randomBytes, createHash } from "crypto";
+import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const KEY_PREFIX = "rtp_live_";
@@ -17,22 +18,28 @@ export function hashApiKey(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-export interface ApiKeyAuthResult {
-  agencyId: string;
-}
+/** 100 requests/hour per key, fixed windows aligned to the clock hour. */
+export const API_RATE_LIMIT = 100;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+
+export type ApiKeyAuthResult =
+  | { ok: true; agencyId: string; keyId: string }
+  | { ok: false; status: 401 }
+  | { ok: false; status: 429; limit: number; current: number; resetAt: string };
 
 /**
- * Validates the `Authorization: Bearer <key>` header against agency_api_keys.
- * Uses the admin client — there is no Supabase Auth session on these requests,
- * so RLS's get_user_agency_id() has nothing to resolve against. Updates
- * last_used_at on success. Returns null on any missing/invalid/revoked key.
+ * Validates the `Authorization: Bearer <key>` header against agency_api_keys,
+ * then enforces the per-key rate limit before any endpoint logic runs. Uses
+ * the admin client — there is no Supabase Auth session on these requests, so
+ * RLS's get_user_agency_id() has nothing to resolve against. Updates
+ * last_used_at on success.
  */
-export async function validateApiKey(req: Request): Promise<ApiKeyAuthResult | null> {
+export async function validateApiKey(req: Request): Promise<ApiKeyAuthResult> {
   const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return null;
+  if (!auth?.startsWith("Bearer ")) return { ok: false, status: 401 };
 
   const raw = auth.slice("Bearer ".length).trim();
-  if (!raw) return null;
+  if (!raw) return { ok: false, status: 401 };
 
   const hash = hashApiKey(raw);
   const admin = createAdminClient();
@@ -44,12 +51,58 @@ export async function validateApiKey(req: Request): Promise<ApiKeyAuthResult | n
     .is("revoked_at", null)
     .maybeSingle();
 
-  if (!key) return null;
+  if (!key) return { ok: false, status: 401 };
 
   await admin
     .from("agency_api_keys")
     .update({ last_used_at: new Date().toISOString() })
     .eq("id", key.id);
 
-  return { agencyId: key.agency_id };
+  // Fixed-window counter, stored in Postgres (not the in-memory
+  // src/lib/utils/rate-limit.ts helper — that's per-serverless-instance
+  // memory and doesn't enforce a real cap across instances).
+  const windowStart = new Date();
+  windowStart.setMinutes(0, 0, 0);
+  const resetAt = new Date(windowStart.getTime() + RATE_LIMIT_WINDOW_MS);
+
+  const { data: count, error: rateLimitError } = await admin.rpc("increment_api_rate_limit", {
+    p_api_key_id: key.id,
+    p_window_start: windowStart.toISOString(),
+  });
+
+  if (rateLimitError) {
+    // Fail open: an infra hiccup on the rate-limit counter shouldn't take
+    // down the API for legitimate callers. The auth check above is the
+    // security-critical fail-closed path; this is best-effort abuse control.
+    console.error("validateApiKey: rate limit check failed", rateLimitError);
+  } else if (typeof count === "number" && count > API_RATE_LIMIT) {
+    return {
+      ok: false,
+      status: 429,
+      limit: API_RATE_LIMIT,
+      current: count,
+      resetAt: resetAt.toISOString(),
+    };
+  }
+
+  return { ok: true, agencyId: key.agency_id, keyId: key.id };
+}
+
+/** Shared 401/429 response for every /api/v1/* route — keeps the rate-limit
+ *  response shape uniform across all endpoints instead of copy-pasted per-route. */
+export function apiAuthErrorResponse(
+  auth: Extract<ApiKeyAuthResult, { ok: false }>
+): NextResponse {
+  if (auth.status === 429) {
+    return NextResponse.json(
+      {
+        error: "Rate limit exceeded.",
+        limit: auth.limit,
+        current: auth.current,
+        reset_at: auth.resetAt,
+      },
+      { status: 429 }
+    );
+  }
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }

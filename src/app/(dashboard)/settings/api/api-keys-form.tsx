@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Key, Copy, Check, AlertTriangle } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,14 @@ export function ApiKeysForm({ initialKeys }: { initialKeys: AgencyApiKey[] }) {
       <Card>
         <CardHeader
           title="API Keys"
-          description="Generate keys to access RoundTrack Pro data programmatically. Data endpoints are coming soon — keys can be created and tested today."
+          description={
+            <>
+              Generate keys to access RoundTrack Pro data programmatically.{" "}
+              <Link href="/settings/api/docs" className="font-medium text-blue-400 hover:text-blue-400">
+                View API docs →
+              </Link>
+            </>
+          }
           action={
             <Button onClick={handleGenerate} loading={generating}>
               <Key className="h-4 w-4" />

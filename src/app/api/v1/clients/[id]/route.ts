@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateApiKey } from "@/lib/api/auth";
+import { validateApiKey, apiAuthErrorResponse } from "@/lib/api/auth";
 import { logApiRequest } from "@/lib/api/log";
 import { findAgencyClient } from "@/lib/api/clients";
 
@@ -7,9 +7,7 @@ import { findAgencyClient } from "@/lib/api/clients";
  *  existence) for both a nonexistent id and one that belongs to another agency. */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await validateApiKey(req);
-  if (!auth) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!auth.ok) return apiAuthErrorResponse(auth);
 
   const { id } = await params;
   const client = await findAgencyClient(id, auth.agencyId);
