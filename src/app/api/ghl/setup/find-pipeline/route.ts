@@ -25,13 +25,31 @@ function mapStageNameToKey(stageName: string): PipelineStageKey | null {
 
   const isResults =
     name.includes("result") || name.includes("response") || name.includes("back");
-  if (/round\s*[3-9]/.test(name) || name.includes("round 3+") || name.includes("3+"))
-    return "round_3_plus";
+  // Rounds 3+ get their own sent/results pair, same as rounds 1 and 2. Before
+  // this, both "Round 3+ - Sent" and "Round 3+ - Results In" collapsed onto a
+  // single key and first-match-wins silently dropped the results stage.
+  if (/round\s*[3-9]/.test(name) || name.includes("3+"))
+    return isResults ? "round_3_plus_results" : "round_3_plus";
   if (/round\s*2/.test(name) || /\br2\b/.test(name))
     return isResults ? "round_2_results" : "round_2_sent";
   if (/round\s*1/.test(name) || /\br1\b/.test(name))
     return isResults ? "round_1_results" : "round_1_sent";
   return null;
+}
+
+/**
+ * Picks the agency's active-client pipeline. A location can hold several
+ * pipelines whose names contain "active client" — Acme has both
+ * "CDP - Active Clients" (ours) and a stale "Active Client" from the original
+ * snapshot. Relying on API return order picked the right one by luck; prefer
+ * the explicit `CDP -` prefix instead, mirroring the same "prefer the specific
+ * signal over the ambiguous one" fix applied to field-detect.ts.
+ */
+function pickActiveClientPipeline<T extends { name: string }>(pipelines: T[]): T | undefined {
+  const candidates = pipelines.filter((p) => p.name.toLowerCase().includes("active client"));
+  if (candidates.length === 0) return undefined;
+  const ours = candidates.find((p) => /^\s*cdp\s*-/i.test(p.name));
+  return ours ?? candidates[0];
 }
 
 /** Auto-detects the agency's "Active Client" GHL pipeline and maps its 3 stage ids by name. */
@@ -50,7 +68,7 @@ export async function POST() {
   }
 
   const pipelines = await getGHLPipelines({ apiKey: ghl_api_key, locationId: ghl_location_id });
-  const match = pipelines.find((p) => p.name.toLowerCase().includes("active client"));
+  const match = pickActiveClientPipeline(pipelines);
   if (!match) {
     return NextResponse.json({
       ok: false,

@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { findOrCreateGHLOpportunity, moveGHLPipelineStage } from "@/lib/ghl/api";
-import type { Agency } from "@/types";
+import type { Agency, AgencySettings } from "@/types";
 
 export type PipelineStageKey =
   | "analysis"
@@ -10,6 +10,7 @@ export type PipelineStageKey =
   | "round_2_sent"
   | "round_2_results"
   | "round_3_plus"
+  | "round_3_plus_results"
   | "goal_achieved";
 
 /** Human labels for the stage keys, used by the settings UI and name-matching. */
@@ -20,13 +21,31 @@ export const PIPELINE_STAGE_LABELS: Record<PipelineStageKey, string> = {
   round_1_results: "Round 1 - Results",
   round_2_sent: "Round 2 - Sent",
   round_2_results: "Round 2 - Results",
-  round_3_plus: "Round 3+ - Active",
+  // Rounds 3+ collapse into one sent/results pair — a client can run many
+  // rounds, and one stage per round would make the board unusable.
+  round_3_plus: "Round 3+ - Sent",
+  round_3_plus_results: "Round 3+ - Results",
   goal_achieved: "Goal Achieved",
 };
 
 export const PIPELINE_STAGE_KEYS = Object.keys(
   PIPELINE_STAGE_LABELS
 ) as PipelineStageKey[];
+
+/**
+ * AgencySettings.ghl_pipeline_stages duplicates these keys (it can't import
+ * PipelineStageKey without a circular import, since this file imports Agency).
+ * This assertion makes the duplication a COMPILE ERROR if the two ever drift,
+ * instead of a stage that silently never populates.
+ */
+type StoredStageKey = keyof NonNullable<AgencySettings["ghl_pipeline_stages"]>;
+type AssertStageKeysMatch = PipelineStageKey extends StoredStageKey
+  ? StoredStageKey extends PipelineStageKey
+    ? true
+    : ["AgencySettings.ghl_pipeline_stages has a key PipelineStageKey lacks"]
+  : ["PipelineStageKey has a key AgencySettings.ghl_pipeline_stages lacks"];
+const _stageKeysInSync: AssertStageKeysMatch = true;
+void _stageKeysInSync;
 
 /** Stage a client's opportunity should sit in once round N's letters are sent. */
 export function stageForRoundSent(roundNumber: number): PipelineStageKey {
@@ -39,7 +58,10 @@ export function stageForRoundSent(roundNumber: number): PipelineStageKey {
 export function stageForRoundResults(roundNumber: number): PipelineStageKey {
   if (roundNumber <= 1) return "round_1_results";
   if (roundNumber === 2) return "round_2_results";
-  return "round_3_plus";
+  // Previously returned "round_3_plus" (the SENT stage), so from round 3 on,
+  // logging results left the opportunity parked in "Sent" — the board couldn't
+  // distinguish "waiting on the bureaus" from "results are in".
+  return "round_3_plus_results";
 }
 
 /**

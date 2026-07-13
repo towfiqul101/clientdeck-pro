@@ -118,7 +118,11 @@ export interface AgencySettings {
   referral_link?: string;
   // Owner's own GHL contact id — staff alert tags land on this contact (Session 6)
   owner_ghl_contact_id?: string;
-  // Pipeline sync (Session 6, Phase B; expanded to the granular 8-stage model in Session 8)
+  // Pipeline sync (Session 6, Phase B; granular stages in Session 8; rounds 3+
+  // gained their own results stage in Session 10).
+  // NOTE: these keys MUST stay in sync with PipelineStageKey in
+  // lib/ghl/pipeline.ts. They're duplicated rather than imported because
+  // pipeline.ts already imports Agency from here (circular otherwise).
   ghl_pipeline_id?: string;
   ghl_pipeline_stages?: Partial<Record<
     | "analysis"
@@ -128,6 +132,7 @@ export interface AgencySettings {
     | "round_2_sent"
     | "round_2_results"
     | "round_3_plus"
+    | "round_3_plus_results"
     | "goal_achieved",
     string
   >>;
