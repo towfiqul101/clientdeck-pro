@@ -17,14 +17,19 @@ import type { SessionContext } from "@/lib/auth/session";
 type PortalLinkResult = { success: true; url: string } | { success: false; error: string };
 
 /**
- * Rotates the client's portal token and (best-effort) pushes it into the GHL
+ * Resolves the client's portal link and (best-effort) pushes it into the GHL
  * `rtp__portal_link` custom field. Does NOT fire any client-facing
  * notification — that's each channel action's own job, so the three portal-
  * link delivery options stay genuinely independent.
+ *
+ * REUSES the existing token (see generatePortalLink). It used to mint a new one
+ * every call, so copying the link silently killed the link already in the
+ * client's inbox. Pass rotate:true only to deliberately revoke old links.
  */
-async function rotatePortalLink(
+async function resolvePortalLink(
   clientId: string,
-  session: SessionContext
+  session: SessionContext,
+  opts: { rotate?: boolean } = {}
 ): Promise<
   | { success: true; url: string; token: string; client: NotifiableClient }
   | { success: false; error: string }
@@ -39,7 +44,7 @@ async function rotatePortalLink(
 
   let url: string;
   try {
-    url = await generatePortalLink(clientId, session.agency.id);
+    url = await generatePortalLink(clientId, session.agency.id, opts);
   } catch (e) {
     return {
       success: false,
@@ -79,24 +84,44 @@ async function logPortalActivity(
   });
 }
 
-/** Rotates the link and returns it for the staff member to copy — no notification sent. */
+/** Returns the client's portal link for the staff member to copy. Non-destructive:
+ *  does NOT invalidate a link the client already has. No notification sent. */
 export async function copyPortalLink(clientId: string): Promise<PortalLinkResult> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };
 
-  const rotated = await rotatePortalLink(clientId, session);
-  if (!rotated.success) return rotated;
+  const link = await resolvePortalLink(clientId, session);
+  if (!link.success) return link;
+
+  // Deliberately not logged as "generated" — copying is a read, and logging it
+  // as a generation is what made 7 harmless copies look like 7 rotations.
+  return { success: true, url: link.url };
+}
+
+/**
+ * Explicitly REVOKES every previously-shared link and issues a fresh one.
+ * This is the security action (link leaked, client offboarded) — it is the only
+ * path that invalidates links, and it's now opt-in rather than a side effect of
+ * sharing.
+ */
+export async function regeneratePortalLink(clientId: string): Promise<PortalLinkResult> {
+  const session = await getSessionContext();
+  if (!session) return { success: false, error: "Not authenticated." };
+
+  const link = await resolvePortalLink(clientId, session, { rotate: true });
+  if (!link.success) return link;
 
   await logPortalActivity(
     session,
     clientId,
-    "Portal link generated",
-    "A new client portal magic link was generated."
+    "Portal link regenerated",
+    "A new magic link was issued. All previously shared links are now invalid."
   );
-  return { success: true, url: rotated.url };
+  return { success: true, url: link.url };
 }
 
-/** Rotates the link and fires the GHL `rtp-portal-sent` tag so the agency's own workflow SMS's it. */
+/** Sends the client's portal link via the GHL `rtp-portal-sent` tag. Reuses the
+ *  existing link — does not invalidate one the client already has. */
 export async function sendPortalLinkViaGHL(clientId: string): Promise<PortalLinkResult> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };
@@ -104,20 +129,20 @@ export async function sendPortalLinkViaGHL(clientId: string): Promise<PortalLink
     return { success: false, error: "Connect GHL to send SMS." };
   }
 
-  const rotated = await rotatePortalLink(clientId, session);
-  if (!rotated.success) return rotated;
+  const link = await resolvePortalLink(clientId, session);
+  if (!link.success) return link;
 
-  await notifyPortalLink(session.agency, { ...rotated.client, portal_token: rotated.token });
+  await notifyPortalLink(session.agency, { ...link.client, portal_token: link.token });
   await logPortalActivity(
     session,
     clientId,
     "Portal link sent via GHL SMS",
-    "A fresh portal link was tagged for GHL SMS delivery."
+    "The client's portal link was tagged for GHL SMS delivery."
   );
-  return { success: true, url: rotated.url };
+  return { success: true, url: link.url };
 }
 
-/** Rotates the link and emails it directly to the client via Resend. */
+/** Emails the client's portal link via Resend. Reuses the existing link. */
 export async function sendPortalLinkViaEmailAction(clientId: string): Promise<PortalLinkResult> {
   const session = await getSessionContext();
   if (!session) return { success: false, error: "Not authenticated." };
@@ -126,14 +151,14 @@ export async function sendPortalLinkViaEmailAction(clientId: string): Promise<Po
   const { data: clientRow } = await supabase.from("clients").select("email").eq("id", clientId).single();
   if (!clientRow?.email) return { success: false, error: "Add client email first." };
 
-  const rotated = await rotatePortalLink(clientId, session);
-  if (!rotated.success) return rotated;
+  const link = await resolvePortalLink(clientId, session);
+  if (!link.success) return link;
 
   const sent = await sendPortalLinkEmail({
     clientEmail: clientRow.email,
-    clientFirstName: rotated.client.first_name,
+    clientFirstName: link.client.first_name,
     agencyName: session.agency.name,
-    portalUrl: rotated.url,
+    portalUrl: link.url,
     agencyPhone: session.agency.phone ?? undefined,
   });
   if (!sent) return { success: false, error: "Could not send email. Try again." };
@@ -144,5 +169,5 @@ export async function sendPortalLinkViaEmailAction(clientId: string): Promise<Po
     "Portal link emailed to client",
     `Sent to ${clientRow.email}.`
   );
-  return { success: true, url: rotated.url };
+  return { success: true, url: link.url };
 }

@@ -14,12 +14,15 @@ export default async function PortalEntryPage({
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06]">
           <Unlink className="h-7 w-7 text-slate-500" />
         </span>
+        {/* Deliberately does NOT say "expired" — a link far more often stops
+            working because a newer one replaced it, and telling the client it
+            "expired" sends everyone hunting for an expiry that isn't the cause. */}
         <h1 className="mt-5 text-lg font-semibold text-slate-100">
-          {expired ? "This link has expired" : "Invalid link"}
+          {expired ? "This link no longer works" : "Invalid link"}
         </h1>
         <p className="mt-2 text-sm text-slate-500">
           {expired
-            ? "Your secure portal link is no longer valid. Contact your credit specialist to get a fresh link sent to your phone."
+            ? "Your portal link is no longer valid — it may have expired, or a newer link may have replaced it. Check for the most recent link from your credit specialist, or ask them to send a fresh one."
             : "This portal link isn't valid. Please use the most recent link your credit specialist sent you."}
         </p>
       </div>

@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Link2, Mail, MessageSquare, ChevronDown, Check } from "lucide-react";
+import { Link2, Mail, MessageSquare, ChevronDown, Check, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import { copyPortalLink, sendPortalLinkViaGHL, sendPortalLinkViaEmailAction } from "./portal-actions";
+import {
+  copyPortalLink,
+  sendPortalLinkViaGHL,
+  sendPortalLinkViaEmailAction,
+  regeneratePortalLink,
+} from "./portal-actions";
 
 export function PortalLinkMenu({ clientId }: { clientId: string }) {
   const { toast } = useToast();
@@ -64,6 +69,27 @@ export function PortalLinkMenu({ clientId }: { clientId: string }) {
     toast("Portal link sent via email.", "success");
   }
 
+  // The ONLY destructive action here — everything else reuses the client's
+  // existing link, so sharing never kills a link the client already has.
+  async function handleRegenerate() {
+    setOpen(false);
+    if (
+      !window.confirm(
+        "Issue a new portal link?\n\nEvery link this client already has — in their email or texts — will stop working immediately. Only do this if the old link was leaked or should no longer work."
+      )
+    ) {
+      return;
+    }
+    setBusy("regen");
+    const result = await regeneratePortalLink(clientId);
+    setBusy(null);
+    if (!result.success) {
+      toast(result.error, "error");
+      return;
+    }
+    toast("New link issued. All previous links are now invalid.", "success");
+  }
+
   return (
     <div className="relative" ref={menuRef}>
       <Button variant="secondary" onClick={() => setOpen((o) => !o)} loading={busy !== null}>
@@ -90,6 +116,19 @@ export function PortalLinkMenu({ clientId }: { clientId: string }) {
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
           >
             <Link2 className="h-4 w-4" /> Copy Link
+          </button>
+          <div className="my-1 border-t border-white/10" />
+          <button
+            onClick={handleRegenerate}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-amber-400 hover:bg-white/5"
+          >
+            <RefreshCw className="h-4 w-4 shrink-0" />
+            <span>
+              Regenerate link
+              <span className="block text-[11px] text-slate-500">
+                Invalidates the client&apos;s current link
+              </span>
+            </span>
           </button>
         </div>
       )}
