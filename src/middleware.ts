@@ -10,7 +10,15 @@ const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
 // session is itself a valid signed-in session, so putting it in AUTH_ROUTES
 // would trigger the "signed-in user hitting an auth route -> /dashboard" rule
 // below and bounce the user away before they can set their password.
-const PUBLIC_ROUTES = ["/", "/snapshot", "/terms", "/privacy", "/reset-password"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/snapshot",
+  "/terms",
+  "/privacy",
+  "/reset-password",
+  "/site.webmanifest",
+  "/sw.js",
+];
 
 /** True for the app's own hosts (production domain, Vercel preview/prod
  *  aliases, localhost) — i.e. NOT a candidate for custom-domain resolution. */
