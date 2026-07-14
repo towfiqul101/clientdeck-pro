@@ -5,7 +5,7 @@ import { GHL_FIELD_KEYS } from "@/lib/ghl/field-keys";
 import type { Agency, Client, TeamMember } from "@/types";
 import { NOTIFICATION_TAGS, type GHLNotificationType } from "@/lib/ghl/notification-tags";
 import { isSubscribedTo } from "@/lib/team/notification-prefs";
-import { sendPushToClient } from "@/lib/push/send";
+import { sendPushToClient, sendPushToStaff } from "@/lib/push/send";
 
 export { NOTIFICATION_TAGS };
 export type { GHLNotificationType };
@@ -320,6 +320,91 @@ function firePush(clientId: string, title: string, body: string, url: string) {
   after(() => sendPushToClient(clientId, { title, body, url }).catch((err) => {
     console.error("[push] firePush failed:", err);
   }));
+}
+
+/**
+ * Builds the in-app/push copy for a staff-facing notification from the same
+ * `data` payload buildNotificationFields/the Resend templates already use.
+ * Kept separate because in-app copy is shorter and always needs a relative
+ * dashboard path — the push service worker matches window URLs by substring
+ * (see public/sw.js), so an absolute NEXT_PUBLIC_APP_URL link would never
+ * match an already-open dashboard tab.
+ */
+function buildStaffChannelContent(
+  type: StaffFacingType,
+  data: GHLNotificationPayload["data"]
+): { title: string; body: string; link: string } {
+  const link = `/clients/${data.client_id}`;
+  switch (type) {
+    case "staff_new_client":
+      return {
+        title: "New client onboarded",
+        body: `${data.client_name} just onboarded.`,
+        link,
+      };
+    case "staff_round_overdue":
+      return {
+        title: "Round overdue",
+        body: `Round ${data.round_number} for ${data.client_name} is ${data.days_overdue} day(s) overdue.`,
+        link,
+      };
+    case "staff_next_round_ready":
+      return {
+        title: "Next round ready",
+        body: `Round ${data.round_number} is ready to prepare for ${data.client_name}.`,
+        link,
+      };
+    case "staff_monthly_progress":
+      return {
+        title: "Monthly progress",
+        body: `Monthly progress update for ${data.client_name}.`,
+        link,
+      };
+  }
+}
+
+/**
+ * Delivers the RTP-native channel (in-app bell + Web Push) for a staff
+ * notification to every already-resolved recipient — the SAME recipient
+ * list and subscribed_notification_types filtering resolveStaffRecipients()
+ * computed for the GHL-tag/Resend channel. Additive only: never blocks, and
+ * never replaces, the existing sendGHLNotification/Resend flow below it.
+ */
+function notifyStaffChannels(
+  agencyId: string,
+  type: StaffFacingType,
+  data: GHLNotificationPayload["data"],
+  recipients: StaffMember[]
+) {
+  if (recipients.length === 0) return;
+
+  const { title, body, link } = buildStaffChannelContent(type, data);
+  const message = `${title}: ${body}`;
+
+  after(async () => {
+    try {
+      const admin = createAdminClient();
+      await admin.from("staff_notifications").insert(
+        recipients.map((m) => ({
+          team_member_id: m.id,
+          agency_id: agencyId,
+          type,
+          message,
+          link,
+        }))
+      );
+    } catch (err) {
+      console.error(`[Staff Notification] ${type} in-app insert failed:`, err);
+    }
+
+    await Promise.all(
+      recipients.map((m) =>
+        sendPushToStaff(m.id, { title, body, url: link }).catch((err) => {
+          console.error(`[Staff Notification] ${type} push failed for ${m.id}:`, err);
+        })
+      )
+    );
+  });
 }
 
 function monthsSince(dateStr: string): number {
@@ -640,6 +725,7 @@ async function notifyStaffSubscribers(
     .eq("is_active", true);
 
   const recipients = resolveStaffRecipients(type, members ?? [], client);
+  notifyStaffChannels(agency.id, type, data, recipients);
 
   if (CLIENT_TAGGED_STAFF_TYPES.has(type)) {
     if (client.ghl_contact_id) {
@@ -695,6 +781,7 @@ export async function notifyStaffNewClient(agency: Agency, client: NotifiableCli
     agency,
     "staff_new_client",
     {
+      client_id: client.id,
       client_name: `${client.first_name} ${client.last_name}`,
       client_email: client.email ?? "",
       client_phone: client.phone ?? "",
@@ -715,6 +802,7 @@ export async function notifyStaffRoundOverdue(
     agency,
     "staff_round_overdue",
     {
+      client_id: client.id,
       client_name: `${client.first_name} ${client.last_name}`,
       round_number: roundNumber,
       days_overdue: daysOverdue,
@@ -734,6 +822,7 @@ export async function notifyStaffNextRoundReady(
     agency,
     "staff_next_round_ready",
     {
+      client_id: client.id,
       client_name: `${client.first_name} ${client.last_name}`,
       round_number: roundNumber,
       dashboard_link: dashboardLinkFor(client.id),
@@ -752,6 +841,7 @@ export async function notifyStaffMonthlyProgress(
     agency,
     "staff_monthly_progress",
     {
+      client_id: client.id,
       client_name: `${client.first_name} ${client.last_name}`,
       score_eq: summary.scoreEq ?? 0,
       score_exp: summary.scoreExp ?? 0,
