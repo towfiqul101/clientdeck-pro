@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn, getInitials } from "@/lib/utils/helpers";
 import { AppSidebarLogo, AppContentLogo } from "@/components/logo";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
+import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { useTheme } from "@/lib/theme/theme-context";
 import {
   LayoutDashboard,
@@ -248,6 +249,7 @@ export function DashboardShell({
             {pageTitle}
           </h1>
           <div className="ml-auto flex items-center gap-3">
+            <NotificationBell />
             <ThemeToggle />
             <span
               className="hidden text-sm text-slate-400 sm:block"
