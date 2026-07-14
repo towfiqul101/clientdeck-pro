@@ -321,6 +321,17 @@ export interface ActivityLog {
   created_at: string;
 }
 
+export interface StaffNotification {
+  id: string;
+  team_member_id: string;
+  agency_id: string;
+  type: string;
+  message: string;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
 export type SnapshotRequestStatus = "pending" | "sent" | "installed";
 
 export interface SnapshotRequest {
