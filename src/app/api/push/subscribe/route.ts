@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
-import { getPortalSession } from "@/lib/portal/session";
+import { getSessionContext } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { rateLimit, getClientIp } from "@/lib/utils/rate-limit";
+import { rateLimit } from "@/lib/utils/rate-limit";
 import { isAllowedPushEndpoint } from "@/lib/push/endpoint";
 
 export async function POST(req: Request) {
-  const ip = getClientIp(req);
-  if (!rateLimit(`portal-push-sub:${ip}`, 10, 60_000)) {
-    return NextResponse.json({ ok: false, error: "Too many requests. Try again shortly." }, { status: 429 });
+  const session = await getSessionContext();
+  if (!session) {
+    return NextResponse.json({ ok: false, error: "Not signed in." }, { status: 401 });
   }
 
-  const session = await getPortalSession();
-  if (!session) {
-    return NextResponse.json({ ok: false, error: "Session expired." }, { status: 401 });
+  if (!rateLimit(`staff-push-sub:${session.teamMember.id}`, 10, 60_000)) {
+    return NextResponse.json({ ok: false, error: "Too many requests. Try again shortly." }, { status: 429 });
   }
 
   let body: { subscription?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } } };
@@ -36,20 +35,19 @@ export async function POST(req: Request) {
     );
   }
 
-  const { client, agency } = session;
   const admin = createAdminClient();
   const { error } = await admin.from("push_subscriptions").upsert(
     {
-      client_id: client.id,
-      team_member_id: null,
-      agency_id: agency.id,
+      team_member_id: session.teamMember.id,
+      client_id: null,
+      agency_id: session.agency.id,
       subscription,
     },
     { onConflict: "endpoint" }
   );
 
   if (error) {
-    console.error("[portal/push/subscribe] upsert failed:", error);
+    console.error("[push/subscribe] upsert failed:", error);
     return NextResponse.json({ ok: false, error: "Could not save subscription." }, { status: 500 });
   }
 
@@ -57,9 +55,9 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await getPortalSession();
+  const session = await getSessionContext();
   if (!session) {
-    return NextResponse.json({ ok: false, error: "Session expired." }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "Not signed in." }, { status: 401 });
   }
 
   let body: { endpoint?: string };
@@ -77,7 +75,7 @@ export async function DELETE(req: Request) {
   await admin
     .from("push_subscriptions")
     .delete()
-    .eq("client_id", session.client.id)
+    .eq("team_member_id", session.teamMember.id)
     .eq("endpoint", body.endpoint);
 
   return NextResponse.json({ ok: true });
