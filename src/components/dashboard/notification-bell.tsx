@@ -86,7 +86,18 @@ export function NotificationBell() {
       setPushEnabled(true); // Unsupported browser — hide the prompt instead of nagging.
       return;
     }
-    setPushEnabled(Notification.permission === "granted");
+    if (Notification.permission === "granted") {
+      setPushEnabled(true);
+      // Permission was already granted (e.g. via the client portal's push
+      // prompt on the same browser) — no UI prompt will ever call
+      // subscribeToPush() in that case, so ensure a push_subscriptions row
+      // exists for this staff member here. Idempotent: pushManager.subscribe()
+      // returns the existing subscription if already subscribed, and the
+      // server upsert is onConflict:"endpoint".
+      subscribeToPush().catch(() => {});
+    } else {
+      setPushEnabled(false);
+    }
   }, []);
 
   useEffect(() => {
