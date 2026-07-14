@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils/helpers";
+import { useToast } from "@/components/ui/toast";
 import type { StaffNotification } from "@/types";
 
 type StaffNotificationItem = Pick<
@@ -22,13 +23,17 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return output;
 }
 
-async function subscribeToPush(): Promise<boolean> {
+type SubscribeResult = "subscribed" | "unsupported" | "denied" | "error";
+
+async function subscribeToPush(): Promise<SubscribeResult> {
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  if (!vapidKey) return false;
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return false;
+  if (!vapidKey) return "unsupported";
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    return "unsupported";
+  }
 
   const permission = await Notification.requestPermission();
-  if (permission !== "granted") return false;
+  if (permission !== "granted") return "denied";
 
   await navigator.serviceWorker.register("/sw.js");
   const registration = await navigator.serviceWorker.ready;
@@ -42,7 +47,7 @@ async function subscribeToPush(): Promise<boolean> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subscription: sub.toJSON() }),
   });
-  return true;
+  return "subscribed";
 }
 
 function timeAgo(iso: string): string {
@@ -57,6 +62,7 @@ function timeAgo(iso: string): string {
 }
 
 export function NotificationBell() {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<StaffNotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -112,8 +118,23 @@ export function NotificationBell() {
   }, [open]);
 
   async function handleEnablePush() {
-    const ok = await subscribeToPush().catch(() => false);
-    setPushEnabled(ok || (typeof Notification !== "undefined" && Notification.permission === "granted"));
+    const result = await subscribeToPush().catch(() => "error" as const);
+    if (result === "subscribed") {
+      setPushEnabled(true);
+      toast("Push notifications enabled.", "success");
+    } else if (result === "denied") {
+      setPushEnabled(false);
+      toast(
+        "Notifications are blocked for this site in your browser. Allow them in your browser's site settings, then try again.",
+        "error"
+      );
+    } else if (result === "unsupported") {
+      setPushEnabled(true); // Nothing we can do — hide the prompt instead of nagging.
+      toast("Push notifications aren't supported in this browser.", "error");
+    } else {
+      setPushEnabled(false);
+      toast("Couldn't enable push notifications. Try again.", "error");
+    }
   }
 
   async function handleItemClick(item: StaffNotificationItem) {
