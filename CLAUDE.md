@@ -89,7 +89,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 
 ### Key Flows
 1. **Client Intake:** GHL webhook → auto-create client in app OR manual creation
-2. **GHL-Native Onboarding:** Lead pays → GHL onboarding form (+ e-signature) → tag `rtp-onboarding-completed` fires webhook → `/api/ghl/onboarding` pulls the contact, upserts the client (identity/docs from the fixed `rtp__*` keys; scores from the `ghl_field_keys` mapping), generates the portal link, syncs docs to Drive + writes back to GHL. Always returns 200 to GHL.
+2. **GHL-Native Onboarding:** Lead pays → GHL onboarding form (+ e-signature step — see "Signature step on the standardized onboarding form" under GHL Integration Details for exact field configuration) → tag `rtp-onboarding-completed` fires webhook → `/api/ghl/onboarding` pulls the contact, upserts the client (identity/docs from the fixed `rtp__*` keys; scores from the `ghl_field_keys` mapping), generates the portal link, syncs docs to Drive + writes back to GHL. Always returns 200 to GHL.
 3. **Dispute Round:** Select items → generate letters with Claude → review/edit → finalize → export PDF → mark sent → GHL sync + Drive letter backup fires
 4. **Results Logging:** Staff logs results per item → deletions update client stats → GHL gets win notification
 5. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload (mirrored to Drive)
@@ -183,13 +183,14 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - **Inbound webhook auth (Session 10):** both inbound webhooks authenticate with the agency's own `agencies.webhook_token`, passed as `?secret=<token>` (or the `x-rtp-secret` / `x-wh-secret` header). Settings → GHL renders each agency's tokenized URL for copy-paste — **the URL is a live credential**. Auth **fails closed**, and the request is **tenant-bound**: the payload's `locationId` must belong to the token's agency, otherwise a valid token for agency A could write into agency B. The old global `GHL_WEBHOOK_SECRET` is still accepted *if set* (legacy migration path) but identifies no agency and so can't be tenant-bound — **keep it unset**. Rejections return **200** with `processed: false` (GHL retry-storms on non-2xx), so a misconfigured URL **fails silently** — verify with a real contact edit, not by looking for errors in GHL.
 - **Inbound webhook URL:** `/api/ghl/webhook` — handles ContactCreate, ContactUpdate, ContactTagUpdate. ⚠️ `ContactCreate` creates a RoundTrack client for **every** contact it receives — in a GHL location shared with other products, trigger it from a *targeted* workflow, never a blanket "contact created".
 - **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `rtp-onboarding-completed` (`ONBOARDING_COMPLETE_TAG` in `notification-tags.ts`; namespaced because a bare `onboarding-complete` is a common tag in credit-repair GHL accounts and another product's workflow adding it would create clients here. **Nothing in the code reads the tag** — the route acts on whatever `contactId`/`locationId` it is POSTed; the tag is purely the GHL-side trigger). This is the primary client-creation path. Upserts the client (identity/docs from the fixed `rtp__*` keys; scores from `ghl_field_keys`), resolves the portal link, syncs docs to Drive + writes `rtp__client_id`/`rtp__portal_link` back. Heavy work runs in Next `after()`; always 200.
-- **Signature request:** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow.
+- **Signature request (fallback only):** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow. This is a re-request path for the rare client who completes onboarding without signing, **not** the primary signature flow — see "Signature step on the standardized onboarding form" below. Meaningful only if the agency has also built a separate workflow reacting to this tag; otherwise clicking it just tags the contact with no visible effect.
 - **Outbound sync:** Uses per-agency `ghl_api_key` stored in `agencies` table
 - **Sync events:** Round sent → pipeline move (`round_N_sent`) + tag + note. Results logged → pipeline move (`round_N_results`). Deletion → tag + field update. Score update → custom fields. Completion → `goal_achieved` stage + tag.
-- **GHL custom fields — single source of truth is `src/lib/ghl/field-keys.ts`.** GHL derives a field's stored key from its NAME ("RTP - Portal Link" → `rtp__portal_link`; the `" - "` collapses to a **double** underscore). The setup tool (`RTP_ALL_CUSTOM_FIELDS` in `setup-config.ts`) creates **28** fields in four groups:
+- **GHL custom fields — single source of truth is `src/lib/ghl/field-keys.ts`.** GHL derives a field's stored key from its NAME ("RTP - Portal Link" → `rtp__portal_link`; the `" - "` collapses to a **double** underscore). The setup tool (`RTP_ALL_CUSTOM_FIELDS` in `setup-config.ts`) creates **38** fields in five groups:
   - **9 core tracking** (`RTP_CUSTOM_FIELDS`): `rtp__round_number`, `rtp__items_deleted`, `rtp__total_items`, `rtp__next_dispute_date`, `rtp__eq_score`, `rtp__exp_score`, `rtp__tu_score`, `rtp__portal_link`, `rtp__client_id`
   - **7 notification** (`RTP_NOTIFICATION_FIELDS`): `rtp__items_disputed`, `rtp__deletions_this_round`, `rtp__deleted_items_list`, `rtp__score_improvement`, `rtp__monthly_fee`, `rtp__agency_phone`, `rtp__google_review_link`
   - **9 identity/intake** (`RTP_IDENTITY_FIELDS`, Session 10 — the **read** side): `rtp__ssn_last_4` (TEXT — note `_last_4`, since "RTP - SSN Last 4" turns *each* space into an underscore), `rtp__dob` (DATE), `rtp__signature_status` (TEXT), `rtp__signature_date` (DATE), `rtp__id_document`, `rtp__proof_of_address`, `rtp__credit_report_eq`, `rtp__credit_report_exp`, `rtp__credit_report_tu` (all FILE_UPLOAD)
+  - **10 onboarding-details intake** (`RTP_ONBOARDING_INTAKE_FIELDS`, migration 034 — the **read** side): `rtp__credit_score_range`, `rtp__reviewed_credit_report_recently`, `rtp__negative_items_reported`, `rtp__enrolled_other_program`, `rtp__primary_goal`, `rtp__results_timeline`, `rtp__employment_status`, `rtp__bankruptcy_filed` (all TEXT — the 3 enum-shaped ones are normalized best-effort against known values and dropped to `NULL` if unrecognized, since the columns are `CHECK`-constrained), `rtp__bankruptcy_date` (DATE), `rtp__intake_concerns` (TEXT)
   - **3 staff-alert** (`RTP_STAFF_ALERT_FIELDS`, Session 11): `rtp__alert_round_number` (NUMERICAL), `rtp__alert_days_overdue` (NUMERICAL), `rtp__alert_dashboard_link` (TEXT). Written to the **client's** contact by the 3 staff alerts — see the Notifications section. Client name/email/phone need no field: on the client's own contact they're the native `{{contact.first_name}}` / `{{contact.email}}` / `{{contact.phone}}`.
 
   > **Note:** earlier revisions of this file listed names like `dispute_round_current` / `credit_score_eq_current` / `clientdeck_portal_link`. Those were **never** the real keys — always trust `field-keys.ts`.
@@ -199,6 +200,61 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
   **Why (Session 10):** these 9 were previously agency-mapped by name via `field-detect.ts`. In a live GHL location shared with TaxIntake Pro (`ti__*`) and Due Diligence Pro (`dd_*`), auto-detect resolved **"Equifax Score" → a field named "Equifax Password"**, **"SSN Last 4" → a *dependent's* SSN**, and "Proof of Address" → a yes/no radio. Caught before any client onboarded through it. Fixed keys make the collision structurally impossible. Auto-detect (scores only) is now **propose-and-confirm** and gated: credential denylist (password/login/PIN/secret), dependent/spouse exclusion, `NUMERICAL`-type requirement, `rtp__` preferred over `dd_`/`ti__`, and **no guess when nothing passes**.
 
   ⚠️ Creating the identity fields does **not** populate them — each agency must point their own GHL onboarding form/workflow at the new `rtp__` fields. Surfaced by the `IdentityFieldsNotice` banner in Settings → GHL.
+
+- **Signature step on the standardized onboarding form.** The primary
+  signature path is the e-signature field embedded directly in the client's
+  onboarding form — **not** the "Send Signature Request via GHL" button (see
+  above), which is a fallback re-request path for the rare client who
+  completes onboarding without signing.
+
+  **How the webhook recognizes a signature** (`extractClientData` in
+  `src/app/api/ghl/onboarding/route.ts`): it reads `rtp__signature_status` and
+  tests it with `/^(signed|yes|true|complete)/i` — a case-insensitive
+  **prefix** match (no `$` anchor), so `Signed`, `signed by client`, and `yes`
+  all match. A GHL signature field's own output (a drawn image, or the
+  client's typed name) never will, so the signature *capture* and the
+  signed-ness *indicator* must be two separate GHL fields. To configure it:
+
+  1. Add GHL's native **Signature** field type to the onboarding form for the
+     actual capture (client draws/types to sign). Its value is never read by
+     RTP — it exists purely to satisfy the legal capture requirement inside GHL.
+  2. In the GHL Workflow that processes this form submission, add an **Update
+     Contact Field** action, placed *after* the signature step, that sets:
+     - `RTP - Signature Status` → the literal text `Signed` — a value
+       hardcoded into the workflow action itself, never mapped from the
+       signature field's own content (its content won't match the regex).
+     - `RTP - Signature Date` → an actual date value (GHL's current-date
+       merge variable/action output), not free text. If left blank, the
+       webhook falls back to "the moment the onboarding webhook ran" — close,
+       but not the true signing timestamp.
+  3. Test with one real contact and confirm the client's Service Agreement
+     card (`/clients/:id`) flips to "Signed." A field-name mismatch (GHL
+     derives the key from the exact name) silently writes to an orphaned
+     field, same as any other `rtp__` field.
+
+  ⚠️ **`RTP - Signature Date` must resolve to a real, parseable date.** Unlike
+  `dob` (parsed and reformatted in JS before it's stored), this value is
+  passed straight through to a `TIMESTAMPTZ` column with no JS-side
+  validation — and an unparseable value does **not** fail gracefully like
+  `ssn_last4` does:
+  - **New client (insert):** the write throws, is caught, and the **entire**
+    client record fails to save — the webhook still returns 200 to GHL, so
+    this fails silently from GHL's side too.
+  - **Returning client (update):** worse — that code path doesn't check the
+    query's error at all, so the **entire update** (not just the signature
+    date) silently no-ops with nothing logged anywhere.
+
+  ⚠️ **`service_agreement_version` is not wired to any GHL field.** It's a DB
+  column (`TEXT DEFAULT 'v1'`) shown on the Service Agreement card, but
+  nothing in `extractClientData` reads it and there's no staff UI to edit it
+  either — every client shows `v1` forever regardless of what they actually
+  signed. Don't point the onboarding form at a "version" field expecting it to
+  be captured; making this real requires a code change (a new `rtp__*` field
+  key + read logic), not a form-configuration step.
+
+  `signature_type` is always hardcoded to `"electronic"` by the webhook when a
+  signature is recognized — nothing on the GHL side can produce `"drawn"` or
+  `"typed"`, even though the DB column allows them.
 
 ## GHL Notifications & Pipeline Sync (Session 6)
 - **Independent channel, additive to outbound sync above.** `src/lib/ghl/notifications.ts` writes the event's data into the contact's GHL custom fields, then **adds a tag** (`NOTIFICATION_TAGS`) that fires the agency's own GHL workflow — free, no per-execution cost. The tag is removed 5s later (via `after()`) so it can refire. Falls back to Resend email (only a subset of types have a template), then to a log-only no-op. Every send is logged to `activity_log` (`action: "notification_sent"`) and never throws past its caller.

@@ -8,6 +8,14 @@ export const dynamic = "force-dynamic";
 /**
  * POST — adds the `signature-requested` tag to the client's GHL contact, which
  * fires the agency's GHL workflow to send the onboarding/signature form link.
+ *
+ * This is a FALLBACK re-request path, not the primary signature flow. The
+ * primary path is the e-signature step embedded directly in the standardized
+ * onboarding form (see "Signature step on the standardized onboarding form"
+ * in CLAUDE.md) — this button exists for the rare case a client completed
+ * onboarding without signing. It's only meaningful if the agency has also
+ * built a separate GHL workflow reacting to this tag; if not, clicking it
+ * just tags the contact with no visible effect.
  */
 export async function POST(req: Request) {
   const session = await getSessionContext();

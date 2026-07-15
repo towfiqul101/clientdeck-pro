@@ -51,6 +51,30 @@ function toInt(value: string | null): number | null {
 }
 
 /**
+ * Validates a raw GHL date/datetime field before it ever reaches the query
+ * or a raw `new Date(x).toISOString()` call, returning an ISO string or null.
+ * Used for RTP - Signature Date, RTP - DOB, and RTP - Bankruptcy Date — all
+ * three used to be unguarded, and an unparseable value failed in one of two
+ * bad ways: a raw `new Date(x).toISOString()` (dob, bankruptcy_date) throws a
+ * synchronous RangeError that aborts the whole webhook before any DB write;
+ * passing the raw string straight to the query (signed_at) let Postgres
+ * reject the whole write instead (the entire client record on insert, or a
+ * silent no-op on update). Same class of risk the ssn_last4 truncation
+ * guards against. A value present but invalid is logged so the substitution
+ * doesn't go unnoticed the way it used to — callers decide the fallback
+ * (null vs. a sensible default) per field; see the call sites.
+ */
+function parseTimestamp(value: string | null, context: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    console.warn(`[Onboarding] ${context}: "${value}" is not a parseable date — ignoring it.`);
+    return null;
+  }
+  return date.toISOString();
+}
+
+/**
  * The 4 Onboarding Details yes/no fields are stored as TEXT in GHL (see
  * field-keys.ts) — no distinct "no answer given" vs "no" without this
  * three-way read: null/blank stays null (not captured), anything else is
@@ -93,7 +117,19 @@ function extractClientData(contact: GHLContact, agency: Agency) {
   const exp = toInt(mapped("score_exp"));
   const tu = toInt(mapped("score_tu"));
 
-  const dobRaw = fixed(GHL_FIELD_KEYS.DOB);
+  // Validated with parseTimestamp() rather than a raw `new Date(x).toISOString()`
+  // — that pattern throws a RangeError synchronously on an unparseable value,
+  // aborting extractClientData (and so the entire onboarding webhook, before
+  // any DB write happens) for the whole client over one bad field. Falls back
+  // to null on failure, not "now": a wrong current-date DOB (implying the
+  // client was born today) is more misleading than a missing one.
+  const dobParsed = parseTimestamp(fixed(GHL_FIELD_KEYS.DOB), "RTP - DOB");
+  // Case-insensitive PREFIX match (no `$` anchor) — "Signed", "signed by
+  // client", and "yes" all match. A GHL signature field's own output (an
+  // image, or the client's typed name) never will, so the standardized
+  // onboarding form needs a *separate* field/workflow action that writes a
+  // literal matching value here once the signature step completes — see
+  // "Signature step on the standardized onboarding form" in CLAUDE.md.
   const signatureRaw = fixed(GHL_FIELD_KEYS.SIGNATURE_STATUS);
   const isSigned = signatureRaw
     ? /^(signed|yes|true|complete)/i.test(signatureRaw)
@@ -123,7 +159,14 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     EMPLOYMENT_STATUSES.map((r) => r.value) as readonly EmploymentStatus[]
   );
   const bankruptcyFiled = toBool(fixed(GHL_FIELD_KEYS.BANKRUPTCY_FILED));
-  const bankruptcyDateRaw = fixed(GHL_FIELD_KEYS.BANKRUPTCY_DATE);
+  // Same reasoning as dob above — null on parse failure, not "now". Doubly
+  // true here since this field is only meaningful when bankruptcyFiled is
+  // true in the first place; a fabricated "filed today" date on top of an
+  // unparseable value would be actively wrong on two axes at once.
+  const bankruptcyDateParsed = parseTimestamp(
+    fixed(GHL_FIELD_KEYS.BANKRUPTCY_DATE),
+    "RTP - Bankruptcy Date"
+  );
 
   return {
     first_name: contact.firstName || "",
@@ -135,7 +178,7 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     state: contact.state || null,
     zip: contact.postalCode || null,
     ssn_last4: ssnLast4,
-    dob: dobRaw ? new Date(dobRaw).toISOString().split("T")[0] : null,
+    dob: dobParsed ? dobParsed.split("T")[0] : null,
     score_eq_start: eq,
     score_exp_start: exp,
     score_tu_start: tu,
@@ -144,8 +187,14 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     score_tu_current: tu,
     signature_status: (isSigned ? "signed" : "pending") as "signed" | "pending",
     signature_type: (isSigned ? "electronic" : null) as "electronic" | null,
+    // Unlike dob/bankruptcy_date, "now" IS a reasonable fallback here: the
+    // webhook typically fires right as the client finishes signing, so an
+    // absent-but-signed date is well-approximated by the current moment —
+    // whereas a wrong current-date DOB or bankruptcy date would actively
+    // mislead (implying "born today" / "filed today").
     signed_at: isSigned
-      ? fixed(GHL_FIELD_KEYS.SIGNATURE_DATE) || new Date().toISOString()
+      ? parseTimestamp(fixed(GHL_FIELD_KEYS.SIGNATURE_DATE), "RTP - Signature Date") ??
+        new Date().toISOString()
       : null,
     credit_score_range: creditScoreRange,
     reviewed_credit_report_recently: toBool(fixed(GHL_FIELD_KEYS.REVIEWED_CREDIT_REPORT_RECENTLY)),
@@ -155,8 +204,8 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     results_timeline: resultsTimeline,
     employment_status: employmentStatus,
     bankruptcy_filed: bankruptcyFiled,
-    bankruptcy_date: bankruptcyFiled && bankruptcyDateRaw
-      ? new Date(bankruptcyDateRaw).toISOString().split("T")[0]
+    bankruptcy_date: bankruptcyFiled && bankruptcyDateParsed
+      ? bankruptcyDateParsed.split("T")[0]
       : null,
     intake_concerns: fixed(GHL_FIELD_KEYS.INTAKE_CONCERNS),
   };
@@ -276,7 +325,7 @@ export async function POST(req: Request) {
     let clientId: string;
     const isNewClient = !existing;
     if (existing) {
-      await supabase
+      const { error: updateErr } = await supabase
         .from("clients")
         .update({
           ...clientData,
@@ -285,6 +334,26 @@ export async function POST(req: Request) {
           status: "analysis",
         })
         .eq("id", existing.id);
+
+      if (updateErr) {
+        // Without this check, a rejected field (e.g. an unparseable date)
+        // used to no-op the ENTIRE update silently — not just the offending
+        // field — with nothing surfaced anywhere. Logged to activity_log (the
+        // channel staff can actually see, on the client's Timeline tab, unlike
+        // raw server logs) before throwing, which halts everything below
+        // (portal link, "Onboarding complete" entry, after() cascade) rather
+        // than continuing as if a write that never happened had succeeded.
+        console.error(`[Onboarding] Client update failed for ${existing.id}:`, updateErr);
+        await supabase.from("activity_log").insert({
+          agency_id: agency.id,
+          client_id: existing.id,
+          actor_type: "ghl",
+          action: "Onboarding update failed",
+          description: `Onboarding webhook could not save this submission: ${updateErr.message}`,
+          metadata: { contact_id: contactId, error: updateErr.message },
+        });
+        throw new Error(`Client update failed: ${updateErr.message}`);
+      }
       clientId = existing.id;
     } else {
       const { data: newClient, error: insertErr } = await supabase

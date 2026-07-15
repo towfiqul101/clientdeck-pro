@@ -107,6 +107,10 @@ export function SignatureCard({
           </a>
         )}
 
+        {/* Fallback re-request only — the primary signature path is the
+            e-signature step embedded in the standardized onboarding form.
+            See CLAUDE.md ("Signature step on the standardized onboarding
+            form") and the route's own docstring. */}
         {!signed && (
           <button
             onClick={sendRequest}
