@@ -8,7 +8,16 @@ import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
 import { moveClientPipelineStage } from "@/lib/ghl/pipeline";
 import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
-import type { Agency, GHLContact, GHLContactCustomField, GhlFieldKeys } from "@/types";
+import { CREDIT_SCORE_RANGES, RESULTS_TIMELINES, EMPLOYMENT_STATUSES } from "@/lib/constants";
+import type {
+  Agency,
+  GHLContact,
+  GHLContactCustomField,
+  GhlFieldKeys,
+  CreditScoreRange,
+  ResultsTimeline,
+  EmploymentStatus,
+} from "@/types";
 
 // Hobby plan caps at 60s. Client creation runs inline; Drive/GHL sync run via
 // after() so GHL gets a fast 200 while the heavier work still completes.
@@ -41,6 +50,37 @@ function toInt(value: string | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * The 4 Onboarding Details yes/no fields are stored as TEXT in GHL (see
+ * field-keys.ts) — no distinct "no answer given" vs "no" without this
+ * three-way read: null/blank stays null (not captured), anything else is
+ * tested against yes/true/1.
+ */
+function toBool(value: string | null): boolean | null {
+  if (value === null || value.trim() === "") return null;
+  return /^(yes|true|1)$/i.test(value.trim());
+}
+
+/**
+ * Best-effort GHL option-label -> our enum key normalizer. GHL reports
+ * whatever text the agency's dropdown/radio is configured with, which won't
+ * necessarily match our snake_case keys verbatim ("800+", "Self-Employed").
+ * An unrecognized value is dropped to null rather than stored — these
+ * columns are CHECK-constrained (migration 034), and passing through an
+ * unmapped value would fail the whole client upsert. Same reasoning as the
+ * ssn_last4 truncation below: never let attacker/agency-controlled GHL text
+ * violate a DB constraint on our own insert.
+ */
+function normalizeEnum<T extends string>(value: string | null, allowed: readonly T[]): T | null {
+  if (!value) return null;
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/\+/g, "_plus")
+    .replace(/[\s-]+/g, "_");
+  return (allowed as readonly string[]).includes(normalized) ? (normalized as T) : null;
+}
+
 function extractClientData(contact: GHLContact, agency: Agency) {
   // Bureau scores stay agency-configurable (the one thing an agency legitimately
   // captures on their own intake form). Everything identity-related is read from
@@ -68,6 +108,23 @@ function extractClientData(contact: GHLContact, agency: Agency) {
   const ssnDigits = fixed(GHL_FIELD_KEYS.SSN_LAST4)?.replace(/\D/g, "") ?? "";
   const ssnLast4 = ssnDigits.length >= 4 ? ssnDigits.slice(-4) : null;
 
+  // Onboarding Details intake (migration 034) — standard onboarding-form
+  // data, RTP-owned fixed keys, same read pattern as the identity fields.
+  const creditScoreRange = normalizeEnum(
+    fixed(GHL_FIELD_KEYS.CREDIT_SCORE_RANGE),
+    CREDIT_SCORE_RANGES.map((r) => r.value) as readonly CreditScoreRange[]
+  );
+  const resultsTimeline = normalizeEnum(
+    fixed(GHL_FIELD_KEYS.RESULTS_TIMELINE),
+    RESULTS_TIMELINES.map((r) => r.value) as readonly ResultsTimeline[]
+  );
+  const employmentStatus = normalizeEnum(
+    fixed(GHL_FIELD_KEYS.EMPLOYMENT_STATUS),
+    EMPLOYMENT_STATUSES.map((r) => r.value) as readonly EmploymentStatus[]
+  );
+  const bankruptcyFiled = toBool(fixed(GHL_FIELD_KEYS.BANKRUPTCY_FILED));
+  const bankruptcyDateRaw = fixed(GHL_FIELD_KEYS.BANKRUPTCY_DATE);
+
   return {
     first_name: contact.firstName || "",
     last_name: contact.lastName || "",
@@ -90,6 +147,18 @@ function extractClientData(contact: GHLContact, agency: Agency) {
     signed_at: isSigned
       ? fixed(GHL_FIELD_KEYS.SIGNATURE_DATE) || new Date().toISOString()
       : null,
+    credit_score_range: creditScoreRange,
+    reviewed_credit_report_recently: toBool(fixed(GHL_FIELD_KEYS.REVIEWED_CREDIT_REPORT_RECENTLY)),
+    negative_items_reported: toBool(fixed(GHL_FIELD_KEYS.NEGATIVE_ITEMS_REPORTED)),
+    enrolled_other_program: toBool(fixed(GHL_FIELD_KEYS.ENROLLED_OTHER_PROGRAM)),
+    primary_goal: fixed(GHL_FIELD_KEYS.PRIMARY_GOAL),
+    results_timeline: resultsTimeline,
+    employment_status: employmentStatus,
+    bankruptcy_filed: bankruptcyFiled,
+    bankruptcy_date: bankruptcyFiled && bankruptcyDateRaw
+      ? new Date(bankruptcyDateRaw).toISOString().split("T")[0]
+      : null,
+    intake_concerns: fixed(GHL_FIELD_KEYS.INTAKE_CONCERNS),
   };
 }
 

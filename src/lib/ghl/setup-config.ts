@@ -71,6 +71,28 @@ export const RTP_IDENTITY_FIELDS: GHLCustomFieldSpec[] = [
 ];
 
 /**
+ * Onboarding Details intake fields RoundTrack Pro OWNS and READS from — same
+ * model as RTP_IDENTITY_FIELDS above. Standard onboarding-form data (credit
+ * self-report, program fit, employment/bankruptcy screening, and any
+ * concerns raised at signup), not a secondary sales-qualification step.
+ *
+ * The agency must update their own GHL onboarding form/workflow to write
+ * into these fields; creating them here does not populate them.
+ */
+export const RTP_ONBOARDING_INTAKE_FIELDS: GHLCustomFieldSpec[] = [
+  { name: "RTP - Credit Score Range", fieldKey: GHL_FIELD_KEYS.CREDIT_SCORE_RANGE, dataType: "TEXT" },
+  { name: "RTP - Reviewed Credit Report Recently", fieldKey: GHL_FIELD_KEYS.REVIEWED_CREDIT_REPORT_RECENTLY, dataType: "TEXT" },
+  { name: "RTP - Negative Items Reported", fieldKey: GHL_FIELD_KEYS.NEGATIVE_ITEMS_REPORTED, dataType: "TEXT" },
+  { name: "RTP - Enrolled Other Program", fieldKey: GHL_FIELD_KEYS.ENROLLED_OTHER_PROGRAM, dataType: "TEXT" },
+  { name: "RTP - Primary Goal", fieldKey: GHL_FIELD_KEYS.PRIMARY_GOAL, dataType: "TEXT" },
+  { name: "RTP - Results Timeline", fieldKey: GHL_FIELD_KEYS.RESULTS_TIMELINE, dataType: "TEXT" },
+  { name: "RTP - Employment Status", fieldKey: GHL_FIELD_KEYS.EMPLOYMENT_STATUS, dataType: "TEXT" },
+  { name: "RTP - Bankruptcy Filed", fieldKey: GHL_FIELD_KEYS.BANKRUPTCY_FILED, dataType: "TEXT" },
+  { name: "RTP - Bankruptcy Date", fieldKey: GHL_FIELD_KEYS.BANKRUPTCY_DATE, dataType: "DATE" },
+  { name: "RTP - Intake Concerns", fieldKey: GHL_FIELD_KEYS.INTAKE_CONCERNS, dataType: "TEXT" },
+];
+
+/**
  * Staff-alert data fields. The 3 staff alerts (new client / round overdue /
  * next round ready) tag the CLIENT's GHL contact, so the agency's workflow can
  * personalise the message with that client's merge fields while still sending
@@ -87,11 +109,12 @@ export const RTP_STAFF_ALERT_FIELDS: GHLCustomFieldSpec[] = [
   { name: "RTP - Alert Dashboard Link", fieldKey: GHL_FIELD_KEYS.ALERT_DASHBOARD_LINK, dataType: "TEXT" },
 ];
 
-/** All 28 fields — used by both the admin and agency-self-service setup tools. */
+/** All 38 fields — used by both the admin and agency-self-service setup tools. */
 export const RTP_ALL_CUSTOM_FIELDS: GHLCustomFieldSpec[] = [
   ...RTP_CUSTOM_FIELDS,
   ...RTP_NOTIFICATION_FIELDS,
   ...RTP_IDENTITY_FIELDS,
+  ...RTP_ONBOARDING_INTAKE_FIELDS,
   ...RTP_STAFF_ALERT_FIELDS,
 ];
 

@@ -3,10 +3,13 @@ import type {
   Bureau,
   ClientStatus,
   CreditGoal,
+  CreditScoreRange,
   DisputeStatus,
+  EmploymentStatus,
   LetterType,
   NegativeType,
   PaymentStatus,
+  ResultsTimeline,
 } from "@/types";
 
 export const US_STATES: { value: string; label: string }[] = [
@@ -50,6 +53,32 @@ export const CREDIT_GOALS: { value: CreditGoal; label: string }[] = [
   { value: "improve_general", label: "Improve General" },
   { value: "business_loan", label: "Business Loan" },
   { value: "rental", label: "Rental" },
+  { value: "other", label: "Other" },
+];
+
+export const CREDIT_SCORE_RANGES: { value: CreditScoreRange; label: string }[] = [
+  { value: "below_580", label: "Below 580" },
+  { value: "580_669", label: "580–669" },
+  { value: "670_739", label: "670–739" },
+  { value: "740_799", label: "740–799" },
+  { value: "800_plus", label: "800+" },
+  { value: "not_sure", label: "Not sure" },
+];
+
+export const RESULTS_TIMELINES: { value: ResultsTimeline; label: string }[] = [
+  { value: "asap", label: "As soon as possible" },
+  { value: "3_months", label: "Within 3 months" },
+  { value: "6_months", label: "Within 6 months" },
+  { value: "1_year", label: "Within 1 year" },
+  { value: "no_rush", label: "No rush" },
+];
+
+export const EMPLOYMENT_STATUSES: { value: EmploymentStatus; label: string }[] = [
+  { value: "employed", label: "Employed" },
+  { value: "self_employed", label: "Self-employed" },
+  { value: "unemployed", label: "Unemployed" },
+  { value: "retired", label: "Retired" },
+  { value: "student", label: "Student" },
   { value: "other", label: "Other" },
 ];
 

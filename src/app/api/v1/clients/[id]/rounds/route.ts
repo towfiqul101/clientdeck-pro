@@ -16,7 +16,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!auth.ok) return apiAuthErrorResponse(auth);
 
   const { id } = await params;
-  const client = await findAgencyClient(id, auth.agencyId);
+
+  let client;
+  try {
+    client = await findAgencyClient(id, auth.agencyId);
+  } catch (err) {
+    await logApiRequest(auth.agencyId, req, {
+      status: 500,
+      description: `API client rounds query failed: ${id}`,
+      metadata: { error: err instanceof Error ? err.message : String(err) },
+    });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 
   if (!client) {
     await logApiRequest(auth.agencyId, req, {

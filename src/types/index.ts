@@ -28,6 +28,10 @@ export type SignatureType = "drawn" | "typed" | "electronic";
 export type CreditMonitoringService = "myfreescorenow" | "identityiq" | "smartcredit";
 export type CreditMonitoringPullStatus = "success" | "failed" | "pending";
 
+export type CreditScoreRange = "below_580" | "580_669" | "670_739" | "740_799" | "800_plus" | "not_sure";
+export type ResultsTimeline = "asap" | "3_months" | "6_months" | "1_year" | "no_rush";
+export type EmploymentStatus = "employed" | "self_employed" | "unemployed" | "retired" | "student" | "other";
+
 /**
  * Per-agency map of GHL custom-field keys → RoundTrack Pro data. Values are the GHL
  * custom-field id/fieldKey for that location (which is unique per location).
@@ -209,6 +213,19 @@ export interface Client {
   onboarding_form_submitted: boolean;
   onboarding_submitted_at: string | null;
   ghl_drive_folder_id: string | null;
+  // Onboarding Details (migration 034) — standard onboarding-form intake,
+  // not a secondary sales-qualification step. All nullable: NULL means "not
+  // captured", not "no".
+  credit_score_range: CreditScoreRange | null;
+  reviewed_credit_report_recently: boolean | null;
+  negative_items_reported: boolean | null;
+  enrolled_other_program: boolean | null;
+  primary_goal: string | null;
+  results_timeline: ResultsTimeline | null;
+  employment_status: EmploymentStatus | null;
+  bankruptcy_filed: boolean | null;
+  bankruptcy_date: string | null;
+  intake_concerns: string | null;
   assigned_to: string | null;
   assigned_at: string | null;
   // Extra staff to notify about this specific client's events, on top of

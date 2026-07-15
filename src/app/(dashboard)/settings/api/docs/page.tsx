@@ -20,7 +20,7 @@ const ENDPOINTS: EndpointDoc[] = [
     path: "/api/v1/clients",
     title: "List clients",
     description:
-      "Lists clients for your agency. Core fields only — no SSN, signature, or document fields. Supports limit/offset pagination (limit defaults to 50, max 100).",
+      "Lists clients for your agency. Core fields plus the 10 Onboarding Details intake fields — no SSN, signature, or document fields. Supports limit/offset pagination (limit defaults to 50, max 100).",
     curl: `curl "${BASE_URL}/api/v1/clients?limit=50&offset=0" \\
   -H "Authorization: Bearer rtp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"`,
     response: `{
@@ -33,7 +33,17 @@ const ENDPOINTS: EndpointDoc[] = [
       "phone": "5035551234",
       "status": "active",
       "assigned_to": "e1ed4241-7953-4f1f-b734-dd91d1f3a8c1",
-      "current_round": 1
+      "current_round": 1,
+      "credit_score_range": "580_669",
+      "reviewed_credit_report_recently": true,
+      "negative_items_reported": true,
+      "enrolled_other_program": false,
+      "primary_goal": "Buy a house next year",
+      "results_timeline": "6_months",
+      "employment_status": "employed",
+      "bankruptcy_filed": false,
+      "bankruptcy_date": null,
+      "intake_concerns": "Worried about a collection account I don't recognize."
     }
   ],
   "pagination": { "limit": 50, "offset": 0, "total": 1 }
@@ -56,7 +66,17 @@ const ENDPOINTS: EndpointDoc[] = [
     "phone": "5035551234",
     "status": "active",
     "assigned_to": "e1ed4241-7953-4f1f-b734-dd91d1f3a8c1",
-    "current_round": 1
+    "current_round": 1,
+    "credit_score_range": "580_669",
+    "reviewed_credit_report_recently": true,
+    "negative_items_reported": true,
+    "enrolled_other_program": false,
+    "primary_goal": "Buy a house next year",
+    "results_timeline": "6_months",
+    "employment_status": "employed",
+    "bankruptcy_filed": false,
+    "bankruptcy_date": null,
+    "intake_concerns": "Worried about a collection account I don't recognize."
   }
 }`,
   },
@@ -121,7 +141,17 @@ const ENDPOINTS: EndpointDoc[] = [
     "phone": "5035551234",
     "status": "onboarding",
     "assigned_to": null,
-    "current_round": 0
+    "current_round": 0,
+    "credit_score_range": null,
+    "reviewed_credit_report_recently": null,
+    "negative_items_reported": null,
+    "enrolled_other_program": null,
+    "primary_goal": null,
+    "results_timeline": null,
+    "employment_status": null,
+    "bankruptcy_filed": null,
+    "bankruptcy_date": null,
+    "intake_concerns": null
   },
   "ghl_warning": null
 }`,

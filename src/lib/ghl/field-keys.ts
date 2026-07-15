@@ -92,6 +92,26 @@ export const GHL_FIELD_KEYS = {
   ALERT_ROUND_NUMBER: "rtp__alert_round_number",
   ALERT_DAYS_OVERDUE: "rtp__alert_days_overdue",
   ALERT_DASHBOARD_LINK: "rtp__alert_dashboard_link",
+
+  // ── Onboarding Details intake (RTP-owned, READ side) ──────────────────────
+  // Standard onboarding-form data — not a secondary sales-qualification step.
+  // Same ownership model as the identity fields above: RTP-owned fixed keys,
+  // read directly by the onboarding webhook, never agency-mapped.
+  //
+  // The 4 yes/no fields are TEXT, not a boolean/option type — same reason as
+  // SIGNATURE_STATUS: extractClientData derives yes/no with a regex against
+  // the raw string value, since the setup tool only creates TEXT/NUMERICAL/
+  // DATE/FILE_UPLOAD fields (no checkbox type).
+  CREDIT_SCORE_RANGE: "rtp__credit_score_range",
+  REVIEWED_CREDIT_REPORT_RECENTLY: "rtp__reviewed_credit_report_recently",
+  NEGATIVE_ITEMS_REPORTED: "rtp__negative_items_reported",
+  ENROLLED_OTHER_PROGRAM: "rtp__enrolled_other_program",
+  PRIMARY_GOAL: "rtp__primary_goal",
+  RESULTS_TIMELINE: "rtp__results_timeline",
+  EMPLOYMENT_STATUS: "rtp__employment_status",
+  BANKRUPTCY_FILED: "rtp__bankruptcy_filed",
+  BANKRUPTCY_DATE: "rtp__bankruptcy_date",
+  INTAKE_CONCERNS: "rtp__intake_concerns",
 } as const;
 
 export type GHLFieldKey = (typeof GHL_FIELD_KEYS)[keyof typeof GHL_FIELD_KEYS];

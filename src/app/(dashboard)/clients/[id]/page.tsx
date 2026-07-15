@@ -8,7 +8,17 @@ import {
   formatDate,
   formatPhone,
 } from "@/lib/utils/helpers";
-import { CREDIT_GOALS, US_STATES } from "@/lib/constants";
+import {
+  CREDIT_GOALS,
+  US_STATES,
+  CREDIT_SCORE_RANGES,
+  RESULTS_TIMELINES,
+  EMPLOYMENT_STATUSES,
+} from "@/lib/constants";
+
+function yesNo(value: boolean | null): string | null {
+  return value === null ? null : value ? "Yes" : "No";
+}
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -33,6 +43,15 @@ export default async function ClientOverviewPage({
     US_STATES.find((s) => s.value === client.state)?.label ?? client.state;
   const goalLabel = client.credit_goal
     ? CREDIT_GOALS.find((g) => g.value === client.credit_goal)?.label
+    : null;
+  const creditScoreRangeLabel = client.credit_score_range
+    ? CREDIT_SCORE_RANGES.find((r) => r.value === client.credit_score_range)?.label
+    : null;
+  const resultsTimelineLabel = client.results_timeline
+    ? RESULTS_TIMELINES.find((r) => r.value === client.results_timeline)?.label
+    : null;
+  const employmentStatusLabel = client.employment_status
+    ? EMPLOYMENT_STATUSES.find((s) => s.value === client.employment_status)?.label
     : null;
 
   const address = [
@@ -79,6 +98,43 @@ export default async function ClientOverviewPage({
               <span className="text-slate-600">No address on file</span>
             )}
           </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Onboarding Details" />
+          <div className="divide-y divide-white/[0.06] px-5 py-2">
+            <Row label="Credit score range" value={creditScoreRangeLabel} />
+            <Row
+              label="Reviewed credit report recently"
+              value={yesNo(client.reviewed_credit_report_recently)}
+            />
+            <Row
+              label="Negative items reported"
+              value={yesNo(client.negative_items_reported)}
+            />
+            <Row
+              label="Enrolled in other program"
+              value={yesNo(client.enrolled_other_program)}
+            />
+            <Row label="Primary goal" value={client.primary_goal} />
+            <Row label="Results timeline" value={resultsTimelineLabel} />
+            <Row label="Employment status" value={employmentStatusLabel} />
+            <Row label="Bankruptcy filed" value={yesNo(client.bankruptcy_filed)} />
+            {client.bankruptcy_filed && (
+              <Row
+                label="Bankruptcy date"
+                value={client.bankruptcy_date ? formatDate(client.bankruptcy_date) : null}
+              />
+            )}
+          </div>
+          {client.intake_concerns && (
+            <div className="border-t border-white/[0.06] px-5 py-4 text-sm">
+              <p className="mb-1 text-slate-500">Concerns</p>
+              <p className="whitespace-pre-line text-slate-200">
+                {client.intake_concerns}
+              </p>
+            </div>
+          )}
         </Card>
 
         <Card>

@@ -3,6 +3,11 @@ import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { toCSV, forceCsvText, type CsvCell } from "@/lib/utils/csv";
 import { formatPhone } from "@/lib/utils/helpers";
+import { CREDIT_SCORE_RANGES, RESULTS_TIMELINES, EMPLOYMENT_STATUSES } from "@/lib/constants";
+
+function yesNoCell(value: boolean | null): string {
+  return value === null ? "" : value ? "Yes" : "No";
+}
 
 const HEADERS = [
   "Name",
@@ -19,11 +24,20 @@ const HEADERS = [
   "City",
   "State",
   "Zip",
-  "SSN Last 4",
   "Monthly Fee",
   "EQ Score",
   "EXP Score",
   "TU Score",
+  "Credit Score Range",
+  "Reviewed Credit Report Recently",
+  "Negative Items Reported",
+  "Enrolled Other Program",
+  "Primary Goal",
+  "Results Timeline",
+  "Employment Status",
+  "Bankruptcy Filed",
+  "Bankruptcy Date",
+  "Intake Concerns",
 ];
 
 /**
@@ -41,8 +55,7 @@ function csvSafePhone(phone: string): CsvCell {
  * Streams a CSV of clients in the caller's agency (RLS-scoped via
  * createServerSupabaseClient) — every client by default, or only the ids
  * passed via ?ids=a,b,c (from the clients list checkbox selection).
- * Operational summary fields only — no signature or document data.
- * SSN is last-4-only, same rule as the CSV import template.
+ * Operational summary fields only — no SSN, signature, or document data.
  */
 export async function GET(req: Request) {
   const session = await getSessionContext();
@@ -65,7 +78,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("clients")
     .select(
-      "first_name, last_name, email, phone, status, assigned_to, current_round, total_items_current, total_items_deleted, service_start_date, address_line1, address_line2, city, state, zip, ssn_last4, monthly_fee, score_eq_current, score_exp_current, score_tu_current"
+      "first_name, last_name, email, phone, status, assigned_to, current_round, total_items_current, total_items_deleted, service_start_date, address_line1, address_line2, city, state, zip, monthly_fee, score_eq_current, score_exp_current, score_tu_current, credit_score_range, reviewed_credit_report_recently, negative_items_reported, enrolled_other_program, primary_goal, results_timeline, employment_status, bankruptcy_filed, bankruptcy_date, intake_concerns"
     )
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true });
@@ -74,7 +87,15 @@ export async function GET(req: Request) {
     query = query.in("id", ids);
   }
 
-  const { data } = await query;
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Client CSV export query failed:", error);
+    return NextResponse.json(
+      { error: "Could not export clients." },
+      { status: 500 }
+    );
+  }
 
   const rows = (data ?? []).map((c) => [
     `${c.first_name} ${c.last_name}`.trim(),
@@ -91,11 +112,26 @@ export async function GET(req: Request) {
     c.city ?? "",
     c.state ?? "",
     c.zip ? forceCsvText(c.zip) : "",
-    c.ssn_last4 ? forceCsvText(c.ssn_last4) : "",
     c.monthly_fee ?? "",
     c.score_eq_current ?? "",
     c.score_exp_current ?? "",
     c.score_tu_current ?? "",
+    c.credit_score_range
+      ? CREDIT_SCORE_RANGES.find((r) => r.value === c.credit_score_range)?.label ?? ""
+      : "",
+    yesNoCell(c.reviewed_credit_report_recently),
+    yesNoCell(c.negative_items_reported),
+    yesNoCell(c.enrolled_other_program),
+    c.primary_goal ?? "",
+    c.results_timeline
+      ? RESULTS_TIMELINES.find((r) => r.value === c.results_timeline)?.label ?? ""
+      : "",
+    c.employment_status
+      ? EMPLOYMENT_STATUSES.find((s) => s.value === c.employment_status)?.label ?? ""
+      : "",
+    yesNoCell(c.bankruptcy_filed),
+    c.bankruptcy_date ?? "",
+    c.intake_concerns ?? "",
   ]);
 
   const csv = toCSV([HEADERS, ...rows]);
