@@ -47,10 +47,12 @@ function today(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+/** Returns an error message on failure, or null on success — same duplicate
+ *  helper exists in items/actions.ts (not in scope for this fix). */
 async function recomputeClientItemTotals(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   clientId: string
-) {
+): Promise<string | null> {
   const [{ count: total }, { count: deleted }] = await Promise.all([
     supabase
       .from("negative_items")
@@ -68,7 +70,7 @@ async function recomputeClientItemTotals(
     .select("total_items_start")
     .eq("id", clientId)
     .single();
-  await supabase
+  const { error } = await supabase
     .from("clients")
     .update({
       total_items_current: totalCount,
@@ -76,6 +78,7 @@ async function recomputeClientItemTotals(
       total_items_start: Math.max(client?.total_items_start ?? 0, totalCount),
     })
     .eq("id", clientId);
+  return error?.message ?? null;
 }
 
 export async function createRound(
@@ -149,22 +152,47 @@ export async function createRound(
   }
 
   const itemIds = selections.map((s) => s.negativeItemId);
-  await supabase
+  const { error: itemsError } = await supabase
     .from("negative_items")
     .update({ dispute_status: "in_dispute", round_disputed: roundNumber })
     .in("id", itemIds);
+  if (itemsError) {
+    // Cheap to roll back at this point — same reasoning as the disputeError
+    // rollback above: don't leave a round/disputes shell whose items were
+    // never actually marked in_dispute.
+    await supabase.from("disputes").delete().eq("round_id", round.id);
+    await supabase.from("dispute_rounds").delete().eq("id", round.id);
+    return { success: false, error: itemsError.message };
+  }
 
-  await supabase
+  const { error: currentRoundError } = await supabase
     .from("clients")
     .update({ current_round: roundNumber })
     .eq("id", clientId);
+  if (currentRoundError) {
+    // Round/disputes/items already persisted correctly at this point — a
+    // rollback here would discard real work over a secondary field. Report
+    // the partial state honestly instead of claiming full success.
+    return {
+      success: false,
+      error: `Round ${roundNumber} was created, but the client's current-round marker failed to update: ${currentRoundError.message}. The round exists — reload the page rather than retrying creation.`,
+    };
+  }
 
   // Auto-progress a client out of the intake phases once real work begins.
-  await supabase
+  // Best-effort/cosmetic (a status nudge, not round data) — logged on
+  // failure but doesn't block the round's success.
+  const { error: statusTransitionError } = await supabase
     .from("clients")
     .update({ status: "active" })
     .eq("id", clientId)
     .in("status", ["onboarding", "analysis"]);
+  if (statusTransitionError) {
+    console.error(
+      `[createRound] Client status auto-progress failed for ${clientId}:`,
+      statusTransitionError
+    );
+  }
 
   await supabase.from("activity_log").insert({
     agency_id: session.agency.id,
@@ -443,7 +471,7 @@ export async function logResults(
   };
 
   for (const entry of entries) {
-    await supabase
+    const { error: disputeUpdateError } = await supabase
       .from("disputes")
       .update({
         result: entry.result,
@@ -451,10 +479,22 @@ export async function logResults(
         result_notes: entry.notes.trim() || null,
       })
       .eq("id", entry.disputeId);
+    if (disputeUpdateError) {
+      // Fail fast rather than continuing: the round-level tally below is
+      // computed from entries[], not from what actually persisted, so
+      // proceeding past a failed entry would let the aggregate stats
+      // (total_deletions etc.) overstate what's really in the DB. Earlier
+      // entries in this same call already saved and don't need re-doing —
+      // retrying just resumes from the failed one.
+      return {
+        success: false,
+        error: `Failed to save result for item: ${disputeUpdateError.message}`,
+      };
+    }
 
     const itemStatus = RESULT_TO_ITEM_STATUS[entry.result];
     if (itemStatus) {
-      await supabase
+      const { error: itemUpdateError } = await supabase
         .from("negative_items")
         .update({
           dispute_status: itemStatus,
@@ -463,6 +503,12 @@ export async function logResults(
           resolution_notes: entry.notes.trim() || null,
         })
         .eq("id", entry.negativeItemId);
+      if (itemUpdateError) {
+        return {
+          success: false,
+          error: `Result saved, but the item's status failed to update: ${itemUpdateError.message}`,
+        };
+      }
     }
 
     if (entry.result === "deleted") tally.deletions++;
@@ -483,7 +529,7 @@ export async function logResults(
     deletedItemNames = (deletedRows ?? []).map((r) => r.creditor_name);
   }
 
-  await supabase
+  const { error: roundCompleteError } = await supabase
     .from("dispute_rounds")
     .update({
       status: "complete",
@@ -494,8 +540,35 @@ export async function logResults(
       total_no_response: tally.no_response,
     })
     .eq("id", roundId);
+  if (roundCompleteError) {
+    // Every entry's result/item-status above already persisted correctly —
+    // only the round's own aggregate/completion state failed. Report it
+    // rather than claiming the round is complete when it isn't.
+    return {
+      success: false,
+      error: `Item results were saved, but the round couldn't be marked complete: ${roundCompleteError.message}`,
+    };
+  }
 
-  await recomputeClientItemTotals(supabase, clientId);
+  const recomputeError = await recomputeClientItemTotals(supabase, clientId);
+  if (recomputeError) {
+    // The round itself is genuinely complete at this point — only the
+    // client's cached item-count totals failed to refresh. Non-fatal to the
+    // round's own success, but logged so stale counts on the client header
+    // don't go unexplained.
+    console.error(
+      `[logResults] recomputeClientItemTotals failed for client ${clientId}:`,
+      recomputeError
+    );
+    await supabase.from("activity_log").insert({
+      agency_id: session.agency.id,
+      client_id: clientId,
+      actor_type: "staff",
+      actor_id: session.userId,
+      action: "Item totals refresh failed",
+      description: `Round ${round.round_number} completed, but the client's cached item totals failed to refresh: ${recomputeError}`,
+    });
+  }
 
   const { data: notifClient } = await supabase
     .from("clients")
@@ -513,7 +586,20 @@ export async function logResults(
     if (scores!.eq !== null) scoreUpdate.score_eq_current = scores!.eq;
     if (scores!.exp !== null) scoreUpdate.score_exp_current = scores!.exp;
     if (scores!.tu !== null) scoreUpdate.score_tu_current = scores!.tu;
-    await supabase.from("clients").update(scoreUpdate).eq("id", clientId);
+    const { error: scoreUpdateError } = await supabase
+      .from("clients")
+      .update(scoreUpdate)
+      .eq("id", clientId);
+    if (scoreUpdateError) {
+      // Item results and round-completion already persisted at this point —
+      // only the score write failed. Skip score_history too rather than
+      // inserting a history row for a score the client record doesn't
+      // actually reflect.
+      return {
+        success: false,
+        error: `Round results were saved, but the score update failed: ${scoreUpdateError.message}`,
+      };
+    }
 
     // Keep notifClient in sync so downstream notifications (deletion_win)
     // report this round's freshly-written scores, not the pre-update values.
@@ -521,7 +607,7 @@ export async function logResults(
       Object.assign(notifClient, scoreUpdate);
     }
 
-    await supabase.from("score_history").insert({
+    const { error: scoreHistoryError } = await supabase.from("score_history").insert({
       client_id: clientId,
       agency_id: session.agency.id,
       score_eq: scores!.eq,
@@ -530,6 +616,24 @@ export async function logResults(
       round_number: round.round_number,
       notes: `Round ${round.round_number} update`,
     });
+    if (scoreHistoryError) {
+      // The client's current score is already correct at this point — this
+      // only breaks the portal's historical chart continuity for this round.
+      // Logged (visible to staff on the client's Timeline), not fatal to the
+      // overall action, since the round/scores themselves are genuinely saved.
+      console.error(
+        `[logResults] score_history insert failed for client ${clientId}:`,
+        scoreHistoryError
+      );
+      await supabase.from("activity_log").insert({
+        agency_id: session.agency.id,
+        client_id: clientId,
+        actor_type: "staff",
+        actor_id: session.userId,
+        action: "Score history entry failed",
+        description: `Round ${round.round_number}'s current score saved, but the historical score_history entry failed: ${scoreHistoryError.message}`,
+      });
+    }
 
     // Best-effort GHL score sync (logged).
     const { ghl_api_key, ghl_location_id } = session.agency;

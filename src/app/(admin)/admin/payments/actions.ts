@@ -32,10 +32,29 @@ export async function recordManualPayment(input: {
   });
   if (payErr) return { success: false, error: payErr.message };
 
-  await admin
+  const { error: statusError } = await admin
     .from("agencies")
     .update({ plan_status: "active" })
     .eq("id", input.agencyId);
+  if (statusError) {
+    // The payment row above is already recorded — this follow-up failure
+    // must not look identical to full success, or the agency stays stuck at
+    // its prior (possibly past_due) status despite having just paid.
+    await admin.from("activity_log").insert({
+      agency_id: input.agencyId,
+      actor_type: "system",
+      actor_id: email,
+      action: "Manual payment recorded, status update failed",
+      description: `$${input.amount.toFixed(2)} via ${input.method}${
+        input.reference ? ` (ref ${input.reference})` : ""
+      }. Payment recorded, but flipping status to active failed: ${statusError.message}`,
+    });
+    revalidatePath("/admin/payments");
+    return {
+      success: false,
+      error: `Payment recorded, but the agency's status failed to update to active: ${statusError.message}`,
+    };
+  }
 
   await admin.from("activity_log").insert({
     agency_id: input.agencyId,
@@ -75,9 +94,19 @@ export async function cancelAgency(agencyId: string): Promise<Result> {
   if (!(await isAdmin())) return { success: false, error: "Forbidden." };
   const admin = createAdminClient();
   const email = await getAdminEmail();
+
+  // "cancelled" never qualifies for hasActiveEntitlement regardless of plan
+  // tier — a custom domain must not keep serving on a cancelled account.
+  const { data: current } = await admin
+    .from("agencies")
+    .select("custom_domain")
+    .eq("id", agencyId)
+    .single();
+  const hadDomain = !!current?.custom_domain;
+
   const { error } = await admin
     .from("agencies")
-    .update({ plan_status: "cancelled" })
+    .update({ plan_status: "cancelled", custom_domain: null, custom_domain_verified: false })
     .eq("id", agencyId);
   if (error) return { success: false, error: error.message };
   await admin.from("activity_log").insert({
@@ -87,6 +116,15 @@ export async function cancelAgency(agencyId: string): Promise<Result> {
     action: "Cancelled (admin)",
     description: "Status set to cancelled by super-admin.",
   });
+  if (hadDomain) {
+    await admin.from("activity_log").insert({
+      agency_id: agencyId,
+      actor_type: "system",
+      actor_id: email,
+      action: "Custom domain revoked (admin)",
+      description: "Custom domain cleared — account cancelled.",
+    });
+  }
   revalidatePath("/admin/payments");
   return { success: true };
 }

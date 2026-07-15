@@ -10,8 +10,10 @@ export default async function NewClientPage() {
   if (!session) redirect("/login");
 
   const limit = await checkClientLimit(session.agency.id);
-  const defaultFee =
-    session.agency.settings?.default_monthly_fee ?? 149;
+  // No UI ever writes settings.default_monthly_fee — it was dead config, so
+  // this is just the plain default rather than a settings read that could
+  // never actually resolve to anything else.
+  const defaultFee = 149;
 
   const emptyInitial: ClientFormInitial = {
     first_name: "",

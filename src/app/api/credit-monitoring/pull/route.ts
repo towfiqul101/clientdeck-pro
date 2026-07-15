@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
   const succeeded = !result.error && (result.score_eq !== null || result.score_exp !== null || result.score_tu !== null);
 
-  await admin.from("credit_monitoring_pulls").insert({
+  const { error: pullInsertError } = await admin.from("credit_monitoring_pulls").insert({
     agency_id: agency.id,
     client_id: clientId,
     service,
@@ -75,12 +75,27 @@ export async function POST(req: Request) {
     status: succeeded ? "success" : "failed",
     error_message: result.error ?? null,
   });
+  if (pullInsertError) {
+    // This IS the dedicated audit table for pull attempts — same reasoning
+    // as the onboarding webhook's auto-pull block: without this check a
+    // failure here produced zero record of the attempt anywhere.
+    console.error(`[Credit Monitoring] pulls audit insert failed for client ${clientId}:`, pullInsertError);
+    await admin.from("activity_log").insert({
+      agency_id: agency.id,
+      client_id: clientId,
+      actor_type: "staff",
+      actor_id: session.userId,
+      action: "Credit monitoring pull logging failed",
+      description: `Pull ${succeeded ? "succeeded" : "failed"} but the audit row failed to save: ${pullInsertError.message}`,
+      metadata: { error: pullInsertError.message },
+    });
+  }
 
   if (!succeeded) {
     return NextResponse.json({ ok: false, error: result.error ?? "No scores returned." });
   }
 
-  await admin
+  const { error: scoreUpdateError } = await admin
     .from("clients")
     .update({
       score_eq_current: result.score_eq ?? client.score_eq_current,
@@ -88,8 +103,18 @@ export async function POST(req: Request) {
       score_tu_current: result.score_tu ?? client.score_tu_current,
     })
     .eq("id", clientId);
+  if (scoreUpdateError) {
+    // Unlike score_history below, this is the value the rest of the app
+    // actually reads (client header, reports) — a failure here must not be
+    // reported as success to the staff member who clicked Pull Scores.
+    console.error(`[Credit Monitoring] client score update failed for ${clientId}:`, scoreUpdateError);
+    return NextResponse.json({
+      ok: false,
+      error: `Scores were pulled successfully, but saving them to the client record failed: ${scoreUpdateError.message}`,
+    });
+  }
 
-  await admin.from("score_history").insert({
+  const { error: scoreHistoryError } = await admin.from("score_history").insert({
     client_id: clientId,
     agency_id: agency.id,
     score_eq: result.score_eq,
@@ -98,6 +123,21 @@ export async function POST(req: Request) {
     round_number: client.current_round,
     notes: `Credit monitoring pull via ${service}`,
   });
+  if (scoreHistoryError) {
+    // Same exception as logResults()'s score_history handling: the client's
+    // current score is already correctly saved at this point — this only
+    // breaks the portal's historical chart continuity for this pull, not
+    // fatal to the overall response.
+    console.error(`[Credit Monitoring] score_history insert failed for client ${clientId}:`, scoreHistoryError);
+    await admin.from("activity_log").insert({
+      agency_id: agency.id,
+      client_id: clientId,
+      actor_type: "staff",
+      actor_id: session.userId,
+      action: "Score history entry failed",
+      description: `Credit monitoring scores saved, but the historical score_history entry failed: ${scoreHistoryError.message}`,
+    });
+  }
 
   if (client.ghl_contact_id && agency.ghl_api_key && agency.ghl_location_id) {
     const fields: Record<string, string> = {};

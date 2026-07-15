@@ -395,7 +395,6 @@ async function seed() {
       settings: {
         timezone: "America/New_York",
         letter_signature: "Durayveon Williams — Jetlag Recovery",
-        default_monthly_fee: 149,
         portal_branding_visible: true,
         onboarding_completed: true,
         onboarding_steps: {

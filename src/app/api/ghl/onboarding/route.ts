@@ -8,6 +8,7 @@ import { syncDocumentToDrive } from "@/lib/google-drive/sync";
 import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notifications";
 import { moveClientPipelineStage } from "@/lib/ghl/pipeline";
 import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
+import { checkClientLimit } from "@/lib/utils/license";
 import { CREDIT_SCORE_RANGES, RESULTS_TIMELINES, EMPLOYMENT_STATUSES } from "@/lib/constants";
 import type {
   Agency,
@@ -324,6 +325,24 @@ export async function POST(req: Request) {
 
     let clientId: string;
     const isNewClient = !existing;
+
+    // Unlike the dashboard's createClient and the Agency API's POST
+    // /api/v1/clients, this webhook never had a plan-limit check at all —
+    // a lead completing GHL onboarding could push an agency past max_clients
+    // with no cap. A real onboarding submission must never be silently
+    // dropped over a billing limit, so the client is still created either
+    // way; an over-limit agency instead gets a visible, loud signal (an
+    // activity_log entry now, surfaced in the admin panel's agency view)
+    // that they need to upgrade, rather than quietly accumulating unlimited
+    // overage forever unnoticed.
+    let overage: { current: number; max: number } | null = null;
+    if (isNewClient) {
+      const limit = await checkClientLimit(agency.id);
+      if (!limit.allowed) {
+        overage = { current: limit.current, max: limit.max };
+      }
+    }
+
     if (existing) {
       const { error: updateErr } = await supabase
         .from("clients")
@@ -385,6 +404,17 @@ export async function POST(req: Request) {
       description: `Onboarding form submitted by ${clientData.first_name} ${clientData.last_name}.`,
       metadata: { contact_id: contactId },
     });
+
+    if (overage) {
+      await supabase.from("activity_log").insert({
+        agency_id: agency.id,
+        client_id: clientId,
+        actor_type: "system",
+        action: "Client limit exceeded",
+        description: `This client was created via GHL onboarding while the agency was already at or over its plan limit (${overage.current}/${overage.max} clients). The client was created anyway — a real onboarding submission is never dropped — but the agency should upgrade its plan.`,
+        metadata: { current: overage.current, max: overage.max },
+      });
+    }
 
     // Heavier work runs after the response is flushed (guaranteed by after()).
     after(async () => {
@@ -475,7 +505,7 @@ export async function POST(req: Request) {
             !result.error &&
             (result.score_eq !== null || result.score_exp !== null || result.score_tu !== null);
 
-          await supabase.from("credit_monitoring_pulls").insert({
+          const { error: pullInsertError } = await supabase.from("credit_monitoring_pulls").insert({
             agency_id: agency.id,
             client_id: clientId,
             service: agency.credit_monitoring_service,
@@ -486,9 +516,30 @@ export async function POST(req: Request) {
             status: succeeded ? "success" : "failed",
             error_message: result.error ?? null,
           });
+          if (pullInsertError) {
+            // This IS the dedicated audit table for pull attempts — if
+            // writing to it fails, there's no other record of this attempt
+            // at all. The enclosing .catch() below only catches thrown
+            // exceptions, and .insert()/.update() return {error} rather than
+            // throwing, so without this check a failure here previously
+            // produced zero output anywhere. Fall back to activity_log so
+            // there's still some visible trace.
+            console.error(
+              `[Onboarding] credit_monitoring_pulls insert failed for client ${clientId}:`,
+              pullInsertError
+            );
+            await supabase.from("activity_log").insert({
+              agency_id: agency.id,
+              client_id: clientId,
+              actor_type: "system",
+              action: "Credit monitoring auto-pull logging failed",
+              description: `Auto-pull ${succeeded ? "succeeded" : "failed"} but the credit_monitoring_pulls audit row failed to save: ${pullInsertError.message}`,
+              metadata: { error: pullInsertError.message },
+            });
+          }
 
           if (succeeded) {
-            await supabase
+            const { error: scoreUpdateError } = await supabase
               .from("clients")
               .update({
                 score_eq_current: result.score_eq ?? clientData.score_eq_current,
@@ -496,6 +547,20 @@ export async function POST(req: Request) {
                 score_tu_current: result.score_tu ?? clientData.score_tu_current,
               })
               .eq("id", clientId);
+            if (scoreUpdateError) {
+              console.error(
+                `[Onboarding] Credit monitoring score update failed for client ${clientId}:`,
+                scoreUpdateError
+              );
+              await supabase.from("activity_log").insert({
+                agency_id: agency.id,
+                client_id: clientId,
+                actor_type: "system",
+                action: "Credit monitoring auto-pull failed",
+                description: `Scores were pulled successfully but failed to save to the client record: ${scoreUpdateError.message}`,
+                metadata: { error: scoreUpdateError.message },
+              });
+            }
           }
         })().catch((err) => console.error("[Onboarding] Credit monitoring auto-pull error:", err)),
       ]);

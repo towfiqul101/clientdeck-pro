@@ -3,21 +3,27 @@ import type {
   ClientStatus,
   CreditScoreRange,
   ResultsTimeline,
-  EmploymentStatus,
 } from "@/types";
 
 /**
  * Core client fields exposed over the Agency API — deliberately excludes
  * SSN, signature, and document fields (same exclusions as the CSV export).
- * The 10 Onboarding Details intake fields are included — they carry no
- * identity/credential data (that's ssn_last4/dob/signature_*, still excluded
- * above).
+ * Of the 10 Onboarding Details intake fields, only the 6 lower-sensitivity
+ * ones are included here (credit_score_range, reviewed_credit_report_recently,
+ * negative_items_reported, enrolled_other_program, primary_goal,
+ * results_timeline). `bankruptcy_filed`/`bankruptcy_date`/`intake_concerns`/
+ * `employment_status` are deliberately excluded — bankruptcy and freeform
+ * financial-hardship text are a materially more sensitive data class than the
+ * operational fields this API was designed around, with no way for a caller
+ * to request a narrower scope than "everything CLIENT_API_FIELDS returns."
+ * They're still visible in the CSV export and the client-detail UI, both of
+ * which are staff-authenticated rather than a bearer key that could leak
+ * into a third-party integration's config.
  */
 export const CLIENT_API_FIELDS =
   "id, first_name, last_name, email, phone, status, assigned_to, current_round, " +
   "credit_score_range, reviewed_credit_report_recently, negative_items_reported, " +
-  "enrolled_other_program, primary_goal, results_timeline, employment_status, " +
-  "bankruptcy_filed, bankruptcy_date, intake_concerns";
+  "enrolled_other_program, primary_goal, results_timeline";
 
 export interface ApiClient {
   id: string;
@@ -34,10 +40,6 @@ export interface ApiClient {
   enrolled_other_program: boolean | null;
   primary_goal: string | null;
   results_timeline: ResultsTimeline | null;
-  employment_status: EmploymentStatus | null;
-  bankruptcy_filed: boolean | null;
-  bankruptcy_date: string | null;
-  intake_concerns: string | null;
 }
 
 /**

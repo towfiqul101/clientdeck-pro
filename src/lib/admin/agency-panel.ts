@@ -21,4 +21,15 @@ export interface AgencyPanelData {
   creditMonitoring: {
     pullsThisMonth: number;
   };
+  /** Same check enforced by checkClientLimit() elsewhere (dashboard
+   *  createClient, Agency API POST) — reused here rather than recomputed, so
+   *  the admin panel's overage flag can never drift from what's actually
+   *  enforced. `current` counts onboarding/analysis/active/on_hold clients
+   *  only, same as clientCount's exclusion of completed/cancelled doesn't —
+   *  the two numbers can legitimately differ. */
+  clientLimit: {
+    allowed: boolean;
+    current: number;
+    max: number;
+  };
 }

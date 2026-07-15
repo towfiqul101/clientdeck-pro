@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCron } from "@/lib/cron/auth";
 import { addGHLTag, createGHLTask } from "@/lib/ghl/api";
 import { notifyStaffNextRoundReady } from "@/lib/ghl/notifications";
-import { suggestLetterType } from "@/lib/utils/helpers";
+import { suggestLetterType, daysSinceDate } from "@/lib/utils/helpers";
 import type { Agency, DisputeStatus, LetterType } from "@/types";
 
 export const maxDuration = 60;
@@ -17,25 +17,37 @@ export async function GET(req: Request) {
   }
   const admin = createAdminClient();
 
-  const { data: agencies } = await admin.from("agencies").select("*");
+  const { data: agencies, error: agenciesError } = await admin.from("agencies").select("*");
+  if (agenciesError) {
+    console.error("auto-create-rounds: failed to list agencies", agenciesError);
+    return NextResponse.json(
+      { error: "Could not list agencies.", detail: agenciesError.message },
+      { status: 500 }
+    );
+  }
 
   let created = 0;
-  const nowMs = Date.now();
+  const errors: string[] = [];
 
   for (const agency of agencies ?? []) {
     const settings = (agency.settings ?? {}) as {
-      auto_create_rounds?: boolean; auto_round_delay_days?: number;
+      auto_create_rounds?: boolean; auto_round_delay_days?: number; timezone?: string;
     };
     if (!settings.auto_create_rounds) continue;
     const delayDays = settings.auto_round_delay_days ?? 5;
 
-    const { data: clients } = await admin
+    const { data: clients, error: clientsError } = await admin
       .from("clients")
       .select(
         "id, current_round, ghl_contact_id, first_name, last_name, payment_status, status, assigned_to, notify_team_member_ids"
       )
       .eq("agency_id", agency.id)
       .eq("status", "active");
+    if (clientsError) {
+      console.error(`auto-create-rounds: failed to list clients for agency ${agency.id}`, clientsError);
+      errors.push(`agency ${agency.id}: client list failed — ${clientsError.message}`);
+      continue;
+    }
 
     for (const client of clients ?? []) {
       if (client.payment_status === "failed" || client.payment_status === "paused") continue;
@@ -49,18 +61,26 @@ export async function GET(req: Request) {
         .maybeSingle();
       if (!lastRound || lastRound.status !== "complete" || !lastRound.date_responses_received) continue;
 
-      const daysSince = (nowMs - new Date(lastRound.date_responses_received).getTime()) / 86400000;
+      // Calendar-day diff in the agency's own timezone, not a raw real-time
+      // ms diff off the server's UTC clock — settings.timezone was collected
+      // in Settings but previously never actually read anywhere.
+      const daysSince = daysSinceDate(lastRound.date_responses_received, settings.timezone);
       if (daysSince < delayDays) continue;
 
-      const { data: items } = await admin
+      const { data: items, error: itemsQueryError } = await admin
         .from("negative_items")
         .select("id, bureau")
         .eq("client_id", client.id)
         .in("dispute_status", RE_DISPUTE_STATUSES);
+      if (itemsQueryError) {
+        console.error(`auto-create-rounds: failed to list items for client ${client.id}`, itemsQueryError);
+        errors.push(`client ${client.id}: item list failed — ${itemsQueryError.message}`);
+        continue;
+      }
       if (!items || items.length === 0) continue;
 
       const roundNumber = (lastRound.round_number ?? 0) + 1;
-      const { data: round } = await admin
+      const { data: round, error: roundError } = await admin
         .from("dispute_rounds")
         .insert({
           client_id: client.id,
@@ -71,10 +91,21 @@ export async function GET(req: Request) {
         })
         .select("id")
         .single();
-      if (!round) continue;
+      if (roundError || !round) {
+        console.error(`auto-create-rounds: round creation failed for client ${client.id}`, roundError);
+        errors.push(`client ${client.id}: round creation failed — ${roundError?.message ?? "no round returned"}`);
+        await admin.from("activity_log").insert({
+          agency_id: agency.id,
+          client_id: client.id,
+          actor_type: "system",
+          action: "Auto-create-round failed",
+          description: `Round ${roundNumber} auto-creation failed: ${roundError?.message ?? "no round returned"}`,
+        });
+        continue;
+      }
 
       const letterType = suggestLetterType(roundNumber, "verified") as LetterType;
-      await admin.from("disputes").insert(
+      const { error: disputesError } = await admin.from("disputes").insert(
         items.map((it) => ({
           round_id: round.id,
           client_id: client.id,
@@ -85,10 +116,60 @@ export async function GET(req: Request) {
           result: "pending",
         }))
       );
-      await admin.from("negative_items")
+      if (disputesError) {
+        // Roll back the round so we don't leave an empty shell — same
+        // reasoning as the dashboard's own createRound().
+        await admin.from("dispute_rounds").delete().eq("id", round.id);
+        console.error(`auto-create-rounds: disputes insert failed for client ${client.id}`, disputesError);
+        errors.push(`client ${client.id}: disputes insert failed — ${disputesError.message}`);
+        await admin.from("activity_log").insert({
+          agency_id: agency.id,
+          client_id: client.id,
+          actor_type: "system",
+          action: "Auto-create-round failed",
+          description: `Round ${roundNumber} auto-creation rolled back: ${disputesError.message}`,
+        });
+        continue;
+      }
+
+      const { error: itemsUpdateError } = await admin
+        .from("negative_items")
         .update({ dispute_status: "in_dispute", round_disputed: roundNumber })
         .in("id", items.map((it) => it.id));
-      await admin.from("clients").update({ current_round: roundNumber }).eq("id", client.id);
+      if (itemsUpdateError) {
+        // Cheap to roll back at this point, same as disputesError above.
+        await admin.from("disputes").delete().eq("round_id", round.id);
+        await admin.from("dispute_rounds").delete().eq("id", round.id);
+        console.error(`auto-create-rounds: item status update failed for client ${client.id}`, itemsUpdateError);
+        errors.push(`client ${client.id}: item status update failed — ${itemsUpdateError.message}`);
+        await admin.from("activity_log").insert({
+          agency_id: agency.id,
+          client_id: client.id,
+          actor_type: "system",
+          action: "Auto-create-round failed",
+          description: `Round ${roundNumber} auto-creation rolled back: ${itemsUpdateError.message}`,
+        });
+        continue;
+      }
+
+      const { error: currentRoundError } = await admin
+        .from("clients")
+        .update({ current_round: roundNumber })
+        .eq("id", client.id);
+      if (currentRoundError) {
+        // Round/disputes/items already persisted correctly — report the
+        // partial state honestly rather than silently ignoring it, same as
+        // the dashboard's own createRound().
+        console.error(`auto-create-rounds: current_round update failed for client ${client.id}`, currentRoundError);
+        errors.push(`client ${client.id}: current_round update failed — ${currentRoundError.message}`);
+        await admin.from("activity_log").insert({
+          agency_id: agency.id,
+          client_id: client.id,
+          actor_type: "system",
+          action: "Auto-create-round partially failed",
+          description: `Round ${roundNumber} was created, but the client's current-round marker failed to update: ${currentRoundError.message}`,
+        });
+      }
 
       await admin.from("activity_log").insert({
         agency_id: agency.id,
@@ -121,5 +202,5 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ roundsCreated: created });
+  return NextResponse.json({ roundsCreated: created, errors });
 }

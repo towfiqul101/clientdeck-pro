@@ -67,7 +67,20 @@ export async function POST() {
           }
           const contactId = ghlRes.id;
 
-          await supabase.from("clients").update({ ghl_contact_id: contactId }).eq("id", client.id);
+          const { error: linkError } = await supabase
+            .from("clients")
+            .update({ ghl_contact_id: contactId })
+            .eq("id", client.id);
+          if (linkError) {
+            // Without this check, a failed link here was reported as a
+            // success — the GHL contact exists but client.ghl_contact_id
+            // stays null, so the next sync run creates a DUPLICATE contact
+            // for the same client instead of finding this one.
+            errors.push(
+              `${client.first_name} ${client.last_name}: GHL contact created but failed to link locally — ${linkError.message}`
+            );
+            return;
+          }
           await updateGHLContactFields(contactId, fields, opts);
           created++;
         } catch (e) {

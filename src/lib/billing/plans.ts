@@ -1,4 +1,4 @@
-import type { Plan } from "@/types";
+import type { Plan, PlanStatus } from "@/types";
 
 export interface PlanConfig {
   id: Plan;
@@ -123,6 +123,24 @@ export function isAgencyPlanOrHigher(plan: Plan): boolean {
 /** True for the plans that unlock API access (Agency and Enterprise). */
 export function hasApiAccess(plan: Plan): boolean {
   return plan === "agency" || plan === "enterprise";
+}
+
+/**
+ * Subscription states that still entitle an agency to plan-gated features
+ * (Agency API, custom domain). Single source of truth — previously
+ * duplicated privately in src/lib/api/auth.ts, which risked the two
+ * entitlement checks (API vs. custom domain) drifting apart.
+ */
+export const ACTIVE_PLAN_STATUSES: PlanStatus[] = ["active", "trialing"];
+
+/**
+ * Whether an agency's current plan+status combination still entitles it to
+ * Agency-tier features that must be re-checked on every use, not just at
+ * setup (custom domain, Agency API) — see CLAUDE.md's "re-check entitlement
+ * on every request" security rule.
+ */
+export function hasActiveEntitlement(plan: Plan, status: PlanStatus): boolean {
+  return isAgencyPlanOrHigher(plan) && ACTIVE_PLAN_STATUSES.includes(status);
 }
 
 export function stripePriceIdForPlan(plan: Plan): string | undefined {

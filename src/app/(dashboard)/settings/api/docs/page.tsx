@@ -20,7 +20,7 @@ const ENDPOINTS: EndpointDoc[] = [
     path: "/api/v1/clients",
     title: "List clients",
     description:
-      "Lists clients for your agency. Core fields plus the 10 Onboarding Details intake fields — no SSN, signature, or document fields. Supports limit/offset pagination (limit defaults to 50, max 100).",
+      "Lists clients for your agency. Core fields plus 6 of the Onboarding Details intake fields — no SSN, signature, document fields, or the more sensitive intake fields (bankruptcy status/date, employment status, freeform intake concerns; those remain staff-only, visible in the dashboard and CSV export). Supports limit/offset pagination (limit defaults to 50, max 100).",
     curl: `curl "${BASE_URL}/api/v1/clients?limit=50&offset=0" \\
   -H "Authorization: Bearer rtp_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"`,
     response: `{
@@ -39,11 +39,7 @@ const ENDPOINTS: EndpointDoc[] = [
       "negative_items_reported": true,
       "enrolled_other_program": false,
       "primary_goal": "Buy a house next year",
-      "results_timeline": "6_months",
-      "employment_status": "employed",
-      "bankruptcy_filed": false,
-      "bankruptcy_date": null,
-      "intake_concerns": "Worried about a collection account I don't recognize."
+      "results_timeline": "6_months"
     }
   ],
   "pagination": { "limit": 50, "offset": 0, "total": 1 }
@@ -72,11 +68,7 @@ const ENDPOINTS: EndpointDoc[] = [
     "negative_items_reported": true,
     "enrolled_other_program": false,
     "primary_goal": "Buy a house next year",
-    "results_timeline": "6_months",
-    "employment_status": "employed",
-    "bankruptcy_filed": false,
-    "bankruptcy_date": null,
-    "intake_concerns": "Worried about a collection account I don't recognize."
+    "results_timeline": "6_months"
   }
 }`,
   },
@@ -147,11 +139,7 @@ const ENDPOINTS: EndpointDoc[] = [
     "negative_items_reported": null,
     "enrolled_other_program": null,
     "primary_goal": null,
-    "results_timeline": null,
-    "employment_status": null,
-    "bankruptcy_filed": null,
-    "bankruptcy_date": null,
-    "intake_concerns": null
+    "results_timeline": null
   },
   "ghl_warning": null
 }`,

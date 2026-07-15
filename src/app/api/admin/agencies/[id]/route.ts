@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Agency } from "@/types";
 import type { AgencyPanelData } from "@/lib/admin/agency-panel";
 import { maskSecret } from "@/lib/utils/secrets";
+import { checkClientLimit } from "@/lib/utils/license";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,7 @@ export async function GET(
     ]);
 
   const a = agency as Agency;
+  const clientLimit = await checkClientLimit(id);
 
   // Never ship plaintext secrets to the browser: API keys are masked (last 4
   // kept as a visual reference for the admin) and Drive OAuth tokens dropped.
@@ -94,6 +96,7 @@ export async function GET(
     creditMonitoring: {
       pullsThisMonth: pullsThisMonth ?? 0,
     },
+    clientLimit,
   };
 
   return NextResponse.json({ ok: true, data: payload });

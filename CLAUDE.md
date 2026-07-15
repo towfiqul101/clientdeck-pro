@@ -25,8 +25,8 @@ RoundTrack Pro is a B2B SaaS dispute management platform for credit repair agenc
 > ⚠️ **This renames nothing inside an agency's GHL account.** It changes what RTP
 > writes to and reads from; the old fields and tags still physically exist in GHL
 > and are now orphaned. Each agency must, by hand:
-> 1. Re-run **Create Custom Fields** — creates the new `RTP - …` fields (28 as of
->    Session 11). It does **not** rename the old ones.
+> 1. Re-run **Create Custom Fields** — creates the new `RTP - …` fields (38 as of
+>    Session 12). It does **not** rename the old ones.
 > 2. Repoint every old merge tag in their GHL workflows to `{{contact.rtp__*}}` —
 >    otherwise the message renders **blank**.
 > 3. Change every workflow **Tag Added** trigger to the `rtp-` tag — otherwise it
@@ -60,23 +60,35 @@ RoundTrack Pro is a B2B SaaS dispute management platform for credit repair agenc
 
 ### Route Structure
 ```
+(marketing)/     — Landing page, privacy, terms, snapshot (public, unauthenticated)
 (auth)/          — Login, signup (agency staff)
 (dashboard)/     — Main app (protected, requires Supabase auth)
+  dashboard/     — Dashboard home
   clients/       — Client list, detail, items, rounds, letters, docs, signature
   templates/     — AI letter template management
   reports/       — Analytics dashboards
   team/          — Staff management (+ plan-based member limit)
   settings/      — General, GHL config + field mapping, Documents (Drive), branding, billing
+  onboarding/    — Post-signup flow, incl. /onboarding/ghl-setup guide page
 (admin)/admin/   — Super-admin panel (password/cookie auth, cross-agency, force-dynamic)
 (admin-auth)/    — /admin/login (unguarded, separate route group)
 portal/          — Client-facing portal (magic link auth, white-labeled)
 api/
   ghl/           — webhook (inbound), onboarding (native flow), sync, send-signature-request,
+                   send-review-request, messages, debug/fields,
                    setup/* (create-fields, find-pipeline, create-opportunities, sync-clients)
-  v1/            — Agency API (Bearer auth, Agency plan only): clients, clients/[id], .../rounds
+  v1/            — Agency API (Bearer auth, Agency plan only): clients, clients/[id], .../rounds, ping
   ai/            — parse-credit-report, strategy (Claude)
-  credit-monitoring/ — pull, test (Agency plan only)
-  push/          — subscribe (portal PWA Web Push)
+  credit-monitoring/ — pull (Agency plan only). No agency-facing "test" route — the
+                   Settings → Credit Monitoring "Test Connection" button calls a Server
+                   Action, not a route; the only actual test *route* is admin-only
+                   (`/api/admin/tools/test-credit-monitoring`).
+  push/          — subscribe (staff dashboard Web Push)
+  portal/push/   — subscribe (client portal PWA Web Push) — a separate route from the
+                   one above; migration 032 extended the shared `push_subscriptions`
+                   table to serve both.
+  notifications/ — list + [id]/read (staff in-app notification bell)
+  clients/export — CSV export (staff-authenticated)
   google-drive/  — connect, callback, disconnect, backfill
   admin/         — logout, agencies/[id] (panel data), tools/* (GHL fields/pipelines/sync/welcome)
   letters/, stripe/, portal/, cron/, settings/
@@ -97,10 +109,11 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 ## Database Tables (Supabase)
 - `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB — **bureau scores ONLY** since Session 10), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `webhook_token` (**per-agency inbound webhook credential**, migration 031 — secret, never sent to the browser except inside that agency's own webhook URL), `credit_monitoring_service`/`credit_monitoring_api_key`/`credit_monitoring_api_secret` (Agency-plan credit monitoring, migration 017), `custom_domain`/`custom_domain_verified` (migration 026), `max_clients`, `plan`/`plan_status`, `settings` (JSONB: `onboarding_steps`, `admin_notes`, `ghl_pipeline_id`/`ghl_pipeline_stages`, `owner_ghl_contact_id`, `auto_create_rounds`/`auto_round_delay_days`, `auto_pull_scores`, `google_review_link`/`referral_link`. **NOT** `ghl_webhook_triggers` — that key is dead, see Notifications.)
 - `team_members` — Staff accounts linked to agencies (roles: owner/admin/staff/viewer)
-- `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`, `ghl_opportunity_id` (cached GHL pipeline opportunity id, migration 016), `ssn_last4` (**CHECK-constrained to exactly 4 digits**, migration 030)
+- `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`, `ghl_opportunity_id` (cached GHL pipeline opportunity id, migration 016), `ssn_last4` (**CHECK-constrained to exactly 4 digits**, migration 030), the 10 Onboarding Details intake fields (`credit_score_range`, `reviewed_credit_report_recently`, `negative_items_reported`, `enrolled_other_program`, `primary_goal`, `results_timeline`, `employment_status`, `bankruptcy_filed`, `bankruptcy_date`, `intake_concerns` — migration 034, see GHL Integration Details)
 - `agency_api_keys` — Agency API keys: `key_hash` (sha256), `key_prefix` (display), `revoked_at` (migration 027)
 - `api_rate_limits` — Fixed-window counter for the Agency API, 100 req/hr per key (migration 029)
-- `push_subscriptions` — Web Push subscriptions for the portal PWA (migration 022)
+- `push_subscriptions` — Web Push subscriptions, originally portal-PWA-only (migration 022); migration 032 made `client_id` nullable and added `team_member_id` (+ an exactly-one-owner `CHECK`) so the same table also serves staff dashboard push (`sendPushToStaff()` in `src/lib/push/send.ts`)
+- `staff_notifications` — In-app notification feed for staff (migration 033), delivered alongside (not instead of) the GHL-tag/Resend channel, for the 4 staff-facing notification types. Written only by `createAdminClient()` from `notifyStaffChannels()` in `src/lib/ghl/notifications.ts`; read/mark-read via the authenticated staff session (RLS-scoped). Surfaced by the notification bell in the dashboard header (`api/notifications/*`).
 - `negative_items` — Items on credit reports to dispute (per bureau)
 - `dispute_rounds` — Round lifecycle (preparing → sent → awaiting → complete)
 - `disputes` — Individual item disputes within a round (with AI-generated letter content)
@@ -125,7 +138,10 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 027 agency_api_keys · 028 activity_log_api_actor (adds `'api'` actor type) ·
 029 agency_api_rate_limits (+ `increment_api_rate_limit()` fn) ·
 **030 ssn_last4_check** (`CHECK (ssn_last4 IS NULL OR ssn_last4 ~ '^\d{4}$')`) ·
-**031 agency_webhook_token** (per-agency inbound webhook credential)
+**031 agency_webhook_token** (per-agency inbound webhook credential) ·
+032 staff_push_subscriptions (extends `push_subscriptions` for staff dashboard push) ·
+033 staff_notifications (in-app notification feed for staff) ·
+**034 onboarding_intake_fields** (10 Onboarding Details columns on `clients`)
 
 ## Key Libraries & Locations
 - `src/lib/supabase/{client,server,admin}.ts` — browser / SSR / service-role clients
@@ -133,7 +149,7 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - `src/lib/ghl/api.ts` — GHL API v2 wrapper (contacts, tags, pipeline, tasks, custom fields, pipelines, opportunity find-or-create)
 - `src/lib/ghl/webhook.ts` — Inbound GHL webhook handler
 - `src/lib/ghl/webhook-auth.ts` — **inbound webhook auth (Session 10).** `verifyGhlWebhook()` (per-agency `webhook_token`, falling back to the legacy global `GHL_WEBHOOK_SECRET` if still set) + `locationBelongsToAgency()` (tenant binding). **Fails closed.**
-- `src/lib/ghl/field-keys.ts` — **SINGLE SOURCE OF TRUTH for the 28 GHL custom-field keys.** Never hand-write a `rtp__*` key elsewhere.
+- `src/lib/ghl/field-keys.ts` — **SINGLE SOURCE OF TRUTH for the 38 GHL custom-field keys.** Never hand-write a `rtp__*` key elsewhere.
 - `src/lib/ghl/setup-config.ts` — the field *specs* the setup tools create (`RTP_CUSTOM_FIELDS` / `_NOTIFICATION_FIELDS` / `_IDENTITY_FIELDS` / `_STAFF_ALERT_FIELDS` → `RTP_ALL_CUSTOM_FIELDS`) + pipeline specs. Field NAMES here are what *derive* the keys above.
 - `src/lib/ghl/notification-tags.ts` — `GHLNotificationType`, `NOTIFICATION_TAGS`, `ONBOARDING_COMPLETE_TAG`, `INBOUND_TAGS`. Split out from `notifications.ts` so **client components can import it** without pulling in `next/server`'s `after()` (which breaks the client bundle).
 - `src/lib/ghl/field-detect.ts` — hardened score-field suggester (Session 10; propose-only, never saves)
@@ -232,17 +248,21 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
      derives the key from the exact name) silently writes to an orphaned
      field, same as any other `rtp__` field.
 
-  ⚠️ **`RTP - Signature Date` must resolve to a real, parseable date.** Unlike
-  `dob` (parsed and reformatted in JS before it's stored), this value is
-  passed straight through to a `TIMESTAMPTZ` column with no JS-side
-  validation — and an unparseable value does **not** fail gracefully like
-  `ssn_last4` does:
-  - **New client (insert):** the write throws, is caught, and the **entire**
-    client record fails to save — the webhook still returns 200 to GHL, so
-    this fails silently from GHL's side too.
-  - **Returning client (update):** worse — that code path doesn't check the
-    query's error at all, so the **entire update** (not just the signature
-    date) silently no-ops with nothing logged anywhere.
+  ✅ **`RTP - Signature Date` (and `dob`/`bankruptcy_date`) are now validated
+  before they reach the query.** `parseTimestamp()` in
+  `src/app/api/ghl/onboarding/route.ts` replaced the old raw
+  `new Date(x).toISOString()` passthrough for all three fields — an
+  unparseable value is logged as a warning and dropped (to `null`, or to
+  "now" only for `signed_at`, where that's a reasonable approximation of the
+  true signing moment; a fabricated current-date `dob`/`bankruptcy_date`
+  would be actively misleading rather than merely missing). The
+  returning-client `.update()` call also now checks its own query `error`:
+  on failure it logs to `activity_log` (`action: "Onboarding update failed"`,
+  visible on the client's Timeline tab) and throws, rather than the old
+  behavior where a rejected field silently no-op'd the entire update with
+  nothing logged anywhere. The insert path still fails the same way it
+  always did on a genuine DB rejection: the write throws, is caught, and the
+  entire client record fails to save (webhook still returns 200 to GHL).
 
   ⚠️ **`service_agreement_version` is not wired to any GHL field.** It's a DB
   column (`TEXT DEFAULT 'v1'`) shown on the Service Agreement card, but
@@ -266,8 +286,9 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
   - The payload passed to the client-tag path carries **no `email`** on purpose: if it did, a GHL failure would let the Resend fallback mail a staff-only alert ("Round 2 is 6 days overdue, chase it") **to the client**.
   - `staff_monthly_progress` is **not** in the set — it still fires per staff member on their own contact (fields would clobber that staff member's own values).
   - ⚠️ **Breaking for any agency that already built these 3 workflows.** Tag names and the Tag-Added trigger are unchanged, so the workflow still fires — but now *with the client as the contact*. If its SMS action sends to "Contact", the staff alert now **texts the client**. Each must be repointed at a fixed staff number and rewritten to use the client merge fields. The 7 client-facing types are unaffected.
+- **Staff in-app + push channel (migrations 032/033, Session 12) — additive, not a replacement.** For all 4 staff-facing types, `notifyStaffChannels()` in `notifications.ts` also writes a `staff_notifications` row and calls `sendPushToStaff()` (`src/lib/push/send.ts`) for each recipient, alongside the GHL-tag/Resend channel above. Surfaced via the notification bell in the dashboard header (`api/notifications/*`, mark-read per row). This channel doesn't depend on the agency having built any GHL workflow — it works out of the box.
 - **Configure at Settings → GHL:** the tag/field reference table (`TagNotificationGuide`), "Pipeline Configuration", and a link to the full setup guide at `/onboarding/ghl-setup`. `agencies.settings.owner_ghl_contact_id` is now only the `staff_monthly_progress` target + the no-client fallback.
-- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through the **9-stage** "Active Client" pipeline — `analysis`, `ready_to_dispute`, `round_1_sent`, `round_1_results`, `round_2_sent`, `round_2_results`, `round_3_plus`, `round_3_plus_results`, `goal_achieved` (configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`; labels + `stageForRoundSent`/`stageForRoundResults`/`stageForClientState` helpers live in `pipeline.ts`). Wired into round events in `clients/[id]/rounds/actions.ts` (round sent → `round_N_sent`, results logged → `round_N_results`, completion → `goal_achieved`); lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()`, caching it on `clients.ghl_opportunity_id`. New clients are placed in `analysis` at onboarding; `/api/ghl/setup/create-opportunities` backfills opportunities for all synced clients; `/api/ghl/setup/find-pipeline` auto-maps stage ids by name (GHL never exposes stage ids in its UI — this tool is the only way to get them) and **prefers an `RTP - ` (or legacy `CDP - `) prefixed pipeline** over any other name containing "active client". Best-effort, no-ops cleanly if unconfigured; unmapped stages just no-op. (Session 6; 3 → 8 stages in Session 8; rounds 3+ gained their own results stage in Session 10.)
+- **Pipeline-stage sync** (`src/lib/ghl/pipeline.ts`, `moveClientPipelineStage`): moves a client's GHL opportunity through the **9-stage** "Active Client" pipeline (`setup-config.ts`'s `RTP_PIPELINES` also defines a second, undocumented-elsewhere **"Credit Sales"** pipeline — 6 lead-stage names, e.g. "New Lead"/"Signed / Won" — for the pre-client sales funnel; only "Active Client" is wired into `pipeline.ts`'s stage-move logic) — `analysis`, `ready_to_dispute`, `round_1_sent`, `round_1_results`, `round_2_sent`, `round_2_results`, `round_3_plus`, `round_3_plus_results`, `goal_achieved` (configured via `agencies.settings.ghl_pipeline_id`/`ghl_pipeline_stages`; labels + `stageForRoundSent`/`stageForRoundResults`/`stageForClientState` helpers live in `pipeline.ts`). Wired into round events in `clients/[id]/rounds/actions.ts` (round sent → `round_N_sent`, results logged → `round_N_results`, completion → `goal_achieved`); lazily finds-or-creates the opportunity via `findOrCreateGHLOpportunity()`, caching it on `clients.ghl_opportunity_id`. New clients are placed in `analysis` at onboarding; `/api/ghl/setup/create-opportunities` backfills opportunities for all synced clients; `/api/ghl/setup/find-pipeline` auto-maps stage ids by name (GHL never exposes stage ids in its UI — this tool is the only way to get them) and **prefers an `RTP - ` (or legacy `CDP - `) prefixed pipeline** over any other name containing "active client". Best-effort, no-ops cleanly if unconfigured; unmapped stages just no-op. (Session 6; 3 → 8 stages in Session 8; rounds 3+ gained their own results stage in Session 10.)
   - `PipelineStageKey` (pipeline.ts) and `AgencySettings.ghl_pipeline_stages` (types/index.ts) duplicate the same key union — they can't import each other (circular). A **compile-time assertion in `pipeline.ts` makes any drift a build error**; don't "fix" it by deleting the assertion.
   - After changing the stage model, agencies must **re-run Find & Connect Pipeline** — existing `ghl_pipeline_stages` rows won't contain the new key until they do.
 - **Visibility:** client Timeline tab shows a "✓ GHL" / "⚠ Email fallback" badge on notification entries; admin agency slide-over's GHL Config tab shows connection status + how staff alerts are targeted.
@@ -282,20 +303,20 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 ## Super-Admin Panel (`/admin`)
 - **Auth is standalone** — password (`ADMIN_PASSWORD`) → SHA-256 → httpOnly `rtp_admin_session` cookie. NO Supabase Auth. Middleware lets all `/admin/*` through; `(admin)/layout.tsx` guards via `requireAdmin()`; `/admin/login` lives in a separate `(admin-auth)` group. `ADMIN_EMAIL` is only an optional audit label.
 - **Features:** dashboard (agencies, MRR, pending-setup), agency **slide-over panel** (Status / GHL Config / Tools / Branding / Payments), Pending Setup queue, manual payments, snapshot requests, activity + system health (Supabase/Vercel/GHL sync failures).
-- **GHL setup tools** (`/api/admin/tools/*`): create the 28 custom fields, create pipelines (best-effort), sync clients, test credit monitoring, resend welcome email. (The agency-facing equivalents live at `/api/ghl/setup/*`.)
+- **GHL setup tools** (`/api/admin/tools/*`): create the 38 custom fields, create pipelines (best-effort), sync clients, test credit monitoring, resend welcome email. (The agency-facing equivalents live at `/api/ghl/setup/*`.)
 - All admin reads use `createAdminClient()` (service role, cross-agency).
 
 ## Google Drive Integration
 - **Per-agency OAuth** (`drive.file` + `userinfo.email` scopes). Tokens on `agencies.google_drive_*`. Connect at Settings → Documents.
-- **Folder layout:** `RoundTrack Pro / {Client Name} / {Onboarding | Round_N | Bureau_Responses | Client_Uploads | Letters}`.
+- **Folder layout:** `RoundTrack Pro / {Client Name} / {Onboarding | Round_N | Client_Uploads}`. There is no separate `Bureau_Responses` or `Letters` subfolder — round-sent letter PDFs are filed under that round's own `Round_N` folder (`src/lib/google-drive/letter-sync.ts`), not a dedicated "Letters" folder.
 - **ALWAYS non-blocking** via `syncDocumentToDrive()` (swallows errors, returns null if not connected). Triggered by: onboarding docs, round-sent letter PDFs (regenerated), portal uploads, and the Settings → Documents **backfill** button.
 - Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` + redirect URI `{APP_URL}/api/google-drive/callback` (see README).
 
 ## Plans & Pricing (`src/lib/billing/plans.ts` — single source of truth)
-- **Starter** $49/mo — 100 clients, 2 team members (internal plan id stays `solo`)
-- **Pro** $129/mo — 700 clients, 5 team members
-- **Agency** $249/mo — unlimited clients + team, API/custom domain, removes branding
-- `enterprise` — provisioned manually. Limits enforced via `maxClientsForPlan()` / `maxTeamMembersForPlan()` and stored on `agencies.max_clients`.
+- **Starter** $49/mo — 100 clients, 3 team members (internal plan id stays `solo`)
+- **Pro** $129/mo — 700 clients, 10 team members
+- **Agency** $249/mo — 3,000 clients, 20 team members, API/custom domain, removes branding — **not unlimited**
+- `enterprise` — provisioned manually, the actually-unlimited tier (`9999`/`9999`). Limits enforced via `maxClientsForPlan()` / `maxTeamMembersForPlan()` and stored on `agencies.max_clients`.
 
 ## AI Letter Generation
 - Uses Claude API (Sonnet 4.6) via `src/lib/claude/generate-letter.ts`
@@ -463,6 +484,29 @@ analytics, landing page.
     then told them it had "expired"). Now reuses the existing token, replacing it only when
     missing/expired/<7 days left; rotation is opt-in via a new explicit **Regenerate link**
     action behind a confirm.
+- **Session 12 — Staff in-app notifications + web push; 10 onboarding-details intake
+  fields; hardening pass.**
+  - **Staff notifications** (migrations 032/033): `staff_notifications` table (in-app
+    feed, RLS-scoped, written only by the server-side notification pipeline) + staff web
+    push (`push_subscriptions` extended with a nullable `client_id`/new `team_member_id`
+    and an exactly-one-owner `CHECK`); both fire alongside the existing GHL-tag/Resend
+    channel for the 4 staff-facing notification types (`notifyStaffChannels()`); a
+    notification bell in the dashboard header (`api/notifications/*`) surfaces them.
+  - **10 Onboarding Details intake fields** (migration 034): `credit_score_range`,
+    `reviewed_credit_report_recently`, `negative_items_reported`, `enrolled_other_program`,
+    `primary_goal`, `results_timeline`, `employment_status`, `bankruptcy_filed`,
+    `bankruptcy_date`, `intake_concerns` — RTP-owned fixed GHL keys (28 → 38 total), read by
+    the onboarding webhook, surfaced in an "Onboarding Details" card on client detail, the
+    CSV export, and the Agency API's client endpoints.
+  - **Hardening pass** (a full 4-phase audit — security / silent-failure sweep /
+    doc-drift / logic-consistency): `signed_at`/`dob`/`bankruptcy_date` in the onboarding
+    webhook now go through a validating `parseTimestamp()` instead of a raw
+    `new Date(x).toISOString()` that could throw and abort the whole webhook for one bad
+    field; the webhook's returning-client update path now checks its own query error and
+    logs failures to `activity_log` instead of silently no-oping; the same
+    unchecked-query-error pattern was found and fixed in `clients/[id]/rounds/actions.ts`
+    (6 mutations) and `api/cron/auto-create-rounds/route.ts`. `ssn_last4` was also removed
+    from the client CSV export (it had been present, unrelated to the onboarding fields).
 
 ## Outstanding (known, not yet done)
 - **Onboarding form collects bureau credentials.** The live GHL onboarding form asks for
@@ -473,7 +517,7 @@ analytics, landing page.
   and pull reports by API instead of holding client passwords.
 - **Per-agency GHL setup still manual.** GHL has **no public API to create or edit forms**,
   and creating a custom field does not populate it — so each agency must, by hand:
-  (a) run *Create Custom Fields* (28 now — the 3 `rtp__alert_*` are new in Session 11);
+  (a) run *Create Custom Fields* (38 now — 10 Onboarding Details fields are new in Session 12);
   (b) point their GHL onboarding form at the `rtp__` identity fields;
   (c) repoint every `{{contact.cdp__*}}` merge tag → `{{contact.rtp__*}}` (else **blank**);
   (d) change every workflow **Tag Added** trigger `cdp-*` → `rtp-*` (else it **silently

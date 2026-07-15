@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient();
-  await admin
+  const { error: disconnectError } = await admin
     .from("agencies")
     .update({
       google_drive_enabled: false,
@@ -23,6 +23,16 @@ export async function POST(request: NextRequest) {
       google_drive_email: null,
     })
     .eq("id", session.agency.id);
+  if (disconnectError) {
+    // Without this check the redirect below claimed disconnection regardless
+    // — tokens would stay in place and Drive sync would keep silently
+    // running while staff believe they turned it off.
+    console.error("[Google Drive disconnect] Failed:", disconnectError);
+    return NextResponse.redirect(
+      new URL("/settings/documents?error=disconnect_failed", request.url),
+      { status: 303 }
+    );
+  }
 
   await admin.from("activity_log").insert({
     agency_id: session.agency.id,

@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     // 3. Only now persist — with the verified root folder id already cached.
     const admin = createAdminClient();
-    await admin
+    const { error: persistError } = await admin
       .from("agencies")
       .update({
         google_drive_enabled: true,
@@ -53,6 +53,14 @@ export async function GET(request: NextRequest) {
         google_drive_root_folder_id: rootFolderId,
       })
       .eq("id", session.agency.id);
+    if (persistError) {
+      // Drive itself was verified working (step 2) — only the DB write
+      // failed. Without this check the redirect below claimed "connected"
+      // regardless, while google_drive_enabled stayed false/null, silently
+      // no-oping every later syncDocumentToDrive() call.
+      console.error("[Google Drive callback] Persist failed:", persistError);
+      return NextResponse.redirect(new URL(`${returnTo}?error=persist`, request.url));
+    }
 
     await admin.from("activity_log").insert({
       agency_id: session.agency.id,

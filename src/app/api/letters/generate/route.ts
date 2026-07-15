@@ -99,7 +99,8 @@ async function generateForDispute(
 // Marks the round as letters_generated once no pending letter remains ungenerated.
 async function maybeMarkGenerated(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  roundId: string
+  roundId: string,
+  agencyId: string
 ) {
   const { count } = await supabase
     .from("disputes")
@@ -107,11 +108,25 @@ async function maybeMarkGenerated(
     .eq("round_id", roundId)
     .is("letter_content", null);
   if ((count ?? 0) === 0) {
-    await supabase
+    const { error } = await supabase
       .from("dispute_rounds")
       .update({ status: "letters_generated" })
       .eq("id", roundId)
       .eq("status", "preparing");
+    if (error) {
+      // The letters themselves are already saved at this point (each
+      // dispute's own update is checked separately in generateForDispute) —
+      // only this status label failed. Logged, not fatal to the response:
+      // worst case the round stays showing "preparing" until the next
+      // successful generation call retries this same update.
+      console.error(`[letters/generate] Failed to mark round ${roundId} letters_generated:`, error);
+      await supabase.from("activity_log").insert({
+        agency_id: agencyId,
+        action: "Round status update failed",
+        actor_type: "system",
+        description: `Round ${roundId}: all letters generated, but the round's status failed to update to letters_generated: ${error.message}`,
+      });
+    }
   }
 }
 
@@ -160,7 +175,7 @@ export async function POST(req: Request) {
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 502 });
     }
-    await maybeMarkGenerated(supabase, dispute.round_id);
+    await maybeMarkGenerated(supabase, dispute.round_id, agencyId);
     return NextResponse.json({
       success: true,
       content: result.content,
@@ -181,7 +196,7 @@ export async function POST(req: Request) {
     }
     const disputes = (data ?? []) as unknown as DisputeWithJoins[];
     if (disputes.length === 0) {
-      await maybeMarkGenerated(supabase, body.roundId);
+      await maybeMarkGenerated(supabase, body.roundId, agencyId);
       return NextResponse.json({ success: true, results: [] });
     }
 
@@ -198,7 +213,7 @@ export async function POST(req: Request) {
       results.push(...settled);
     }
 
-    await maybeMarkGenerated(supabase, body.roundId);
+    await maybeMarkGenerated(supabase, body.roundId, agencyId);
 
     return NextResponse.json({
       success: true,

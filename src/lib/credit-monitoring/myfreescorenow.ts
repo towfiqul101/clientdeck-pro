@@ -1,3 +1,5 @@
+import { parseScore } from "./parse-score";
+
 export interface ClientData {
   firstName: string;
   lastName: string;
@@ -54,10 +56,14 @@ export async function pullMyFreeScoreNow(
 
     const data = (await response.json()) as Record<string, unknown>;
 
+    const scores = typeof data.scores === "object" && data.scores !== null
+      ? (data.scores as Record<string, unknown>)
+      : null;
+
     return {
-      score_eq: typeof data.equifax_score === "number" ? data.equifax_score : typeof data.scores === "object" && data.scores !== null && "equifax" in data.scores ? Number(data.scores.equifax) || null : null,
-      score_exp: typeof data.experian_score === "number" ? data.experian_score : typeof data.scores === "object" && data.scores !== null && "experian" in data.scores ? Number(data.scores.experian) || null : null,
-      score_tu: typeof data.transunion_score === "number" ? data.transunion_score : typeof data.scores === "object" && data.scores !== null && "transunion" in data.scores ? Number(data.scores.transunion) || null : null,
+      score_eq: parseScore(data.equifax_score) ?? (scores ? parseScore(scores.equifax) : null),
+      score_exp: parseScore(data.experian_score) ?? (scores ? parseScore(scores.experian) : null),
+      score_tu: parseScore(data.transunion_score) ?? (scores ? parseScore(scores.transunion) : null),
       raw_response: data,
     };
   } catch (err) {

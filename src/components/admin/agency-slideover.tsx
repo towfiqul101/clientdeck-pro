@@ -376,6 +376,15 @@ function StatusTab({
         </button>
       </div>
 
+      {!data.clientLimit.allowed && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-400">
+          <strong>Over plan limit</strong> — {data.clientLimit.current}/{data.clientLimit.max}{" "}
+          active clients. New clients (including ones onboarded via GHL) are still being
+          created — nothing is blocked — but this agency needs a plan upgrade or a raised
+          limit override above.
+        </div>
+      )}
+
       <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
         <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Signup info</h4>
         <dl className="mt-2 space-y-1.5 text-sm">
@@ -383,6 +392,10 @@ function StatusTab({
           <Row k="Owner" v={a.owner_email} />
           <Row k="Signed up" v={formatDate(a.created_at)} />
           <Row k="Clients" v={String(data.clientCount)} />
+          <Row
+            k="Active clients / limit"
+            v={`${data.clientLimit.current} / ${data.clientLimit.max}`}
+          />
           <Row k="License key" v={a.license_key} />
         </dl>
       </div>

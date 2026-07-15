@@ -24,6 +24,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   // Say exactly what to do; a generic "try again" leaves the user stuck in a loop.
   drive_scope:
     "Google didn't grant access to your Drive, so nothing was connected. Click Connect again and make sure you tick the Google Drive permission checkbox on the consent screen.",
+  persist:
+    "Google verified the connection, but saving it failed. Please try connecting again.",
+  disconnect_failed:
+    "Disconnecting Google Drive failed — it may still be connected. Please try again.",
 };
 
 export default async function DocumentsSettingsPage({

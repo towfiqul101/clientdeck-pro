@@ -127,8 +127,10 @@ export async function confirmImport(rows: ParsedClientRow[]): Promise<ConfirmImp
 
   if (validRows.length > 0) {
     const admin = createAdminClient();
-    const defaultMonthlyFee = session.agency.settings?.default_monthly_fee;
-
+    // settings.default_monthly_fee was never settable via any UI (dead
+    // config) — monthly_fee is simply omitted here so the clients table's
+    // own column default (149.00) applies, same value this always resolved
+    // to in practice.
     const inserts = validRows.map((r) => ({
       agency_id: session.agency.id,
       first_name: r.first_name,
@@ -140,7 +142,6 @@ export async function confirmImport(rows: ParsedClientRow[]): Promise<ConfirmImp
       total_items_start: 0,
       total_items_current: 0,
       total_items_deleted: 0,
-      ...(defaultMonthlyFee ? { monthly_fee: defaultMonthlyFee } : {}),
     }));
 
     const { error } = await admin.from("clients").insert(inserts);

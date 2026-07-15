@@ -1,4 +1,5 @@
 import type { ClientData, ScorePullResult } from "./myfreescorenow";
+import { parseScore } from "./parse-score";
 
 // TODO: Verify endpoint URL with SmartCredit's white-label reseller API docs.
 export async function pullSmartCredit(
@@ -33,10 +34,14 @@ export async function pullSmartCredit(
 
     const data = (await response.json()) as Record<string, unknown>;
 
+    const scores = typeof data.scores === "object" && data.scores !== null
+      ? (data.scores as Record<string, unknown>)
+      : null;
+
     return {
-      score_eq: typeof data.scores === "object" && data.scores !== null && "equifax" in data.scores ? Number(data.scores.equifax) || null : null,
-      score_exp: typeof data.scores === "object" && data.scores !== null && "experian" in data.scores ? Number(data.scores.experian) || null : null,
-      score_tu: typeof data.scores === "object" && data.scores !== null && "transunion" in data.scores ? Number(data.scores.transunion) || null : null,
+      score_eq: scores ? parseScore(scores.equifax) : null,
+      score_exp: scores ? parseScore(scores.experian) : null,
+      score_tu: scores ? parseScore(scores.transunion) : null,
       raw_response: data,
     };
   } catch (err) {

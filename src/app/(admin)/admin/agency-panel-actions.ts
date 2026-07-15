@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isAdmin, getAdminEmail } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { maxClientsForPlan } from "@/lib/billing/plans";
+import { maxClientsForPlan, hasActiveEntitlement } from "@/lib/billing/plans";
 import { verifyGHLConnection } from "@/lib/ghl/api";
 import { isMaskedSecret } from "@/lib/utils/secrets";
 import type { Plan, PlanStatus } from "@/types";
@@ -70,6 +70,20 @@ export async function saveAgencyStatus(
   });
 
   const admin = createAdminClient();
+
+  // A custom domain is an Agency-tier feature — if this save drops the
+  // agency below that entitlement (downgraded plan, or a non-active status),
+  // clear it rather than leaving it serving indefinitely on a stale
+  // entitlement. Only worth a distinct log line if the agency actually had
+  // one connected.
+  const revokingDomain = !hasActiveEntitlement(input.plan, input.status);
+  const { data: current } = await admin
+    .from("agencies")
+    .select("custom_domain")
+    .eq("id", agencyId)
+    .single();
+  const hadDomain = revokingDomain && !!current?.custom_domain;
+
   const { error } = await admin
     .from("agencies")
     .update({
@@ -78,6 +92,7 @@ export async function saveAgencyStatus(
       max_clients: maxClients,
       trial_ends_at: input.trialEnd ? new Date(input.trialEnd).toISOString() : null,
       settings,
+      ...(revokingDomain ? { custom_domain: null, custom_domain_verified: false } : {}),
     })
     .eq("id", agencyId);
   if (error) return { success: false, error: error.message };
@@ -87,6 +102,13 @@ export async function saveAgencyStatus(
     "Account updated (admin)",
     `Plan ${input.plan} / ${input.status}, max ${maxClients} clients.`
   );
+  if (hadDomain) {
+    await logAgency(
+      agencyId,
+      "Custom domain revoked (admin)",
+      `Plan/status change (${input.plan} / ${input.status}) no longer entitles a custom domain — cleared.`
+    );
+  }
   revalidateAdmin();
   return { success: true };
 }
@@ -226,7 +248,28 @@ export async function recordAgencyPayment(
   });
   if (error) return { success: false, error: error.message };
 
-  await admin.from("agencies").update({ plan_status: "active" }).eq("id", agencyId);
+  const { error: statusError } = await admin
+    .from("agencies")
+    .update({ plan_status: "active" })
+    .eq("id", agencyId);
+  if (statusError) {
+    // The payment row above is already recorded — don't let this follow-up
+    // failure look identical to a fully successful "record payment" call,
+    // or the agency stays stuck at its prior (possibly past_due) status.
+    await logAgency(
+      agencyId,
+      "Manual payment recorded, status update failed (admin)",
+      `$${input.amount.toFixed(2)} via ${input.method}${
+        input.reference ? ` (ref ${input.reference})` : ""
+      }. Payment recorded, but flipping status to active failed: ${statusError.message}`
+    );
+    revalidateAdmin();
+    revalidatePath("/admin/payments");
+    return {
+      success: false,
+      error: `Payment recorded, but the agency's status failed to update to active: ${statusError.message}`,
+    };
+  }
 
   await logAgency(
     agencyId,

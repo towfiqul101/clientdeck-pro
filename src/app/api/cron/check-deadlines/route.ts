@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCron } from "@/lib/cron/auth";
 import { createGHLTask } from "@/lib/ghl/api";
-import { daysRemaining } from "@/lib/utils/helpers";
+import { daysSinceDate, todayInTimezone } from "@/lib/utils/helpers";
 import { notifyStaffRoundOverdue, type NotifiableClient } from "@/lib/ghl/notifications";
 import type { Agency } from "@/types";
 
@@ -39,6 +39,12 @@ export async function GET(req: Request) {
 
   const admin = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
+  // Broadened by 1 day past the server's UTC "today": an agency in a
+  // timezone ahead of UTC can have already crossed into the next local
+  // calendar day — and so genuinely be overdue — before UTC's date string
+  // reflects it. The precise per-agency-timezone check happens in the loop
+  // below; this just avoids missing rows at the UTC boundary.
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
   const { data, error } = await admin
     .from("dispute_rounds")
@@ -46,7 +52,7 @@ export async function GET(req: Request) {
       "id, round_number, agency_id, client_id, response_deadline, client:clients(id, first_name, last_name, email, phone, ghl_contact_id, assigned_to, notify_team_member_ids), agency:agencies(*)"
     )
     .eq("status", "awaiting_response")
-    .lt("response_deadline", today);
+    .lte("response_deadline", tomorrow);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -71,13 +77,21 @@ export async function GET(req: Request) {
   let flagged = 0;
 
   for (const round of overdue) {
+    // Precise check: was this round's deadline actually passed as of "today"
+    // in the agency's OWN timezone (settings.timezone), not just the broad
+    // UTC-based window the query fetched? A round whose deadline is
+    // tomorrow-UTC but not yet passed locally isn't overdue yet.
+    const agencySettings = round.agency?.settings as { timezone?: string } | undefined;
+    const agencyToday = todayInTimezone(agencySettings?.timezone);
+    if (round.response_deadline >= agencyToday) continue;
+
     clientsAffected.add(round.client_id);
     if (alreadyFlagged.has(round.id)) continue;
 
     const name = round.client
       ? `${round.client.first_name} ${round.client.last_name}`
       : "client";
-    const daysOver = Math.abs(daysRemaining(round.response_deadline));
+    const daysOver = daysSinceDate(round.response_deadline, agencySettings?.timezone);
 
     await admin.from("activity_log").insert({
       agency_id: round.agency_id,

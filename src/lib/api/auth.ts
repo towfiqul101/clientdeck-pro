@@ -1,7 +1,7 @@
 import { randomBytes, createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { hasApiAccess } from "@/lib/billing/plans";
+import { hasApiAccess, ACTIVE_PLAN_STATUSES } from "@/lib/billing/plans";
 import type { Plan, PlanStatus } from "@/types";
 
 const KEY_PREFIX = "rtp_live_";
@@ -29,9 +29,6 @@ export type ApiKeyAuthResult =
   | { ok: false; status: 401 }
   | { ok: false; status: 402; reason: string }
   | { ok: false; status: 429; limit: number; current: number; resetAt: string };
-
-/** Subscription states that still entitle an agency to use the API. */
-const ACTIVE_PLAN_STATUSES: PlanStatus[] = ["active", "trialing"];
 
 /**
  * Validates the `Authorization: Bearer <key>` header against agency_api_keys,

@@ -464,10 +464,21 @@ export async function checkDomainVerification(): Promise<{ verified: boolean }> 
   const result = await verifyDomain(domain);
   if (result.verified) {
     const supabase = await createServerSupabaseClient();
-    await supabase
+    const { error } = await supabase
       .from("agencies")
       .update({ custom_domain_verified: true })
       .eq("id", session.agency.id);
+    if (error) {
+      // Vercel confirmed the domain, but the DB flag — the thing
+      // middleware's isVerifiedAgencyDomain() actually checks — never got
+      // set. Reporting verified:true here would tell the agency it worked
+      // while the portal keeps 404ing on their domain.
+      console.error(
+        `[checkDomainVerification] Failed to persist verified flag for agency ${session.agency.id}:`,
+        error
+      );
+      return { verified: false };
+    }
     revalidatePath("/settings/domain");
   }
   return result;

@@ -73,7 +73,6 @@ export interface Agency {
   custom_domain_verified: boolean;
   ghl_location_id: string | null;
   ghl_api_key: string | null;
-  ghl_webhook_url: string | null;
   /** Per-agency inbound webhook credential (migration 031). Secret — never
    *  send to the browser except inside this agency's own webhook URL. */
   webhook_token: string;
@@ -112,7 +111,6 @@ export interface OnboardingSteps {
 export interface AgencySettings {
   timezone: string;
   letter_signature: string;
-  default_monthly_fee: number;
   portal_branding_visible: boolean;
   onboarding_completed?: boolean;
   onboarding_completed_at?: string | null;

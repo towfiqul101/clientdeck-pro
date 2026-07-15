@@ -45,6 +45,33 @@ export function daysRemaining(deadline: string | Date): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * "Today" as a YYYY-MM-DD date string in a given IANA timezone — used so
+ * deadline/overdue crons compare against the agency's own local calendar
+ * date (settings.timezone) rather than the server's UTC date, which could
+ * be off by a day near local midnight. Falls back to UTC on an invalid/unset
+ * timezone rather than throwing.
+ */
+export function todayInTimezone(timezone: string | undefined | null): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: timezone || "UTC" }).format(new Date());
+  } catch {
+    return new Date().toISOString().split("T")[0];
+  }
+}
+
+/**
+ * Whole calendar days between a YYYY-MM-DD date and "today" in the given
+ * timezone. Both sides are anchored to UTC midnight for the diff — only the
+ * determination of "today" is timezone-aware — so this is a pure date-count,
+ * not a raw real-time ms diff that would drift with time-of-day.
+ */
+export function daysSinceDate(dateStr: string, timezone: string | undefined | null): number {
+  const today = todayInTimezone(timezone);
+  const diffMs = Date.parse(`${today}T00:00:00Z`) - Date.parse(`${dateStr}T00:00:00Z`);
+  return Math.floor(diffMs / 86400000);
+}
+
 export function scoreChange(start: number | null, current: number | null): {
   value: number;
   direction: "up" | "down" | "same";
