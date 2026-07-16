@@ -1,7 +1,9 @@
 import { randomBytes, createHash } from "crypto";
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasApiAccess, ACTIVE_PLAN_STATUSES } from "@/lib/billing/plans";
+import { notifyAdmin } from "@/lib/admin/notify";
 import type { Plan, PlanStatus } from "@/types";
 
 const KEY_PREFIX = "rtp_live_";
@@ -56,14 +58,29 @@ export async function validateApiKey(req: Request): Promise<ApiKeyAuthResult> {
   // Join the agency in so entitlement costs no extra round-trip.
   const { data: key } = await admin
     .from("agency_api_keys")
-    .select("id, agency_id, agency:agencies(plan, plan_status)")
+    .select("id, agency_id, agency:agencies(name, plan, plan_status)")
     .eq("key_hash", hash)
     .is("revoked_at", null)
     .maybeSingle();
 
-  if (!key) return { ok: false, status: 401 };
+  if (!key) {
+    // Unknown OR revoked key — someone is calling with a credential that
+    // doesn't work, which is either a leaked/stale integration or a probe.
+    // Not attributable to an agency (the key didn't resolve); throttled 1/day.
+    after(() =>
+      notifyAdmin(
+        "api_key_rejected",
+        null,
+        "Agency API request rejected: invalid key",
+        "A request to /api/v1/* presented an unknown or revoked API key. A stale integration may still be running, or someone is probing the API.",
+        { throttlePerDay: true }
+      )
+    );
+    return { ok: false, status: 401 };
+  }
 
   const agency = key.agency as unknown as {
+    name: string;
     plan: Plan;
     plan_status: PlanStatus;
   } | null;
@@ -110,6 +127,15 @@ export async function validateApiKey(req: Request): Promise<ApiKeyAuthResult> {
     // security-critical fail-closed path; this is best-effort abuse control.
     console.error("validateApiKey: rate limit check failed", rateLimitError);
   } else if (typeof count === "number" && count > API_RATE_LIMIT) {
+    after(() =>
+      notifyAdmin(
+        "api_key_rejected",
+        key.agency_id,
+        `Agency API rate limit hit: ${agency.name}`,
+        `An API key belonging to ${agency.name} exceeded ${API_RATE_LIMIT} requests/hour (${count} this window). Their integration may be misbehaving.`,
+        { throttlePerDay: true }
+      )
+    );
     return {
       ok: false,
       status: 429,

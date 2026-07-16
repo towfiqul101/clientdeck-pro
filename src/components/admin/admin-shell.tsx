@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/helpers";
+import { AdminNotificationBell } from "@/components/admin/admin-notification-bell";
 import {
   LayoutDashboard,
   Building2,
@@ -16,6 +17,7 @@ import {
   X,
   ShieldAlert,
   Hourglass,
+  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -56,6 +58,7 @@ export function AdminShell({
     },
     { label: "Payments", href: "/admin/payments", icon: CreditCard },
     { label: "Activity", href: "/admin/activity", icon: Activity },
+    { label: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
   const sidebar = (
@@ -161,6 +164,7 @@ export function AdminShell({
           <span className="rounded bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
             Super-admin mode
           </span>
+          <AdminNotificationBell />
         </header>
 
         <main className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">

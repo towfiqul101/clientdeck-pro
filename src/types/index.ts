@@ -347,6 +347,17 @@ export interface StaffNotification {
   created_at: string;
 }
 
+/** Super-admin notification feed (migration 036) — see src/lib/admin/notify.ts. */
+export interface AdminNotification {
+  id: string;
+  type: string;
+  agency_id: string | null;
+  title: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+}
+
 export type SnapshotRequestStatus = "pending" | "sent" | "installed";
 
 export interface SnapshotRequest {

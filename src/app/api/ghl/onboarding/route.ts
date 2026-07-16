@@ -9,6 +9,7 @@ import { notifyStaffNewClient, type NotifiableClient } from "@/lib/ghl/notificat
 import { moveClientPipelineStage } from "@/lib/ghl/pipeline";
 import { isAgencyPlanOrHigher } from "@/lib/billing/plans";
 import { checkClientLimit } from "@/lib/utils/license";
+import { notifyAdmin } from "@/lib/admin/notify";
 import { CREDIT_SCORE_RANGES, RESULTS_TIMELINES, EMPLOYMENT_STATUSES } from "@/lib/constants";
 import type {
   Agency,
@@ -267,6 +268,17 @@ export async function POST(req: Request) {
   const auth = await verifyGhlWebhook(req);
   if (!auth.ok) {
     console.warn(`GHL onboarding webhook rejected: ${auth.reason}`);
+    // Throttled 1/day: could be an attack probe OR a misconfigured agency URL
+    // (both otherwise invisible — rejections return 200 to stop GHL retries).
+    after(() =>
+      notifyAdmin(
+        "webhook_auth_failure",
+        null,
+        "GHL onboarding webhook rejected: bad credential",
+        `A request to /api/ghl/onboarding was rejected (${auth.reason}). Either someone is probing the endpoint or an agency's webhook URL is misconfigured.`,
+        { throttlePerDay: true }
+      )
+    );
     return Response.json({ received: true, processed: false });
   }
 
@@ -287,6 +299,15 @@ export async function POST(req: Request) {
     if (!(await locationBelongsToAgency(auth, locationId))) {
       console.warn(
         "GHL onboarding webhook rejected: locationId does not belong to the token's agency"
+      );
+      after(() =>
+        notifyAdmin(
+          "webhook_auth_failure",
+          auth.agencyId,
+          "GHL onboarding webhook rejected: cross-tenant locationId",
+          `A request to /api/ghl/onboarding presented a valid agency token but claimed a locationId that agency doesn't own. This is either a serious misconfiguration or an abuse attempt.`,
+          { throttlePerDay: true }
+        )
       );
       return Response.json({ received: true, processed: false }, { status: 200 });
     }
@@ -414,6 +435,14 @@ export async function POST(req: Request) {
         description: `This client was created via GHL onboarding while the agency was already at or over its plan limit (${overage.current}/${overage.max} clients). The client was created anyway — a real onboarding submission is never dropped — but the agency should upgrade its plan.`,
         metadata: { current: overage.current, max: overage.max },
       });
+      after(() =>
+        notifyAdmin(
+          "client_limit_exceeded",
+          agency.id,
+          `Client limit exceeded: ${agency.name}`,
+          `${agency.name} onboarded a client while at ${overage.current}/${overage.max} clients on the ${agency.plan} plan. The client was created anyway — they should upgrade.`
+        )
+      );
     }
 
     // Heavier work runs after the response is flushed (guaranteed by after()).

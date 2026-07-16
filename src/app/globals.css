@@ -586,8 +586,8 @@ html.light .app-content .always-dark .border-white\/\[0\.08\] {
 /* -------- Accent TEXT colors (light). The pastel -300/-400 accent shades are
    tuned for dark surfaces; on white cards they drop to ~1.5:1 contrast and
    read as invisible. Darken them to AA-ish shades. These accents are used
-   almost exclusively as text/icons over faint colored tints (bg-*/10, bg-*/20,
-   status pills) that are NOT flipped to white, so the darker ink reads well on
+   almost exclusively as text/icons over faint colored tints (e.g. bg-accent
+   at 10-20% opacity, status pills) that are NOT flipped to white, so the darker ink reads well on
    the tint. Solid colored buttons use text-white and are untouched. -------- */
 html.light .app-content .text-violet-300,
 html.light .app-content .text-violet-400,

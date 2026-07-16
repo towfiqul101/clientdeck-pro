@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessionContext } from "@/lib/auth/session";
 import { Card, CardHeader } from "@/components/ui/card";
 import { getInitials } from "@/lib/utils/helpers";
 import { maxTeamMembersForPlan, PLAN_BY_ID } from "@/lib/billing/plans";
 import { resolveSubscribedTypes } from "@/lib/team/notification-prefs";
 import { TeamInvite } from "./team-invite";
+import { ResendInviteButton } from "./resend-invite-button";
 import { NotificationPrefsForm } from "./notification-prefs-form";
 import { MemberGhlContactField } from "./member-ghl-contact-field";
 import { Users, ArrowRight, Briefcase, Trash2, Percent } from "lucide-react";
@@ -99,6 +101,30 @@ async function getCaseloadStats(
   return stats;
 }
 
+/**
+ * Members who have never signed in are "pending" — the invite email went out
+ * (team_members row + auth user were created up front by inviteTeamMember),
+ * but the person hasn't clicked their action link yet. Supabase's
+ * last_sign_in_at is the signal: it stays NULL until the invite/recovery link
+ * is first verified. A member with no auth user at all (user_id NULL — the
+ * original generateLink call failed) is also pending.
+ */
+async function getPendingMemberIds(members: TeamMember[]): Promise<Set<string>> {
+  const admin = createAdminClient();
+  const pending = new Set<string>();
+  await Promise.all(
+    members.map(async (m) => {
+      if (!m.user_id) {
+        pending.add(m.id);
+        return;
+      }
+      const { data } = await admin.auth.admin.getUserById(m.user_id);
+      if (!data?.user?.last_sign_in_at) pending.add(m.id);
+    })
+  );
+  return pending;
+}
+
 export default async function TeamPage() {
   const session = await getSessionContext();
   if (!session) redirect("/login");
@@ -117,7 +143,10 @@ export default async function TeamPage() {
   const canInvite =
     session.teamMember.role === "owner" || session.teamMember.role === "admin";
 
-  const caseloadStats = await getCaseloadStats(activeMembers);
+  const [caseloadStats, pendingMemberIds] = await Promise.all([
+    getCaseloadStats(activeMembers),
+    getPendingMemberIds(members),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -271,6 +300,17 @@ export default async function TeamPage() {
                   <span className="rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400">
                     Inactive
                   </span>
+                )}
+                {m.is_active && pendingMemberIds.has(m.id) && (
+                  <>
+                    <span
+                      className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400"
+                      title="Invited, but hasn't signed in yet"
+                    >
+                      Pending
+                    </span>
+                    {canInvite && <ResendInviteButton memberId={m.id} />}
+                  </>
                 )}
               </li>
             ))}

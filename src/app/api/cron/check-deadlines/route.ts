@@ -4,6 +4,7 @@ import { isAuthorizedCron } from "@/lib/cron/auth";
 import { createGHLTask } from "@/lib/ghl/api";
 import { daysSinceDate, todayInTimezone } from "@/lib/utils/helpers";
 import { notifyStaffRoundOverdue, type NotifiableClient } from "@/lib/ghl/notifications";
+import { notifyAdmin } from "@/lib/admin/notify";
 import type { Agency } from "@/types";
 
 export const maxDuration = 120;
@@ -147,9 +148,50 @@ export async function GET(req: Request) {
     ]);
   }
 
+  // Super-admin heads-up: trials ending within 3 days. Runs on this daily
+  // cron (Hobby crons are daily-only); notifyAdmin's per-day throttle keeps
+  // it to one notification per agency per day even if the cron re-runs.
+  const trialsEnding = await checkTrialsEnding(admin);
+
   return NextResponse.json({
     overdueCount: overdue.length,
     newlyFlagged: flagged,
     clientsAffected: clientsAffected.size,
+    trialsEnding,
   });
+}
+
+async function checkTrialsEnding(
+  admin: ReturnType<typeof createAdminClient>
+): Promise<number> {
+  const now = new Date();
+  const threeDaysOut = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  const { data, error } = await admin
+    .from("agencies")
+    .select("id, name, owner_email, trial_ends_at")
+    .eq("plan_status", "trialing")
+    .gte("trial_ends_at", now.toISOString())
+    .lte("trial_ends_at", threeDaysOut.toISOString());
+
+  if (error) {
+    console.error("check-deadlines: trial-ending query failed", error);
+    return 0;
+  }
+
+  for (const agency of data ?? []) {
+    const daysLeft = Math.max(
+      0,
+      Math.ceil((new Date(agency.trial_ends_at!).getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+    );
+    await notifyAdmin(
+      "trial_ending",
+      agency.id,
+      `Trial ending in ${daysLeft} day${daysLeft === 1 ? "" : "s"}: ${agency.name}`,
+      `${agency.name} (${agency.owner_email}) is on a trial that ends ${agency.trial_ends_at!.slice(0, 10)}. Reach out before it lapses.`,
+      { throttlePerDay: true }
+    );
+  }
+
+  return (data ?? []).length;
 }

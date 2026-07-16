@@ -88,6 +88,7 @@ api/
                    one above; migration 032 extended the shared `push_subscriptions`
                    table to serve both.
   notifications/ — list + [id]/read (staff in-app notification bell)
+  admin/notifications/ — list + [id]/read (SUPER-ADMIN bell — separate from the staff one above)
   clients/export — CSV export (staff-authenticated)
   google-drive/  — connect, callback, disconnect, backfill
   admin/         — logout, agencies/[id] (panel data), tools/* (GHL fields/pipelines/sync/welcome)
@@ -107,7 +108,7 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 5. **Client Portal:** Magic link via SMS (GHL workflow) → score chart, progress timeline, document upload (mirrored to Drive)
 
 ## Database Tables (Supabase)
-- `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB — **bureau scores ONLY** since Session 10), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `webhook_token` (**per-agency inbound webhook credential**, migration 031 — secret, never sent to the browser except inside that agency's own webhook URL), `credit_monitoring_service`/`credit_monitoring_api_key`/`credit_monitoring_api_secret` (Agency-plan credit monitoring, migration 017), `custom_domain`/`custom_domain_verified` (migration 026), `max_clients`, `plan`/`plan_status`, `settings` (JSONB: `onboarding_steps`, `admin_notes`, `ghl_pipeline_id`/`ghl_pipeline_stages`, `owner_ghl_contact_id`, `auto_create_rounds`/`auto_round_delay_days`, `auto_pull_scores`, `google_review_link`/`referral_link`. **NOT** `ghl_webhook_triggers` — that key is dead, see Notifications.)
+- `agencies` — SaaS customers. Incl. `ghl_field_keys` (JSONB — **bureau scores ONLY** since Session 10), `google_drive_*` (OAuth tokens/email/root folder), `ghl_api_key`, `webhook_token` (**per-agency inbound webhook credential**, migration 031 — secret, never sent to the browser except inside that agency's own webhook URL), `credit_monitoring_service`/`credit_monitoring_api_key`/`credit_monitoring_api_secret` (Agency-plan credit monitoring, migration 017), `custom_domain`/`custom_domain_verified` (migration 026 — see Custom Domain section), `max_clients`, `plan`/`plan_status`, `settings` (JSONB: `timezone` (Session 13 — now actually read, see Custom Domain/crons below), `onboarding_steps`, `admin_notes`, `ghl_pipeline_id`/`ghl_pipeline_stages`, `owner_ghl_contact_id`, `auto_create_rounds`/`auto_round_delay_days`, `auto_pull_scores`, `google_review_link`/`referral_link`. **NOT** `ghl_webhook_triggers` — dead, see Notifications — nor `default_monthly_fee` — dead, dropped Session 13.). **NOT** `ghl_webhook_url` — dropped (migration 035, Session 13); the webhook URLs shown in Settings → GHL are built dynamically from `webhook_token`, not a stored column.
 - `team_members` — Staff accounts linked to agencies (roles: owner/admin/staff/viewer)
 - `clients` — End-clients. Incl. signature fields (`signature_status`, `signed_at`, `signature_type`, `service_agreement_version`), `onboarding_form_submitted`, `ghl_drive_folder_id`, `portal_token`, `ghl_opportunity_id` (cached GHL pipeline opportunity id, migration 016), `ssn_last4` (**CHECK-constrained to exactly 4 digits**, migration 030), the 10 Onboarding Details intake fields (`credit_score_range`, `reviewed_credit_report_recently`, `negative_items_reported`, `enrolled_other_program`, `primary_goal`, `results_timeline`, `employment_status`, `bankruptcy_filed`, `bankruptcy_date`, `intake_concerns` — migration 034, see GHL Integration Details)
 - `agency_api_keys` — Agency API keys: `key_hash` (sha256), `key_prefix` (display), `revoked_at` (migration 027)
@@ -125,6 +126,8 @@ URL — pages live at `/clients`, `/settings/ghl`, `/admin`, etc. (NOT `/dashboa
 - `ghl_sync_log` — Outbound GHL sync attempts + failures (migration 005)
 - `score_history` — Bureau score snapshots per round for the portal chart (migration 006)
 - `credit_monitoring_pulls` — Per-pull audit trail (service, scores returned, status/error) for the credit monitoring integration (migration 017)
+- `admin_notifications` — Cross-agency notification feed for the SUPER-ADMIN (migration 036). Written only by `notifyAdmin()` (`src/lib/admin/notify.ts`); read/mark-read via `requireAdminApi()`-guarded `/api/admin/notifications/*`; surfaced by the bell in the /admin header. RLS enabled with **no policies** (service-role only) — `staff_notifications` can't serve this because its RLS resolves through `auth.uid()`, which the password/cookie super-admin doesn't have. `agency_id` nullable (security events often aren't attributable) with `ON DELETE SET NULL`.
+- `admin_notification_recipients` — Who receives super-admin notification EMAILS (migration 037; the bell shows them regardless). Cross-agency config, no `agency_id`; managed at `/admin/settings` (cap **3**, enforced in the action — the UI is the only writer). Same no-policy RLS posture as 036.
 
 ### Migrations (`supabase/migrations/`, run in order in Supabase SQL editor)
 001 schema · 002 RLS · 003 seed templates · 004 finalized col · 005 ghl_sync_log ·
@@ -141,7 +144,10 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 **031 agency_webhook_token** (per-agency inbound webhook credential) ·
 032 staff_push_subscriptions (extends `push_subscriptions` for staff dashboard push) ·
 033 staff_notifications (in-app notification feed for staff) ·
-**034 onboarding_intake_fields** (10 Onboarding Details columns on `clients`)
+**034 onboarding_intake_fields** (10 Onboarding Details columns on `clients`) ·
+**035 drop_ghl_webhook_url** (dead column, zero reads/writes anywhere in `src/`) ·
+036 admin_notifications (super-admin bell feed) ·
+037 admin_notification_recipients (admin email recipients, max 3 via /admin/settings)
 
 ## Key Libraries & Locations
 - `src/lib/supabase/{client,server,admin}.ts` — browser / SSR / service-role clients
@@ -160,17 +166,18 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - `src/lib/ghl/notifications.ts` — notification service: writes custom fields → adds a `rtp-*` tag that fires the agency's own GHL workflow → Resend fallback → log-only no-op. 11 `GHLNotificationType`s; **never throws past its caller.**
 - `src/lib/ghl/pipeline.ts` — best-effort GHL opportunity/pipeline-stage sync (`moveClientPipelineStage`)
 - `src/lib/team/notification-prefs.ts` — `isSubscribedTo()`; owners default to subscribed-to-everything until they opt out
-- `src/lib/credit-monitoring/{index,myfreescorenow,identityiq,smartcredit}.ts` — provider adapters (**unverified placeholder endpoints** — see that section)
+- `src/lib/credit-monitoring/{index,myfreescorenow,identityiq,smartcredit}.ts` — provider adapters (**unverified placeholder endpoints** — see that section); `parse-score.ts`'s `parseScore()` (Session 13) is the shared `Number.isFinite` guard `myfreescorenow`/`smartcredit` coerce provider score fields through — `identityiq` doesn't need it (already a plain `typeof === "number"` gate, no string coercion)
 - `src/lib/reports/metrics.ts` — bureau success-rate / negative-type / retention reporting
 - `src/lib/google-drive/{auth,client,sync,letter-sync}.ts` — OAuth, Drive API, non-blocking sync
 - `src/lib/admin/session.ts` — super-admin password/cookie auth (`rtp_admin_session`)
 - `src/lib/admin/{mrr,avatar,agency-panel,tool-helpers}.ts` — admin dashboard helpers
-- `src/lib/billing/plans.ts` — **single source of truth for plans/pricing/limits**
+- `src/lib/admin/notify.ts` — `notifyAdmin(type, agencyId, title, body, opts?)`: super-admin notification service (bell row + Resend fan-out to `admin_notification_recipients`, `Promise.allSettled` so one address can't block the rest). **Never throws**; hot-path callers wrap it in `after()`. `{throttlePerDay:true}` caps to one per (type, agency) per 24h — REQUIRED for the attacker-influenceable types (`webhook_auth_failure`, `api_key_rejected`); the throttle check itself fails open (better a duplicate alert than a dropped security signal). 5 types wired: `new_agency_signup` (signup action), `client_limit_exceeded` (onboarding webhook overage branch), `trial_ending` (≤3 days, checked in the `check-deadlines` cron), `webhook_auth_failure`, `api_key_rejected`.
+- `src/lib/billing/plans.ts` — **single source of truth for plans/pricing/limits**; `ACTIVE_PLAN_STATUSES` + `hasActiveEntitlement(plan, status)` (Session 13) are the shared entitlement check reused by both the Agency API (`src/lib/api/auth.ts`, re-checked every request) and custom-domain revocation (event-driven, see Custom Domain section) — previously duplicated privately in `api/auth.ts`, which is exactly the kind of drift that let the custom-domain side fall out of sync in the first place
 - `src/lib/team/limits.ts` — team-member limit enforcement
 - `src/lib/utils/csv.ts` — `toCSV()` + `forceCsvText()`; **formula-guards every freeform cell** (see Security Rules)
 - `src/lib/utils/secrets.ts` — `maskSecret()`; a masked value on save means "keep the existing secret"
 - `src/lib/utils/portal-token.ts` — `generatePortalLink()` (**reuses** the client's token; only rotates on `{rotate:true}` or near-expiry) + `validatePortalToken()`
-- `src/lib/utils/{helpers,license}.ts` — formatting, license
+- `src/lib/utils/{helpers,license}.ts` — formatting, license; `helpers.ts`'s `todayInTimezone()`/`daysSinceDate()` (Session 13) are what let `check-deadlines`/`auto-create-rounds` respect `agencies.settings.timezone` instead of the server's UTC clock; `license.ts`'s `checkClientLimit()` is reused directly by the admin agency-panel API (`api/admin/agencies/[id]/route.ts`) so its overage flag can never drift from what's actually enforced
 - `src/lib/auth/{session,admin}.ts` — staff session context / admin guard wrappers
 - `src/types/index.ts` — All TypeScript types matching the DB schema
 
@@ -199,6 +206,7 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - **Inbound webhook auth (Session 10):** both inbound webhooks authenticate with the agency's own `agencies.webhook_token`, passed as `?secret=<token>` (or the `x-rtp-secret` / `x-wh-secret` header). Settings → GHL renders each agency's tokenized URL for copy-paste — **the URL is a live credential**. Auth **fails closed**, and the request is **tenant-bound**: the payload's `locationId` must belong to the token's agency, otherwise a valid token for agency A could write into agency B. The old global `GHL_WEBHOOK_SECRET` is still accepted *if set* (legacy migration path) but identifies no agency and so can't be tenant-bound — **keep it unset**. Rejections return **200** with `processed: false` (GHL retry-storms on non-2xx), so a misconfigured URL **fails silently** — verify with a real contact edit, not by looking for errors in GHL.
 - **Inbound webhook URL:** `/api/ghl/webhook` — handles ContactCreate, ContactUpdate, ContactTagUpdate. ⚠️ `ContactCreate` creates a RoundTrack client for **every** contact it receives — in a GHL location shared with other products, trigger it from a *targeted* workflow, never a blanket "contact created".
 - **Onboarding webhook:** `/api/ghl/onboarding` — trigger from GHL on tag `rtp-onboarding-completed` (`ONBOARDING_COMPLETE_TAG` in `notification-tags.ts`; namespaced because a bare `onboarding-complete` is a common tag in credit-repair GHL accounts and another product's workflow adding it would create clients here. **Nothing in the code reads the tag** — the route acts on whatever `contactId`/`locationId` it is POSTed; the tag is purely the GHL-side trigger). This is the primary client-creation path. Upserts the client (identity/docs from the fixed `rtp__*` keys; scores from `ghl_field_keys`), resolves the portal link, syncs docs to Drive + writes `rtp__client_id`/`rtp__portal_link` back. Heavy work runs in Next `after()`; always 200.
+  - **Client-limit check is advisory, not a gate (Session 13).** `checkClientLimit()` runs for new clients only; if the agency is at/over `max_clients`, the client is **still created** — a real onboarding submission is never silently dropped over a billing limit — but a "Client limit exceeded" `activity_log` entry is written and the overage becomes visible in the admin agency slide-over's Status tab (an amber banner + "Active clients / limit" row, sourced from the same `checkClientLimit()` call the panel's API route now reuses directly, so the two numbers can't drift apart).
 - **Signature request (fallback only):** `/api/ghl/send-signature-request` — adds tag `signature-requested` to fire the agency's GHL form workflow. This is a re-request path for the rare client who completes onboarding without signing, **not** the primary signature flow — see "Signature step on the standardized onboarding form" below. Meaningful only if the agency has also built a separate workflow reacting to this tag; otherwise clicking it just tags the contact with no visible effect.
 - **Outbound sync:** Uses per-agency `ghl_api_key` stored in `agencies` table
 - **Sync events:** Round sent → pipeline move (`round_N_sent`) + tag + note. Results logged → pipeline move (`round_N_results`). Deletion → tag + field update. Score update → custom fields. Completion → `goal_achieved` stage + tag.
@@ -295,7 +303,8 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 
 ## Credit Monitoring Integration (Session 7)
 - **Gated to the Agency plan** via `isAgencyPlanOrHigher()` (`src/lib/billing/plans.ts`) — Starter/Pro agencies see an upgrade-gate card at Settings → Credit Monitoring instead of the connection form, and `/api/credit-monitoring/pull` returns 403 for non-Agency agencies.
-- **Three provider adapters** under `src/lib/credit-monitoring/` (`myfreescorenow.ts`, `identityiq.ts`, `smartcredit.ts`, dispatched via `index.ts`'s `pullCreditScores()`/`testConnection()`) — each carries a standing `TODO: Verify endpoint URL and field names` comment; these are unverified placeholder API calls pending real partner API docs, not confirmed integrations.
+- **Three provider adapters** under `src/lib/credit-monitoring/` (`myfreescorenow.ts`, `identityiq.ts`, `smartcredit.ts`, dispatched via `index.ts`'s `pullCreditScores()`/`testConnection()`) — each carries a standing `TODO: Verify endpoint URL and field names` comment; these are unverified placeholder API calls pending real partner API docs, not confirmed integrations. `myfreescorenow`/`smartcredit` parse provider score fields through `parse-score.ts`'s `parseScore()` (Session 13 — a `Number.isFinite` guard replacing a bare `Number(x) || null`, which let `Infinity`/`-Infinity` through as a "valid" score); this is defensive tightening on an unverified integration, not a claim it's now production-ready.
+- **`/api/credit-monitoring/pull`'s 3 writes are all checked (Session 13):** the `credit_monitoring_pulls` audit insert (logs to `activity_log` as a fallback if even the audit table write fails), the client score update (fails the response loud — this is the value the rest of the app actually reads), and the `score_history` insert (logged but non-fatal, same exception as `logResults()`'s handling of the same table — the client's current score is already correct by that point, only chart continuity is affected).
 - **`credit_monitoring_pulls`** (migration 017) — per-pull audit row (`agency_id`, `client_id`, `service`, scores, `status`/`error_message`, `raw_response`). Credentials live on `agencies.credit_monitoring_service`/`_api_key`/`_api_secret`.
 - **Settings tab** at Settings → Credit Monitoring: provider select + API key/secret fields (cleared on provider change), Test Connection button. **Pull Scores button** lives on client detail — calls `/api/credit-monitoring/pull`, writes `score_history`, and syncs the GHL score custom fields. An opt-in auto-pull (`settings.auto_pull_scores`) also fires non-blocking from the GHL onboarding webhook for newly onboarded clients.
 - Also surfaced in Reports ("Credit Score Analytics" section) and the admin agency slide-over (status + test-connection tool, `/api/admin/tools/test-credit-monitoring`).
@@ -311,6 +320,12 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - **Folder layout:** `RoundTrack Pro / {Client Name} / {Onboarding | Round_N | Client_Uploads}`. There is no separate `Bureau_Responses` or `Letters` subfolder — round-sent letter PDFs are filed under that round's own `Round_N` folder (`src/lib/google-drive/letter-sync.ts`), not a dedicated "Letters" folder.
 - **ALWAYS non-blocking** via `syncDocumentToDrive()` (swallows errors, returns null if not connected). Triggered by: onboarding docs, round-sent letter PDFs (regenerated), portal uploads, and the Settings → Documents **backfill** button.
 - Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` + redirect URI `{APP_URL}/api/google-drive/callback` (see README).
+
+## Custom Domain (White-Label Portal, Agency plan)
+- **Connect flow** (`connectDomain()` in `src/app/(dashboard)/settings/actions.ts`): gated on `isAgencyPlanOrHigher()`, validates the input against `DOMAIN_REGEX` (labels of `[a-z0-9-]` joined by dots — no slashes/`@`/whitespace, so it can't be used for path traversal or SSRF when interpolated into the Vercel API path), checks cross-agency uniqueness via the admin client, then calls Vercel's Domains API (`src/lib/vercel/domains.ts`) to attach it to the project.
+- **Ownership verification is Vercel's own TXT/CNAME challenge** (`verifyDomain()`/`checkDomainVerification()`) — this app doesn't fake or skip it; an agency can't activate a domain it doesn't control. `checkDomainVerification()`'s DB write (`custom_domain_verified = true`) is now checked (Session 13) — if it fails, the function reports `verified: false` rather than telling the agency it worked while the flag `middleware.ts` actually reads never flipped.
+- **Middleware host routing** (`isVerifiedAgencyDomain()` in `src/middleware.ts`): a forged `Host` header only matches if it exactly equals some agency's `custom_domain` **and** `custom_domain_verified = true` in the DB — an attacker can't just claim an arbitrary host. Portal access itself still goes through the token/session flow underneath regardless of host, so a host match alone grants no client data.
+- **Entitlement is revoked event-driven, NOT re-checked per-request (Session 13 — unlike the Agency API, see Security Rules).** `hasActiveEntitlement(plan, status)` (`src/lib/billing/plans.ts`) is checked at the two admin mutation points that can remove Agency-tier entitlement — `saveAgencyStatus()` (admin directly edits plan/status) and `cancelAgency()` (always revokes, since `cancelled` never qualifies regardless of plan) — both in the admin actions files, clearing `custom_domain`/`custom_domain_verified` and logging a distinct "Custom domain revoked" activity entry when the agency actually had one connected. **This means any other future code path that changes `plan`/`plan_status` (e.g. if Stripe billing ever goes live for real — see Deploy/Stripe note) must also call this check, or a downgraded agency's domain keeps serving indefinitely.** `middleware.ts` itself does not re-verify entitlement on each request the way `validateApiKey()` does for the Agency API.
 
 ## Plans & Pricing (`src/lib/billing/plans.ts` — single source of truth)
 - **Starter** $49/mo — 100 clients, 3 team members (internal plan id stays `solo`)
@@ -337,7 +352,9 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - **Tenant-bind anything the caller can name.** Both GHL webhooks pick the agency from the payload's `locationId`, which the caller controls — so authentication alone was not enough. `locationBelongsToAgency()` rejects a request whose `locationId` isn't owned by the token's agency.
 - **CSV: formula-guard all freeform text.** `toCSV()` prefixes any cell starting with `=`, `+`, `-`, `@`, tab, or CR. Quoting does NOT prevent Excel formula execution. Client names come from lead-submitted GHL forms — i.e. attacker-controlled. Only `RawCsvCell` (from `forceCsvText()`) bypasses the guard.
 - **Allowlist any URL the server will fetch.** Push subscription endpoints are checked against the real push services (`src/lib/push/endpoint.ts`) — `web-push` will POST to any host it's given, which made the portal an SSRF primitive.
-- **Re-check entitlement on every request, not just at issuance.** Agency API keys verify `hasApiAccess(plan)` + `plan_status` on each call, so a downgraded/cancelled agency's existing keys stop working.
+- **Re-check entitlement on every request, not just at issuance.** Agency API keys verify `hasApiAccess(plan)` + `plan_status` on each call, so a downgraded/cancelled agency's existing keys stop working. **Custom domain entitlement is checked differently (Session 13)** — event-driven at the plan/status-changing admin mutations, not per-request in `middleware.ts`; see the Custom Domain section for exactly why and where that matters.
+- **Data-minimize what a bearer key can read, even from your own paying customers.** The Agency API deliberately excludes `bankruptcy_filed`/`bankruptcy_date`/`intake_concerns`/`employment_status` from `CLIENT_API_FIELDS` (`src/lib/api/clients.ts`, Session 13) — a materially more sensitive data class than the operational fields (`status`, `current_round`, etc.) this API was designed around, with no way for a caller to request a narrower scope than "everything the endpoint returns." They're still visible in the CSV export and the client-detail UI, both staff-authenticated rather than a bearer key that could leak into a third-party integration's config.
+- **A real client onboarding submission is never silently dropped over a billing limit — it's flagged instead.** The GHL onboarding webhook's `checkClientLimit()` call (Session 13) still creates the client when an agency is at/over `max_clients`; it logs an `activity_log` overage entry and surfaces it in the admin panel rather than either silently allowing unlimited overage (the old behavior) or dropping a lead's real data (which a hard block would risk, given the webhook can't ask the lead to try again later).
 
 > ⚠️ **Known outstanding risk (not a code issue):** the live GHL onboarding form collects **full SSN + bureau login credentials, security-question answers, and PINs** into plaintext GHL custom fields. This is the single largest exposure in the system and the root cause behind several past bugs. The credential-free path already exists — enroll clients via the credit-monitoring provider (`src/lib/credit-monitoring/`) and pull reports by API instead of holding their passwords.
 
@@ -449,7 +466,8 @@ analytics, landing page.
     in-memory helper, which doesn't hold across serverless instances); endpoints
     `GET /api/v1/clients`, `/clients/:id`, `/clients/:id/rounds`, `POST /api/v1/clients`;
     docs page at `/settings/api/docs`. Cross-agency reads 404 identically whether the id
-    exists elsewhere or not.
+    exists elsewhere or not. **Field scope narrowed in Session 13** — see the Security Rules
+    entitlement bullet and the Session 13 note above.
   - **Security audit + fixes** — full SSN reachable via the onboarding webhook (**H1**,
     migration 030); CSV formula injection in the client export; blind SSRF via portal push
     subscription endpoints; API keys surviving plan downgrade/cancellation. See
@@ -497,7 +515,9 @@ analytics, landing page.
     `primary_goal`, `results_timeline`, `employment_status`, `bankruptcy_filed`,
     `bankruptcy_date`, `intake_concerns` — RTP-owned fixed GHL keys (28 → 38 total), read by
     the onboarding webhook, surfaced in an "Onboarding Details" card on client detail, the
-    CSV export, and the Agency API's client endpoints.
+    CSV export, and (originally) the Agency API's client endpoints. **Corrected in Session
+    13:** the Agency API now excludes `bankruptcy_filed`/`bankruptcy_date`/`intake_concerns`/
+    `employment_status` — see Security Rules and the Agency API note below.
   - **Hardening pass** (a full 4-phase audit — security / silent-failure sweep /
     doc-drift / logic-consistency): `signed_at`/`dob`/`bankruptcy_date` in the onboarding
     webhook now go through a validating `parseTimestamp()` instead of a raw
@@ -507,6 +527,75 @@ analytics, landing page.
     unchecked-query-error pattern was found and fixed in `clients/[id]/rounds/actions.ts`
     (6 mutations) and `api/cron/auto-create-rounds/route.ts`. `ssn_last4` was also removed
     from the client CSV export (it had been present, unrelated to the onboarding fields).
+- **Session 13 — Full 4-phase audit (security / silent-failure sweep / doc-drift /
+  logic-consistency) + remediation.**
+  - **Security (Phase A):** custom domain entitlement now revoked event-driven at the
+    admin plan/status-changing mutations rather than never (see Custom Domain section);
+    Agency API narrowed to exclude bankruptcy/employment/freeform-concerns fields (see
+    Security Rules); the onboarding webhook's client-limit bypass is now checked and
+    logged/flagged instead of silently unlimited. TOCTOU plan-limit race, Agency API
+    rate-limit fail-open, and push-subscription takeover were all re-examined and
+    reconfirmed as unchanged, acceptable low-severity tradeoffs — see Outstanding.
+  - **Silent-failure sweep (Phase B):** the "check `error`, don't let a write failure look
+    identical to success" pattern — first found in the CSV export, `/api/v1/clients/:id`,
+    and the onboarding webhook's update path (Session 12) — turned out to be systemic.
+    Fixed across `clients/[id]/rounds/actions.ts` (`createRound`/`logResults`/
+    `recomputeClientItemTotals`), `api/cron/auto-create-rounds` and `api/cron/check-deadlines`,
+    `api/credit-monitoring/pull`, `api/google-drive/callback` + `disconnect`,
+    `api/ghl/setup/sync-clients` + its admin twin, `settings/actions.ts`'s
+    `checkDomainVerification`, `letters/generate`'s `maybeMarkGenerated`, and two admin
+    payment actions' follow-up `plan_status: "active"` update. Severity was matched to
+    context per site (some fail the whole response loud; `score_history`-class writes are
+    logged but non-fatal since the actually-consequential value is already saved by that
+    point) rather than a single blanket rollback-everywhere rule.
+  - **Doc-drift (Phase C):** this file itself was the subject — reconciled against the
+    actual code (this entry, the Custom Domain section, and the corrections scattered
+    through Security Rules/Outstanding above are that reconciliation).
+  - **Logic/consistency (Phase D):** dropped the dead `ghl_webhook_url` column (migration
+    035) and the dead `settings.default_monthly_fee` key (never settable via any UI); wired
+    `settings.timezone` into `check-deadlines`/`auto-create-rounds` (new
+    `todayInTimezone()`/`daysSinceDate()` helpers in `helpers.ts`) — it had a working
+    save/load round-trip in Settings but nothing ever read it back, so deadline/overdue math
+    always ran on the server's UTC clock regardless of the agency's actual timezone; tightened
+    the 2 credit-monitoring adapters' score parsing to reject `Infinity`/`-Infinity` (new
+    `parse-score.ts`), matching the `Number.isFinite` guard already used elsewhere.
+  - **Unrelated fix caught along the way:** `/login` and `/signup` (the shared `(auth)`
+    layout) were rendering a generic placeholder icon+text component instead of the real
+    logo image already used on the marketing nav and dashboard sidebar — swapped to
+    `AppContentLogo` (`src/components/logo.tsx`). `src/components/ui/logo.tsx`'s `Logo`
+    placeholder component is now unreferenced but left in place (not deleted without
+    confirmation).
+- **Session 14 — Team-invite polish + super-admin cross-agency notifications.**
+  - **Pending/accepted distinction on Settings → Team** — members who have never signed
+    in (Supabase `last_sign_in_at` IS NULL, or no auth user at all) show an amber
+    **Pending** badge. Clicking the invite/recovery action link counts as first sign-in,
+    so the badge flips off exactly at acceptance (even before the password is set).
+  - **Resend invite** (`resendInvite()` in `team/actions.ts`, button next to Pending
+    members, owner/admin only). ⚠️ Uses a **recovery**-type `generateLink` for the normal
+    case — `type:"invite"` errors with "already registered" for the auth user the original
+    invite already created; invite-type is kept only as the repair path when `user_id` is
+    NULL (backfills it). Both land on `/reset-password`. Reuses the existing
+    `team_members` row (never duplicates), refuses for already-accepted members, and
+    **awaits** the email send so failure surfaces to the clicker (the original invite's
+    send stays fire-and-forget in `after()`).
+  - **Super-admin notification system** (migrations 036/037): `admin_notifications` +
+    `admin_notification_recipients` tables, `notifyAdmin()` service
+    (`src/lib/admin/notify.ts` — see Key Libraries for types/throttle semantics), bell in
+    the /admin header (`/api/admin/notifications/*`, `requireAdminApi()`-guarded), and a
+    new **/admin/settings** page managing up to 3 email recipients. The interim
+    `ADMIN_NOTIFY_EMAIL` env var from earlier in the session was replaced by the
+    recipients table **before ever shipping** — it is not read anywhere; `ADMIN_EMAIL`
+    keeps its audit-label-only meaning.
+  - **Verified live** (2026-07-16): 3 rapid webhook forgeries against the real DB wrote
+    exactly **one** `admin_notifications` row (throttle held). Local Resend sends 403'd —
+    `.env.local`'s `RESEND_API_KEY` belongs to an account where `roundtrackpro.com` is
+    NOT verified; the working key lives in Vercel as a **sensitive** (unreadable) env var,
+    so email delivery was verified against production post-deploy instead.
+  - The project-local `verify` skill (`.claude/skills/verify/SKILL.md`) was refreshed:
+    stale `cdp_*` identifiers corrected, plus new techniques (driving Server Actions over
+    HTTP via `server-reference-manifest.json` ids, minting staff session cookies from the
+    Supabase auth REST API, `NEXT_PUBLIC_*` build-time inlining, mock-PostgREST pattern
+    for not-yet-applied migrations).
 
 ## Outstanding (known, not yet done)
 - **Onboarding form collects bureau credentials.** The live GHL onboarding form asks for
@@ -530,10 +619,15 @@ analytics, landing page.
   same "no client merge fields" limitation the other 3 staff alerts had before Session 11.
   Left out of that change deliberately (scoped to 3); moving it is a small, mechanical
   follow-up: add it to `CLIENT_TAGGED_STAFF_TYPES` and give it `buildNotificationFields` cases.
-- **Low-severity, open:** plan-limit checks are check-then-act (concurrent imports can
-  overshoot `max_clients`); the GHL onboarding webhook bypasses the plan limit entirely;
-  Agency API rate limiting fails open if the counter query errors; a push subscription row
-  can be taken over given a known endpoint URL (denial, not interception).
+- **Low-severity, open — reconfirmed unchanged by the Session 13 audit:** plan-limit checks
+  are check-then-act (concurrent imports/creates can overshoot `max_clients` by a small
+  margin — no advisory lock or atomic counter); Agency API rate limiting fails open if the
+  counter query errors (deliberate: an infra hiccup on the rate-limit counter shouldn't take
+  down the API for legitimate callers); a push subscription row can be taken over given a
+  known endpoint URL (denial, not interception — endpoint URLs aren't practically guessable).
+  **No longer accurate as of Session 13:** the GHL onboarding webhook used to bypass the plan
+  limit with zero visibility at all — it now checks and logs overage (still creates the
+  client either way) — see Security Rules and the onboarding webhook note above.
 
 ## Common Commands
 ```bash

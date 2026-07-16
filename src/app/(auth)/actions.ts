@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAgencyWelcomeEmail } from "@/lib/admin/welcome-email";
+import { notifyAdmin } from "@/lib/admin/notify";
 
 export interface AuthActionState {
   error?: string;
@@ -148,11 +149,20 @@ export async function signUpAction(
     }
   }
 
-  // Best-effort welcome email — never blocks or fails the signup response.
-  after(() => {
-    sendAgencyWelcomeEmail({ name: agencyName, owner_name: name, owner_email: email }).catch((err) =>
-      console.error("[Email] Welcome email failed:", err)
-    );
+  // Best-effort welcome email + super-admin heads-up — never block or fail
+  // the signup response.
+  after(async () => {
+    await Promise.allSettled([
+      sendAgencyWelcomeEmail({ name: agencyName, owner_name: name, owner_email: email }).catch((err) =>
+        console.error("[Email] Welcome email failed:", err)
+      ),
+      notifyAdmin(
+        "new_agency_signup",
+        agencyId,
+        "New agency signup",
+        `${agencyName} signed up (owner: ${name}, ${email}). 14-day trial started.`
+      ),
+    ]);
   });
 
   return { success: true };
