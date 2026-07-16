@@ -78,6 +78,40 @@ export async function middleware(request: NextRequest) {
   //    deliberately includes unknown foreign hosts, so a misconfigured
   //    NEXT_PUBLIC_APP_URL can never 404 the primary site itself.
   const host = request.headers.get("host");
+
+  // 0a. Legacy production alias → canonical domain. The app used to serve fully
+  //     on clientdeck-pro.vercel.app (post-rename it stayed live on both hosts).
+  //     Browser flows that build their redirectTo from window.location.origin
+  //     (Google OAuth sign-in, email change) silently failed there because that
+  //     origin isn't in Supabase's Redirect-URL allow-list. Move all PAGE
+  //     traffic to the canonical host, preserving path + query (so an
+  //     already-sent /portal?token= link just lands on the canonical host).
+  //     Deliberately NOT redirected, because external callers still hit the old
+  //     host and none of them follow 3xx redirects:
+  //       - /api/*  : GHL + Stripe webhooks and the Google Drive OAuth callback
+  //                   keep working here until each agency re-copies its URL.
+  //       - sw.js / site.webmanifest : a portal PWA installed from the old host
+  //                   still fetches these.
+  //     Only the EXACT production alias matches — preview aliases
+  //     (clientdeck-pro-*.vercel.app) must keep serving for deploy testing.
+  if (
+    host?.split(":")[0].toLowerCase() === "clientdeck-pro.vercel.app" &&
+    !pathname.startsWith("/api") &&
+    pathname !== "/sw.js" &&
+    pathname !== "/site.webmanifest"
+  ) {
+    let canonical: URL;
+    try {
+      canonical = new URL(process.env.NEXT_PUBLIC_APP_URL!);
+    } catch {
+      canonical = new URL("https://www.roundtrackpro.com");
+    }
+    const url = request.nextUrl.clone();
+    url.protocol = canonical.protocol;
+    url.host = canonical.host;
+    return NextResponse.redirect(url, 308);
+  }
+
   const isWhiteLabelHost =
     host && !isPrimaryAppHost(host) ? await isVerifiedAgencyDomain(host) : false;
   if (

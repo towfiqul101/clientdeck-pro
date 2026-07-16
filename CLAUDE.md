@@ -717,7 +717,18 @@ steps are manual and happen outside the codebase:
 - [ ] Update email signatures
 
 **Redirects (keep old URLs working):**
-- [ ] `clientdeck-pro.vercel.app` stays working automatically (Vercel project unchanged)
+- [x] `clientdeck-pro.vercel.app` → canonical domain (Session 16). `middleware.ts`
+      step 0a 308-redirects all **page** traffic on the exact legacy alias to
+      `NEXT_PUBLIC_APP_URL`, preserving path + query. **Intentionally NOT
+      redirected:** `/api/*` (GHL + Stripe webhooks and the Google Drive OAuth
+      callback still hit the old host and don't follow 3xx — they keep working
+      there until each agency re-copies its URL), and `sw.js`/`site.webmanifest`
+      (an old-host portal PWA still fetches them). Preview aliases
+      (`clientdeck-pro-*.vercel.app`) are untouched. This closes the
+      `window.location.origin`-based-redirect bug (Google OAuth sign-in, email
+      change silently failing on the non-canonical host). ⚠️ Still finish the
+      "Existing GHL agencies" webhook-URL re-copy below so `/api/*` can eventually
+      stop being served on the old host.
 - [ ] If `clientdeckpro.com` was registered, add a Vercel redirect → `roundtrackpro.com`
 
 **Existing GHL agencies (notify beta users):**
