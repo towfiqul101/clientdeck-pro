@@ -63,6 +63,31 @@ async function isVerifiedAgencyDomain(host: string): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // 0. White-label hosts: an agency's VERIFIED custom domain serves ONLY the
+  //    client-portal surface. Vercel attaches the domain to the whole project,
+  //    so without this, portal.agency.com/ served the RoundTrack marketing
+  //    site and /login the staff app — a branding leak on a domain the
+  //    agency's clients see. Anything that isn't the portal (or the API and
+  //    PWA assets the portal itself needs) redirects to /portal. Hosts that
+  //    are NOT a verified custom domain keep the normal routing below — that
+  //    deliberately includes unknown foreign hosts, so a misconfigured
+  //    NEXT_PUBLIC_APP_URL can never 404 the primary site itself.
+  const host = request.headers.get("host");
+  const isWhiteLabelHost =
+    host && !isPrimaryAppHost(host) ? await isVerifiedAgencyDomain(host) : false;
+  if (
+    isWhiteLabelHost &&
+    !pathname.startsWith("/portal") &&
+    !pathname.startsWith("/api") &&
+    pathname !== "/sw.js" &&
+    pathname !== "/site.webmanifest"
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/portal";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   // 1. API routes handle their own auth (webhooks, service role, portal).
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
@@ -71,12 +96,11 @@ export async function middleware(request: NextRequest) {
   // 2. Portal (client-facing) — separate auth via the portal_session cookie.
   //    Never apply staff Supabase Auth here.
   if (pathname.startsWith("/portal")) {
-    const host = request.headers.get("host");
     // Defense-in-depth: on any Host that isn't our own, only proceed if it's
-    // a verified custom domain. The token/cookie flow below is already
-    // fully host-agnostic and does the real work; this just guards against
-    // stale DNS after an agency disconnects their domain.
-    if (host && !isPrimaryAppHost(host) && !(await isVerifiedAgencyDomain(host))) {
+    // a verified custom domain (already resolved in step 0). The token/cookie
+    // flow below is fully host-agnostic and does the real work; this just
+    // guards against stale DNS after an agency disconnects their domain.
+    if (host && !isPrimaryAppHost(host) && !isWhiteLabelHost) {
       return new NextResponse("Not found", { status: 404 });
     }
     if (pathname === "/portal") {
