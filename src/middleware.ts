@@ -16,6 +16,11 @@ const PUBLIC_ROUTES = [
   "/terms",
   "/privacy",
   "/reset-password",
+  // OAuth code exchange — runs while the Supabase session doesn't exist yet.
+  "/auth/callback",
+  // MFA challenge — reachable at AAL1 (signed in, second factor pending), so
+  // it can be neither an AUTH_ROUTE (signed-in bounce) nor protected.
+  "/auth/mfa",
   "/site.webmanifest",
   "/sw.js",
 ];

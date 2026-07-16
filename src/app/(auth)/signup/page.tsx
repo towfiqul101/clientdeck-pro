@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Field, Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { GoogleSignInButton } from "../google-signin-button";
 
 const initialState: AuthActionState = {};
 
@@ -142,6 +143,12 @@ export default function SignupPage() {
           {busy ? "Creating account…" : "Create account"}
         </Button>
       </form>
+
+      <GoogleSignInButton />
+      <p className="-mt-1 text-center text-xs text-slate-600">
+        Google signs you into an existing account — new agencies use the form
+        above.
+      </p>
 
       <p className="text-center text-sm text-slate-500">
         Already have an account?{" "}

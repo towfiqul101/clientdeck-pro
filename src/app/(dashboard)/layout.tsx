@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSessionContext } from "@/lib/auth/session";
+import { getSessionContext, isMfaChallengeRequired } from "@/lib/auth/session";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ToastProvider } from "@/components/ui/toast";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme/theme-context";
@@ -12,9 +12,14 @@ export default async function DashboardLayout({
   const session = await getSessionContext();
 
   // Middleware sends signed-out users to /login. If we get here with no usable
-  // session, the user is authenticated but has no active team_member/agency —
-  // redirecting to /login would loop against middleware, so sign them out first.
+  // session, either (a) MFA is enrolled but this session hasn't passed the
+  // challenge yet — send them to it — or (b) the user is authenticated but has
+  // no active team_member/agency; redirecting to /login would loop against
+  // middleware, so sign them out instead.
   if (!session) {
+    if (await isMfaChallengeRequired()) {
+      redirect("/auth/mfa");
+    }
     redirect("/signout");
   }
 

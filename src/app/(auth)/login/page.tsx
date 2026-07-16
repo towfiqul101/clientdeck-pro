@@ -7,6 +7,18 @@ import { createClient } from "@/lib/supabase/client";
 import { Field, Input } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { GoogleSignInButton } from "../google-signin-button";
+
+// /auth/callback bounce-back messages (OAuth is sign-in only — see the route).
+function callbackError(code: string | null, email: string | null): string | null {
+  if (code === "no_account") {
+    return `No RoundTrack account found for ${email || "that Google account"}. Create an agency from the signup page, or ask your agency to invite you first.`;
+  }
+  if (code === "oauth") {
+    return "Google sign-in didn't complete. Try again, or use your email and password.";
+  }
+  return null;
+}
 
 export default function LoginPage() {
   return (
@@ -45,10 +57,11 @@ function safeDest(path: string): string {
 function LoginForm() {
   const searchParams = useSearchParams();
   const redirectedFrom = searchParams.get("redirectedFrom") || "/dashboard";
+  const oauthError = callbackError(searchParams.get("error"), searchParams.get("email"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(oauthError);
   const [pending, setPending] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -127,6 +140,8 @@ function LoginForm() {
           {pending ? "Signing in…" : "Sign in"}
         </Button>
       </form>
+
+      <GoogleSignInButton />
 
       <p className="text-center text-sm text-slate-500">
         Don&apos;t have an account?{" "}

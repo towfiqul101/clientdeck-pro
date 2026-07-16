@@ -41,7 +41,7 @@ RoundTrack Pro is a B2B SaaS dispute management platform for credit repair agenc
 - **Framework:** Next.js 16 (App Router, React 19, TypeScript, `src/` directory)
 - **Styling:** Tailwind CSS (dark/professional theme, blue accent `#2563EB`)
 - **Database:** Supabase (PostgreSQL with Row Level Security)
-- **Auth:** Supabase Auth (email/password for agencies, magic links for client portal). Super-admin `/admin` uses a **standalone password + cookie**, NOT Supabase Auth.
+- **Auth:** Supabase Auth (email/password for agencies + optional Google OAuth sign-in and per-user TOTP MFA — Session 15; magic links for client portal). Super-admin `/admin` uses a **standalone password + cookie**, NOT Supabase Auth, with its own optional TOTP second factor (`ADMIN_TOTP_SECRET`).
 - **AI:** Claude API (Sonnet 4.6) for dispute letter generation
 - **Payments:** Stripe (subscriptions + customer portal) + manual/off-platform payment recording via admin
 - **CRM Sync:** GoHighLevel API v2 (two-way webhook sync + native onboarding flow)
@@ -61,14 +61,17 @@ RoundTrack Pro is a B2B SaaS dispute management platform for credit repair agenc
 ### Route Structure
 ```
 (marketing)/     — Landing page, privacy, terms, snapshot (public, unauthenticated)
-(auth)/          — Login, signup (agency staff)
+(auth)/          — Login, signup (agency staff), forgot/reset password
+auth/            — callback (OAuth code exchange, sign-in only — no agency
+                   auto-create), mfa (TOTP challenge page for AAL1 sessions)
 (dashboard)/     — Main app (protected, requires Supabase auth)
   dashboard/     — Dashboard home
   clients/       — Client list, detail, items, rounds, letters, docs, signature
   templates/     — AI letter template management
   reports/       — Analytics dashboards
   team/          — Staff management (+ plan-based member limit)
-  settings/      — General, GHL config + field mapping, Documents (Drive), branding, billing
+  settings/      — General, Account (own email change + TOTP MFA), GHL config +
+                   field mapping, Documents (Drive), branding, billing
   onboarding/    — Post-signup flow, incl. /onboarding/ghl-setup guide page
 (admin)/admin/   — Super-admin panel (password/cookie auth, cross-agency, force-dynamic)
 (admin-auth)/    — /admin/login (unguarded, separate route group)
@@ -178,7 +181,8 @@ UPDATE RLS policy) · 019 message_origins · 020 staff_notification_prefs ·
 - `src/lib/utils/secrets.ts` — `maskSecret()`; a masked value on save means "keep the existing secret"
 - `src/lib/utils/portal-token.ts` — `generatePortalLink()` (**reuses** the client's token; only rotates on `{rotate:true}` or near-expiry) + `validatePortalToken()`
 - `src/lib/utils/{helpers,license}.ts` — formatting, license; `helpers.ts`'s `todayInTimezone()`/`daysSinceDate()` (Session 13) are what let `check-deadlines`/`auto-create-rounds` respect `agencies.settings.timezone` instead of the server's UTC clock; `license.ts`'s `checkClientLimit()` is reused directly by the admin agency-panel API (`api/admin/agencies/[id]/route.ts`) so its overage flag can never drift from what's actually enforced
-- `src/lib/auth/{session,admin}.ts` — staff session context / admin guard wrappers
+- `src/lib/auth/{session,admin}.ts` — staff session context / admin guard wrappers. `session.ts` also owns (Session 15): **MFA enforcement** — `isMfaChallengeRequired()`; `getSessionContext()` returns null for an AAL1 session whose user has a verified TOTP factor, and the dashboard layout routes that state to `/auth/mfa` — and the **lazy login-email sync** (JWT email ≠ `team_members.email` → update it, plus `agencies.owner_email` for owners; runs after Supabase's double-confirm email change completes)
+- `src/lib/admin/totp.ts` — dependency-free RFC 6238 TOTP for **admin 2FA** (`verifyTotp()`, ±1 step, constant-time). Enabled by setting `ADMIN_TOTP_SECRET` (generate: `node scripts/generate-admin-totp-secret.mjs`); fails closed — secret set + bad/missing code rejects. Entirely separate from Supabase MFA (the admin session has no Supabase user)
 - `src/types/index.ts` — All TypeScript types matching the DB schema
 
 ## Code Style & Conventions
@@ -378,6 +382,9 @@ CRON_SECRET
 PORTAL_TOKEN_SECRET
 ADMIN_PASSWORD                         # super-admin /admin login (required for admin access)
 ADMIN_EMAIL                            # optional audit label only
+ADMIN_TOTP_SECRET                      # optional: enables admin-login 2FA (base32; generate
+                                       # with scripts/generate-admin-totp-secret.mjs). Unset =
+                                       # password-only, unchanged.
 GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET  # Google Drive OAuth (Drive no-ops if unset)
 VAPID_PRIVATE_KEY / VAPID_SUBJECT / NEXT_PUBLIC_VAPID_PUBLIC_KEY  # Web Push (portal PWA; no-ops if unset)
 VERCEL_TOKEN / VERCEL_PROJECT_ID / VERCEL_TEAM_ID  # custom portal domains (Agency plan)
@@ -597,6 +604,44 @@ analytics, landing page.
     HTTP via `server-reference-manifest.json` ids, minting staff session cookies from the
     Supabase auth REST API, `NEXT_PUBLIC_*` build-time inlining, mock-PostgREST pattern
     for not-yet-applied migrations).
+- **Session 15 — Auth expansion: Google OAuth, email change, member MFA, admin 2FA.**
+  All Supabase-native (no new DB tables, no new packages); the custom-domain
+  portal-only middleware fix (commit `75108fc`) also landed between sessions.
+  - **Google OAuth sign-in** — "Continue with Google" on /login + /signup
+    (`(auth)/google-signin-button.tsx`) → `/auth/callback` (PKCE code exchange).
+    **SIGN-IN ONLY by design**: no team_members row → signed out + bounced to
+    /login?error=no_account. Never auto-creates an agency (an invited member
+    clicking Google pre-acceptance must not spawn a phantom tenant; signup needs
+    an agency name). Supabase auto-links the Google identity to an existing
+    same-email user, so password/invited users can switch to Google freely.
+    ⚠️ Requires the Google provider enabled in Supabase Dashboard → Auth →
+    Providers (Google Cloud OAuth client, redirect URI = the Supabase
+    /auth/v1/callback URL) — until then the button shows a friendly error.
+  - **Login email change** — Settings → Account (new tab). `updateUser({email})`
+    with Supabase's secure email change (confirm from BOTH addresses; verify
+    it's on in Supabase Auth settings — it's the default). Sync into
+    `team_members.email` (+ `agencies.owner_email` for owners) happens lazily
+    in `getSessionContext()` — see Key Libraries. The audit that motivated it:
+    invite dedup, `resendInvite`'s `generateLink(email)`, staff notification
+    delivery, and signup's owner-row link all join on `team_members.email`.
+    "Update email to agency" (task item 5) = this owner sync; `owner_email` is
+    not an independent business-contact field, so no second mechanism exists.
+  - **Member MFA (TOTP)** — enroll/verify/disable in Settings → Account
+    (`mfa-section.tsx`, QR from Supabase's `mfa.enroll`). ENFORCED, not
+    decorative: AAL1 session + verified factor ⇒ `getSessionContext()` null
+    everywhere (server actions fail closed) and the dashboard layout routes to
+    `/auth/mfa` (challenge page, PUBLIC_ROUTES). Disabling a verified factor
+    requires an AAL2 session (Supabase rule; the UI explains it). Per-user
+    opt-in; no org-wide "require MFA" policy yet.
+  - **Admin 2FA** — `ADMIN_TOTP_SECRET` env var + dependency-free RFC 6238
+    verify (`src/lib/admin/totp.ts`, validated against the RFC test vectors);
+    code field appears on /admin/login only when configured; fails closed.
+    Generate a secret with `scripts/generate-admin-totp-secret.mjs`.
+  - **Verified live** (local server, real Supabase): admin 2FA matrix (no code /
+    wrong code / valid code / wrong password), real TOTP factor enrolled on the
+    demo user → AAL1 request 307'd to /auth/mfa → AAL2 request passed → factor
+    unenrolled (cleanup confirmed zero factors); stale `team_members.email`
+    re-synced on first request; `/auth/callback` guard; per-section builds green.
 
 ## Outstanding (known, not yet done)
 - **Onboarding form collects bureau credentials.** The live GHL onboarding form asks for

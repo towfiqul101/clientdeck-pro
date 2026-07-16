@@ -16,6 +16,9 @@ export default async function AdminLoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
+  // Server component: safe to read the env directly. The code field only
+  // renders when admin 2FA is actually configured.
+  const totpEnabled = Boolean(process.env.ADMIN_TOTP_SECRET);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#0f172a] px-4 py-12">
@@ -36,7 +39,11 @@ export default async function AdminLoginPage({
           {error && (
             <div className="mt-6 flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>Invalid password. Please try again.</span>
+              <span>
+                {error === "2fa"
+                  ? "Invalid authentication code. Enter the current 6-digit code from your authenticator app."
+                  : "Invalid password. Please try again."}
+              </span>
             </div>
           )}
 
@@ -59,6 +66,29 @@ export default async function AdminLoginPage({
                 className="w-full rounded-md border border-white/10 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
+
+            {totpEnabled && (
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="totp"
+                  className="block text-sm font-medium text-slate-300"
+                >
+                  Authentication Code
+                </label>
+                <input
+                  id="totp"
+                  name="totp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  required
+                  placeholder="123456"
+                  className="w-full rounded-md border border-white/10 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            )}
 
             <button
               type="submit"

@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils/helpers";
-import { Building2, Plug, Palette, CreditCard, FolderOpen, LineChart, Globe, Key } from "lucide-react";
+import { Building2, Plug, Palette, CreditCard, FolderOpen, LineChart, Globe, Key, UserCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const TABS: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "General", href: "/settings", icon: Building2 },
+  { label: "Account", href: "/settings/account", icon: UserCircle },
   { label: "GHL Integration", href: "/settings/ghl", icon: Plug },
   { label: "Documents", href: "/settings/documents", icon: FolderOpen },
   { label: "Credit Monitoring", href: "/settings/credit-monitoring", icon: LineChart },
