@@ -682,7 +682,7 @@ export default function LandingPage() {
           </div>
 
           <p className="mt-6 text-xs text-slate-500">
-            14-day free trial · No credit card required · Built for GHL
+            7-day free trial · No credit card required · Built for GHL
           </p>
 
           {/* Live dashboard mockup */}
@@ -1017,7 +1017,7 @@ export default function LandingPage() {
                 Simple pricing. No surprises.
               </h2>
               <p className="mt-4 text-lg text-slate-600">
-                Every plan includes a 14-day free trial. No credit card required
+                Every plan includes a 7-day free trial. No credit card required
                 to start.
               </p>
             </div>
@@ -1031,7 +1031,7 @@ export default function LandingPage() {
 
           <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-400">
             {[
-              "14-day free trial",
+              "7-day free trial",
               "Cancel anytime",
               "Setup support included",
               "GHL snapshot included",
@@ -1066,35 +1066,6 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================================ */}
-      {/* 10. FOUNDER NOTE                                              */}
-      {/* ============================================================ */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-24">
-          <Reveal>
-            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-600 text-xl font-bold text-white shadow-lg">
-              TI
-            </span>
-            <blockquote className="font-display mt-6 text-xl leading-relaxed text-slate-700 sm:text-2xl">
-              &ldquo;I kept watching credit repair agencies juggle CDM,
-              spreadsheets, and GoHighLevel — spending more time keeping tools in
-              sync than serving clients. RoundTrack Pro exists to make running a
-              credit repair business feel like doing the work again, not managing
-              the software around it.&rdquo;
-            </blockquote>
-            <p className="mt-6 font-semibold text-slate-900">Towfiqul Islam</p>
-            <p className="text-sm text-slate-500">Founder, RoundTrack Pro</p>
-            <a
-              href="#how-it-works"
-              className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 hover:text-violet-700"
-            >
-              Read about RoundTrack Pro
-              <ArrowRight className="h-3.5 w-3.5" />
-            </a>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ============================================================ */}
       {/* 11. FINAL CTA                                                 */}
       {/* ============================================================ */}
       <section className="bg-[#0F1730] text-white">
@@ -1107,13 +1078,13 @@ export default function LandingPage() {
             </h2>
             <p className="relative mx-auto mt-4 max-w-xl text-lg text-slate-400">
               Disputes, client communication, and GHL — connected in one
-              platform, with a 14-day free trial to prove it.
+              platform, with a 7-day free trial to prove it.
             </p>
             <a
               href="#pricing"
               className="cta-gradient relative mt-8 inline-flex items-center gap-2 rounded-xl px-7 py-4 text-sm font-semibold text-white"
             >
-              Start Your Free 14-Day Trial
+              Start Your Free 7-Day Trial
               <ArrowRight className="h-4 w-4" />
             </a>
             <div className="relative mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
