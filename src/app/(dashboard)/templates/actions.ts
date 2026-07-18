@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth/session";
-import { generateDisputeLetter } from "@/lib/claude/generate-letter";
+import { generateDisputeLetter, fillTemplateLetter } from "@/lib/claude/generate-letter";
 import type {
   Client,
   NegativeItem,
@@ -11,6 +11,7 @@ import type {
   LetterTemplate,
   LetterType,
   NegativeType,
+  TemplateKind,
 } from "@/types";
 
 export interface ActionResult {
@@ -20,6 +21,7 @@ export interface ActionResult {
 
 export interface TemplateInput {
   name: string;
+  kind: TemplateKind;
   description: string;
   negativeType: NegativeType | "";
   letterType: LetterType;
@@ -49,6 +51,7 @@ export async function createTemplate(
     .insert({
       agency_id: session.agency.id,
       name: input.name.trim(),
+      kind: input.kind,
       description: input.description.trim() || null,
       negative_type: input.negativeType || null,
       letter_type: input.letterType,
@@ -92,6 +95,7 @@ export async function updateTemplate(
     .from("letter_templates")
     .update({
       name: input.name.trim(),
+      kind: input.kind,
       description: input.description.trim() || null,
       negative_type: input.negativeType || null,
       letter_type: input.letterType,
@@ -147,6 +151,7 @@ export async function duplicateTemplate(
     .insert({
       agency_id: session.agency.id,
       name: `${source.name} (Copy)`,
+      kind: source.kind,
       description: source.description,
       negative_type: source.negative_type,
       letter_type: source.letter_type,
@@ -213,13 +218,19 @@ export async function previewTemplateLetter(
 
   const t = template as LetterTemplate;
   try {
-    const { content } = await generateDisputeLetter({
+    const params = {
       client: previewClient(),
       item: previewItem(t.negative_type as NegativeType | null),
       dispute: previewDispute(t.letter_type),
       template: t,
       agencyName: session.agency.name,
-    });
+      reasonLabel: "Inaccurate / Not Mine",
+      instructionLabel: "Delete",
+    };
+    const { content } =
+      t.kind === "agency_static"
+        ? fillTemplateLetter(params)
+        : await generateDisputeLetter(params);
     return { success: true, content };
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : "Preview failed." };
