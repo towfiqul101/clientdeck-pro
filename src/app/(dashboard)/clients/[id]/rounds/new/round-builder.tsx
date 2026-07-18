@@ -13,9 +13,17 @@ import {
   getNegativeTypeLabel,
   suggestLetterType,
 } from "@/lib/utils/helpers";
-import { BUREAUS, LETTER_TYPES, BUREAU_STYLES } from "@/lib/constants";
+import { BUREAUS, LETTER_TYPES, LETTER_SOURCES, BUREAU_STYLES } from "@/lib/constants";
 import { createRound, type RoundItemSelection } from "../actions";
-import type { Bureau, DisputeResult, LetterType, NegativeItem } from "@/types";
+import type {
+  Bureau,
+  DisputeReason,
+  DisputeInstruction,
+  DisputeResult,
+  LetterSource,
+  LetterType,
+  NegativeItem,
+} from "@/types";
 import { FileWarning, Layers, Sparkles } from "lucide-react";
 
 export interface BuilderItem extends NegativeItem {
@@ -27,12 +35,16 @@ interface RoundBuilderProps {
   clientId: string;
   roundNumber: number;
   items: BuilderItem[];
+  reasons: DisputeReason[];
+  instructions: DisputeInstruction[];
 }
 
 export function RoundBuilder({
   clientId,
   roundNumber,
   items,
+  reasons,
+  instructions,
 }: RoundBuilderProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -46,6 +58,15 @@ export function RoundBuilder({
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [letterTypes, setLetterTypes] = useState<Record<string, LetterType>>(
     () => Object.fromEntries(items.map((i) => [i.id, defaultType(i)]))
+  );
+  const [reasonIds, setReasonIds] = useState<Record<string, string>>(() =>
+    Object.fromEntries(items.map((i) => [i.id, reasons[0]?.id ?? ""]))
+  );
+  const [instructionIds, setInstructionIds] = useState<Record<string, string>>(
+    () => Object.fromEntries(items.map((i) => [i.id, instructions[0]?.id ?? ""]))
+  );
+  const [sources, setSources] = useState<Record<string, LetterSource>>(() =>
+    Object.fromEntries(items.map((i) => [i.id, "ai" as LetterSource]))
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -95,6 +116,9 @@ export function RoundBuilder({
       negativeItemId: i.id,
       bureau: i.bureau,
       letterType: letterTypes[i.id],
+      reasonId: reasonIds[i.id],
+      instructionId: instructionIds[i.id],
+      useTemplate: sources[i.id] === "agency_template",
     }));
     const result = await createRound(clientId, selections);
     if (result.success) {
@@ -209,7 +233,7 @@ export function RoundBuilder({
                     <li
                       key={item.id}
                       className={cn(
-                        "flex flex-col gap-3 px-5 py-3 sm:flex-row sm:items-center",
+                        "flex flex-col gap-3 px-5 py-3 sm:flex-row sm:items-start",
                         isSelected && "bg-blue-50/40"
                       )}
                     >
@@ -246,7 +270,7 @@ export function RoundBuilder({
                       </label>
 
                       {isSelected && (
-                        <div className="sm:w-56">
+                        <div className="grid grid-cols-1 gap-2 sm:w-[34rem] sm:grid-cols-2">
                           <Select
                             aria-label="Letter type"
                             value={letterTypes[item.id]}
@@ -258,6 +282,47 @@ export function RoundBuilder({
                             }
                             options={LETTER_TYPES}
                           />
+                          <Select
+                            aria-label="Dispute reason"
+                            value={reasonIds[item.id]}
+                            onChange={(e) =>
+                              setReasonIds((prev) => ({
+                                ...prev,
+                                [item.id]: e.target.value,
+                              }))
+                            }
+                            options={reasons.map((r) => ({ value: r.id, label: r.label }))}
+                          />
+                          <Select
+                            aria-label="Instruction"
+                            value={instructionIds[item.id]}
+                            onChange={(e) =>
+                              setInstructionIds((prev) => ({
+                                ...prev,
+                                [item.id]: e.target.value,
+                              }))
+                            }
+                            options={instructions.map((r) => ({ value: r.id, label: r.label }))}
+                          />
+                          <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[#1a1a2e] p-1">
+                            {LETTER_SOURCES.map((s) => (
+                              <button
+                                key={s.value}
+                                type="button"
+                                onClick={() =>
+                                  setSources((prev) => ({ ...prev, [item.id]: s.value }))
+                                }
+                                className={cn(
+                                  "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                                  sources[item.id] === s.value
+                                    ? "bg-blue-600 text-white"
+                                    : "text-slate-400 hover:bg-white/[0.03]"
+                                )}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </li>

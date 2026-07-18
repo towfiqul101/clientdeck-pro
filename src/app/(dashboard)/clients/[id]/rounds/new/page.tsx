@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { RoundBuilder, type BuilderItem } from "./round-builder";
-import type { DisputeResult, NegativeItem } from "@/types";
+import type { DisputeResult, NegativeItem, DisputeReason, DisputeInstruction } from "@/types";
 
 interface PriorDisputeRow {
   negative_item_id: string;
@@ -17,7 +17,7 @@ export default async function NewRoundPage({
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
 
-  const [itemsRes, roundRes, priorRes] = await Promise.all([
+  const [itemsRes, roundRes, priorRes, reasonsRes, instructionsRes] = await Promise.all([
     // Active items — anything not already deleted can still be disputed.
     supabase
       .from("negative_items")
@@ -40,6 +40,18 @@ export default async function NewRoundPage({
       )
       .eq("client_id", id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("dispute_reasons")
+      .select("*")
+      .eq("is_active", true)
+      .order("is_system", { ascending: false })
+      .order("sort_order"),
+    supabase
+      .from("dispute_instructions")
+      .select("*")
+      .eq("is_active", true)
+      .order("is_system", { ascending: false })
+      .order("sort_order"),
   ]);
 
   const roundNumber = (roundRes.data?.round_number ?? 0) + 1;
@@ -69,5 +81,13 @@ export default async function NewRoundPage({
     }
   );
 
-  return <RoundBuilder clientId={id} roundNumber={roundNumber} items={items} />;
+  return (
+    <RoundBuilder
+      clientId={id}
+      roundNumber={roundNumber}
+      items={items}
+      reasons={(reasonsRes.data ?? []) as DisputeReason[]}
+      instructions={(instructionsRes.data ?? []) as DisputeInstruction[]}
+    />
+  );
 }
