@@ -6,13 +6,14 @@ import {
   type RoundData,
   type RoundDispute,
 } from "./round-workspace";
-import type { Bureau, DisputeResult, LetterType } from "@/types";
+import type { Bureau, DisputeResult, LetterSource, LetterType } from "@/types";
 import type { ComplianceCheck } from "@/lib/compliance/validate-letter";
 
 interface DisputeJoinRow {
   id: string;
   bureau: Bureau;
   letter_type: LetterType;
+  letter_source: LetterSource;
   letter_content: string | null;
   certified_mail_number: string | null;
   is_finalized: boolean;
@@ -46,7 +47,7 @@ export default async function RoundDetailPage({
   const { data: disputeRows } = await supabase
     .from("disputes")
     .select(
-      "id, bureau, letter_type, letter_content, certified_mail_number, is_finalized, result, result_notes, negative_item_id, compliance_status, compliance_checks, negative_item:negative_items(creditor_name)"
+      "id, bureau, letter_type, letter_source, letter_content, certified_mail_number, is_finalized, result, result_notes, negative_item_id, compliance_status, compliance_checks, negative_item:negative_items(creditor_name)"
     )
     .eq("round_id", roundId)
     .order("bureau", { ascending: true });
@@ -57,6 +58,7 @@ export default async function RoundDetailPage({
     id: d.id,
     bureau: d.bureau,
     letter_type: d.letter_type,
+    letter_source: d.letter_source,
     letter_content: d.letter_content,
     certified_mail_number: d.certified_mail_number,
     is_finalized: d.is_finalized,

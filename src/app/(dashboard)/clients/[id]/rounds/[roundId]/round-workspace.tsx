@@ -26,6 +26,7 @@ import {
 import type {
   Bureau,
   DisputeResult,
+  LetterSource,
   LetterType,
   RoundStatus,
 } from "@/types";
@@ -42,12 +43,14 @@ import {
   AlertTriangle,
   ShieldCheck,
   ShieldAlert,
+  FileText,
 } from "lucide-react";
 
 export interface RoundDispute {
   id: string;
   bureau: Bureau;
   letter_type: LetterType;
+  letter_source: LetterSource;
   letter_content: string | null;
   certified_mail_number: string | null;
   is_finalized: boolean;
@@ -156,13 +159,16 @@ export function RoundWorkspace({
     setLetters((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
 
-  async function generateOne(disputeId: string): Promise<boolean> {
+  async function generateOne(
+    disputeId: string,
+    forceSource?: LetterSource
+  ): Promise<boolean> {
     patchLetter(disputeId, { state: "generating", error: undefined });
     try {
       const res = await fetch("/api/letters/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ disputeId }),
+        body: JSON.stringify({ disputeId, forceSource }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -231,6 +237,20 @@ export function RoundWorkspace({
       toast("Letter regenerated.", "success");
     } else {
       toast("Could not regenerate.", "error");
+    }
+  }
+
+  // Escape hatch for a dispute whose stored source is 'agency_template' but
+  // has no matching agency template — switches just this one letter to AI
+  // and persists the corrected source server-side.
+  async function generateWithAiInstead(disputeId: string) {
+    const ok = await generateOne(disputeId, "ai");
+    if (ok) {
+      patchLetter(disputeId, { finalized: false });
+      toast("Generated with AI.", "success");
+      router.refresh();
+    } else {
+      toast("Could not generate with AI.", "error");
     }
   }
 
@@ -486,9 +506,21 @@ export function RoundWorkspace({
                   </div>
                 </div>
                 {l.state === "error" ? (
-                  <div className="flex items-center gap-2 px-5 py-4 text-sm text-red-400">
-                    <AlertTriangle className="h-4 w-4" />
-                    {l.error ?? "Generation failed."}
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                    <span className="flex items-center gap-2 text-sm text-red-400">
+                      <AlertTriangle className="h-4 w-4" />
+                      {l.error ?? "Generation failed."}
+                    </span>
+                    {d.letter_source === "agency_template" && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => generateWithAiInstead(d.id)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Generate with AI instead
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <textarea
@@ -830,6 +862,16 @@ function LetterCardHeader({ dispute }: { dispute: RoundDispute }) {
       </span>
       <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400">
         {getLetterTypeLabel(dispute.letter_type)}
+      </span>
+      <span
+        className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400"
+        title={dispute.letter_source === "agency_template" ? "Agency template" : "AI generated"}
+      >
+        {dispute.letter_source === "agency_template" ? (
+          <FileText className="h-3 w-3" />
+        ) : (
+          <Sparkles className="h-3 w-3" />
+        )}
       </span>
     </div>
   );
