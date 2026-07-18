@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { LetterTemplate } from "@/types";
+import type { LetterTemplate, TemplateKind } from "@/types";
 
 /**
  * Resolves the best letter template for a given item + letter type.
@@ -11,6 +11,10 @@ import type { LetterTemplate } from "@/types";
  *   4. System template        — any negative_type for that letter_type
  *   5. System template        — any initial_dispute (last-resort baseline)
  *
+ * All of the above is additionally scoped to the requested `kind`
+ * ('ai_prompt' or 'agency_static') — an agency_static request never
+ * matches an ai_prompt template and vice versa.
+ *
  * Returns null only if the templates table is empty for that type entirely.
  * Uses the service-role client so it can read system templates (agency_id NULL)
  * regardless of the caller's RLS context.
@@ -18,7 +22,8 @@ import type { LetterTemplate } from "@/types";
 export async function findBestTemplate(
   agencyId: string,
   negativeType: string,
-  letterType: string
+  letterType: string,
+  kind: TemplateKind = "ai_prompt"
 ): Promise<LetterTemplate | null> {
   const supabase = createAdminClient();
 
@@ -26,6 +31,7 @@ export async function findBestTemplate(
     .from("letter_templates")
     .select("*")
     .eq("is_active", true)
+    .eq("kind", kind)
     .or(`agency_id.eq.${agencyId},agency_id.is.null`);
 
   const templates = (data ?? []) as LetterTemplate[];
