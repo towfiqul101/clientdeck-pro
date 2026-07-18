@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -105,11 +105,19 @@ export function RoundWorkspace({
   clientName,
   round,
   disputes,
+  intent,
 }: {
   clientId: string;
   clientName: string;
   round: RoundData;
   disputes: RoundDispute[];
+  /**
+   * Optional one-shot instruction from the rounds kanban drag-and-drop: which
+   * existing dialog to auto-open on load so a drag routes through the very same
+   * Mark-Sent / Log-Results / Generate flow the on-page buttons use. Cleared
+   * from the URL immediately so a refresh or back-nav doesn't re-fire it.
+   */
+  intent?: string;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -154,6 +162,27 @@ export function RoundWorkspace({
     }, 2500);
     return () => clearInterval(t);
   }, [genProgress.active]);
+
+  // Drag-and-drop hand-off from the rounds kanban: open the same existing
+  // dialog the buttons open, once, then strip ?intent from the URL. Guarded on
+  // the round's current status so a drag from a stale board can't open a dialog
+  // for a step the round has already passed — it just lands on the workspace.
+  const intentHandled = useRef(false);
+  useEffect(() => {
+    if (intentHandled.current || !intent) return;
+    intentHandled.current = true;
+    window.history.replaceState(null, "", `/clients/${clientId}/rounds/${round.id}`);
+    if (intent === "send" && round.status === "letters_generated") {
+      openSendModal();
+    } else if (intent === "results" && round.status === "awaiting_response") {
+      openResults();
+    } else if (intent === "generate" && round.status === "preparing") {
+      void generateAll();
+    } else {
+      toast("This round already moved past that step.", "error");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function patchLetter(id: string, patch: Partial<LetterState>) {
     setLetters((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));

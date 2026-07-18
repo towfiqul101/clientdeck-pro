@@ -27,10 +27,13 @@ interface DisputeJoinRow {
 
 export default async function RoundDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; roundId: string }>;
+  searchParams: Promise<{ intent?: string }>;
 }) {
   const { id, roundId } = await params;
+  const { intent } = await searchParams;
   const supabase = await createServerSupabaseClient();
 
   const client = await getClientOr404(id);
@@ -89,6 +92,7 @@ export default async function RoundDetailPage({
       clientName={`${client.first_name} ${client.last_name}`}
       round={roundData}
       disputes={disputes}
+      intent={intent}
     />
   );
 }
