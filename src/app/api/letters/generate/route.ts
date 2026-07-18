@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { findBestTemplate } from "@/lib/claude/template-matcher";
 import { generateDisputeLetter, fillTemplateLetter } from "@/lib/claude/generate-letter";
 import type { ComplianceResult } from "@/lib/compliance/validate-letter";
-import type { Client, Dispute, LetterSource, NegativeItem } from "@/types";
+import type { Client, Dispute, LetterSource, LetterTemplate, NegativeItem } from "@/types";
 
 export const maxDuration = 300; // letter generation can take a while for big rounds
 
@@ -35,6 +35,36 @@ async function priorResult(
   return data?.result ?? undefined;
 }
 
+// Staff can pick an exact agency_static template in round-builder
+// (dispute.letter_template_id). Honor that pick first; fall back to
+// findBestTemplate()'s auto-match when nothing was picked (AI path, or an
+// agency_template dispute created before the picker existed) or when the
+// picked template was since deactivated/deleted — a stale pointer should
+// degrade to auto-match, not hard-fail generation.
+async function resolveTemplate(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  dispute: DisputeWithJoins,
+  agencyId: string,
+  effectiveSource: LetterSource
+): Promise<LetterTemplate | null> {
+  if (effectiveSource === "agency_template" && dispute.letter_template_id) {
+    const { data } = await supabase
+      .from("letter_templates")
+      .select("*")
+      .eq("id", dispute.letter_template_id)
+      .eq("is_active", true)
+      .or(`agency_id.eq.${agencyId},agency_id.is.null`)
+      .maybeSingle();
+    if (data) return data as LetterTemplate;
+  }
+  return findBestTemplate(
+    agencyId,
+    dispute.negative_item.negative_type,
+    dispute.letter_type,
+    effectiveSource === "agency_template" ? "agency_static" : "ai_prompt"
+  );
+}
+
 async function generateForDispute(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   dispute: DisputeWithJoins,
@@ -49,12 +79,7 @@ async function generateForDispute(
   try {
     const effectiveSource: LetterSource = forceSource ?? dispute.letter_source;
 
-    const template = await findBestTemplate(
-      agencyId,
-      dispute.negative_item.negative_type,
-      dispute.letter_type,
-      effectiveSource === "agency_template" ? "agency_static" : "ai_prompt"
-    );
+    const template = await resolveTemplate(supabase, dispute, agencyId, effectiveSource);
     if (!template) {
       return {
         disputeId: dispute.id,

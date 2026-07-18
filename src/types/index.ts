@@ -285,6 +285,7 @@ export interface Dispute {
   dispute_reason_id: string | null;
   dispute_instruction_id: string | null;
   letter_source: LetterSource;
+  letter_template_id: string | null;
   letter_content: string | null;
   letter_pdf_url: string | null;
   certified_mail_number: string | null;

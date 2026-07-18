@@ -21,6 +21,7 @@ import type {
   DisputeInstruction,
   DisputeResult,
   LetterSource,
+  LetterTemplate,
   LetterType,
   NegativeItem,
 } from "@/types";
@@ -37,6 +38,7 @@ interface RoundBuilderProps {
   items: BuilderItem[];
   reasons: DisputeReason[];
   instructions: DisputeInstruction[];
+  templates: LetterTemplate[];
 }
 
 export function RoundBuilder({
@@ -45,6 +47,7 @@ export function RoundBuilder({
   items,
   reasons,
   instructions,
+  templates,
 }: RoundBuilderProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -67,6 +70,9 @@ export function RoundBuilder({
   );
   const [sources, setSources] = useState<Record<string, LetterSource>>(() =>
     Object.fromEntries(items.map((i) => [i.id, "ai" as LetterSource]))
+  );
+  const [templateIds, setTemplateIds] = useState<Record<string, string>>(() =>
+    Object.fromEntries(items.map((i) => [i.id, templates[0]?.id ?? ""]))
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -119,6 +125,8 @@ export function RoundBuilder({
       reasonId: reasonIds[i.id],
       instructionId: instructionIds[i.id],
       useTemplate: sources[i.id] === "agency_template",
+      templateId:
+        sources[i.id] === "agency_template" ? templateIds[i.id] || null : null,
     }));
     const result = await createRound(clientId, selections);
     if (result.success) {
@@ -305,24 +313,54 @@ export function RoundBuilder({
                             options={instructions.map((r) => ({ value: r.id, label: r.label }))}
                           />
                           <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-[#1a1a2e] p-1">
-                            {LETTER_SOURCES.map((s) => (
-                              <button
-                                key={s.value}
-                                type="button"
-                                onClick={() =>
-                                  setSources((prev) => ({ ...prev, [item.id]: s.value }))
-                                }
-                                className={cn(
-                                  "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
-                                  sources[item.id] === s.value
-                                    ? "bg-blue-600 text-white"
-                                    : "text-slate-400 hover:bg-white/[0.03]"
-                                )}
-                              >
-                                {s.label}
-                              </button>
-                            ))}
+                            {LETTER_SOURCES.map((s) => {
+                              const disabled =
+                                s.value === "agency_template" &&
+                                templates.length === 0;
+                              return (
+                                <button
+                                  key={s.value}
+                                  type="button"
+                                  disabled={disabled}
+                                  title={
+                                    disabled
+                                      ? "No agency templates yet — create one in Templates settings"
+                                      : undefined
+                                  }
+                                  onClick={() =>
+                                    setSources((prev) => ({ ...prev, [item.id]: s.value }))
+                                  }
+                                  className={cn(
+                                    "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                                    sources[item.id] === s.value
+                                      ? "bg-blue-600 text-white"
+                                      : "text-slate-400 hover:bg-white/[0.03]",
+                                    disabled && "cursor-not-allowed opacity-40"
+                                  )}
+                                >
+                                  {s.label}
+                                </button>
+                              );
+                            })}
                           </div>
+                          {sources[item.id] === "agency_template" && (
+                            <div className="sm:col-span-2">
+                              <Select
+                                aria-label="Template"
+                                value={templateIds[item.id]}
+                                onChange={(e) =>
+                                  setTemplateIds((prev) => ({
+                                    ...prev,
+                                    [item.id]: e.target.value,
+                                  }))
+                                }
+                                options={templates.map((t) => ({
+                                  value: t.id,
+                                  label: t.is_system ? `${t.name} (System)` : t.name,
+                                }))}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </li>

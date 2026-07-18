@@ -1,6 +1,12 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { RoundBuilder, type BuilderItem } from "./round-builder";
-import type { DisputeResult, NegativeItem, DisputeReason, DisputeInstruction } from "@/types";
+import type {
+  DisputeResult,
+  NegativeItem,
+  DisputeReason,
+  DisputeInstruction,
+  LetterTemplate,
+} from "@/types";
 
 interface PriorDisputeRow {
   negative_item_id: string;
@@ -17,7 +23,7 @@ export default async function NewRoundPage({
   const { id } = await params;
   const supabase = await createServerSupabaseClient();
 
-  const [itemsRes, roundRes, priorRes, reasonsRes, instructionsRes] = await Promise.all([
+  const [itemsRes, roundRes, priorRes, reasonsRes, instructionsRes, templatesRes] = await Promise.all([
     // Active items — anything not already deleted can still be disputed.
     supabase
       .from("negative_items")
@@ -52,6 +58,15 @@ export default async function NewRoundPage({
       .eq("is_active", true)
       .order("is_system", { ascending: false })
       .order("sort_order"),
+    // Agency-static templates staff can pick directly for the "Use our
+    // template" path — system defaults first, then this agency's own.
+    supabase
+      .from("letter_templates")
+      .select("*")
+      .eq("kind", "agency_static")
+      .eq("is_active", true)
+      .order("is_system", { ascending: false })
+      .order("name"),
   ]);
 
   const roundNumber = (roundRes.data?.round_number ?? 0) + 1;
@@ -88,6 +103,7 @@ export default async function NewRoundPage({
       items={items}
       reasons={(reasonsRes.data ?? []) as DisputeReason[]}
       instructions={(instructionsRes.data ?? []) as DisputeInstruction[]}
+      templates={(templatesRes.data ?? []) as LetterTemplate[]}
     />
   );
 }

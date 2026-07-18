@@ -40,6 +40,7 @@ export interface RoundItemSelection {
   reasonId: string;
   instructionId: string;
   useTemplate: boolean;
+  templateId: string | null;
 }
 
 export type CreateRoundResult =
@@ -145,6 +146,7 @@ export async function createRound(
     dispute_reason_id: s.reasonId,
     dispute_instruction_id: s.instructionId,
     letter_source: s.useTemplate ? "agency_template" : "ai",
+    letter_template_id: s.useTemplate ? s.templateId : null,
     result: "pending" as DisputeResult,
   }));
 
