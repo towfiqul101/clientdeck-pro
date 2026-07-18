@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { LETTER_TYPES, NEGATIVE_TYPES } from "@/lib/constants";
+import { LETTER_TYPES, NEGATIVE_TYPES, TEMPLATE_KINDS } from "@/lib/constants";
 import { createTemplate, updateTemplate, previewTemplateLetter } from "./actions";
-import type { LetterTemplate, LetterType, NegativeType } from "@/types";
+import type { LetterTemplate, LetterType, NegativeType, TemplateKind } from "@/types";
 
 /** Must match exactly the 16 keys buildPromptVariables() injects in src/lib/claude/generate-letter.ts. */
 const VARIABLES = [
@@ -27,6 +27,8 @@ const VARIABLES = [
   "today_date",
   "agency_name",
   "ssn_last4",
+  "dispute_reason",
+  "instruction",
 ];
 
 export function TemplateForm({ template }: { template?: LetterTemplate }) {
@@ -37,6 +39,7 @@ export function TemplateForm({ template }: { template?: LetterTemplate }) {
   const [previewContent, setPreviewContent] = useState<string | null>(null);
 
   const [name, setName] = useState(template?.name ?? "");
+  const [kind, setKind] = useState<TemplateKind>(template?.kind ?? "ai_prompt");
   const [description, setDescription] = useState(template?.description ?? "");
   const [negativeType, setNegativeType] = useState<NegativeType | "">(
     (template?.negative_type as NegativeType | null) ?? ""
@@ -59,6 +62,7 @@ export function TemplateForm({ template }: { template?: LetterTemplate }) {
     setError(null);
     const input = {
       name,
+      kind,
       description,
       negativeType,
       letterType,
@@ -95,6 +99,22 @@ export function TemplateForm({ template }: { template?: LetterTemplate }) {
       <div className="space-y-4 lg:col-span-2">
         <Field label="Name" htmlFor="name">
           <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <Field
+          label="Kind"
+          htmlFor="kind"
+          hint={
+            kind === "agency_static"
+              ? "The exact letter text, filled in with {{variables}} — no AI call."
+              : "Instructions for Claude to draft the letter from."
+          }
+        >
+          <Select
+            id="kind"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as TemplateKind)}
+            options={TEMPLATE_KINDS}
+          />
         </Field>
         <Field label="Description" htmlFor="description">
           <Textarea id="description" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -136,7 +156,10 @@ export function TemplateForm({ template }: { template?: LetterTemplate }) {
             Active
           </label>
         </div>
-        <Field label="Prompt" htmlFor="promptTemplate">
+        <Field
+          label={kind === "agency_static" ? "Letter Body" : "Prompt"}
+          htmlFor="promptTemplate"
+        >
           <textarea
             id="promptTemplate"
             value={promptTemplate}
