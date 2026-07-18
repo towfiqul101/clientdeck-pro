@@ -6,10 +6,11 @@ import type { LetterTemplate, TemplateKind } from "@/types";
  *
  * Priority (first match wins):
  *   1. Agency custom template — exact negative_type + letter_type
- *   2. System template        — exact negative_type + letter_type
- *   3. System template        — letter_type only (negative_type IS NULL, generic)
- *   4. System template        — any negative_type for that letter_type
- *   5. System template        — any initial_dispute (last-resort baseline)
+ *   2. Agency custom template — letter_type only (negative_type IS NULL, generic)
+ *   3. System template        — exact negative_type + letter_type
+ *   4. System template        — letter_type only (negative_type IS NULL, generic)
+ *   5. System template        — any negative_type for that letter_type
+ *   6. System template        — any initial_dispute (last-resort baseline)
  *
  * All of the above is additionally scoped to the requested `kind`
  * ('ai_prompt' or 'agency_static') — an agency_static request never
@@ -49,7 +50,13 @@ export async function findBestTemplate(
   );
   if (agencyExact) return agencyExact;
 
-  // 2. System, exact match
+  // 2. Agency custom, generic (negative_type NULL) for this letter type
+  const agencyGeneric = templates.find(
+    (t) => isAgency(t) && t.letter_type === letterType && t.negative_type === null
+  );
+  if (agencyGeneric) return agencyGeneric;
+
+  // 3. System, exact match
   const systemExact = templates.find(
     (t) =>
       isSystem(t) &&
@@ -58,19 +65,19 @@ export async function findBestTemplate(
   );
   if (systemExact) return systemExact;
 
-  // 3. System, generic (negative_type NULL) for this letter type
+  // 4. System, generic (negative_type NULL) for this letter type
   const systemGeneric = templates.find(
     (t) => isSystem(t) && t.letter_type === letterType && t.negative_type === null
   );
   if (systemGeneric) return systemGeneric;
 
-  // 4. System, any negative_type for this letter type
+  // 5. System, any negative_type for this letter type
   const systemAnyType = templates.find(
     (t) => isSystem(t) && t.letter_type === letterType
   );
   if (systemAnyType) return systemAnyType;
 
-  // 5. Absolute fallback: any system initial_dispute template
+  // 6. Absolute fallback: any system initial_dispute template
   const baseline = templates.find(
     (t) => isSystem(t) && t.letter_type === "initial_dispute"
   );
