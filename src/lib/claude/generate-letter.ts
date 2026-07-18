@@ -18,6 +18,8 @@ interface GenerateLetterParams {
   agencyName: string;
   agencyAddress?: string;
   previousResult?: string;
+  reasonLabel?: string;
+  instructionLabel?: string;
 }
 
 function buildPromptVariables(params: GenerateLetterParams): Record<string, string> {
@@ -50,6 +52,8 @@ function buildPromptVariables(params: GenerateLetterParams): Record<string, stri
     }),
     agency_name: agencyName,
     ssn_last4: client.ssn_last4 || "XXXX",
+    dispute_reason: params.reasonLabel || "N/A",
+    instruction: params.instructionLabel || "N/A",
   };
 }
 
@@ -292,6 +296,27 @@ export async function generateDisputeLetter(
     content,
     tokensUsed,
     compliance: validateLetterCompliance(content, params.template.prompt_template),
+  };
+}
+
+/**
+ * Deterministic variable-fill for an agency_static template — no API call.
+ * The near-identical-to-template compliance check is skipped here on
+ * purpose: a fill letter is *always* near-identical to its source template
+ * by design, so that check would false-positive on every single one.
+ */
+export function fillTemplateLetter(
+  params: GenerateLetterParams
+): { content: string; compliance: ComplianceResult } {
+  const variables = buildPromptVariables(params);
+  const content = injectVariables(params.template.prompt_template, variables);
+  return {
+    content,
+    compliance: validateLetterCompliance(
+      content,
+      params.template.prompt_template,
+      { skipNearIdenticalCheck: true }
+    ),
   };
 }
 
