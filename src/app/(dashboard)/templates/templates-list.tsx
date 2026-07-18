@@ -113,6 +113,9 @@ export function TemplatesList({ templates }: { templates: LetterTemplate[] }) {
                     <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400">
                       {LETTER_TYPE_LABEL.get(t.letter_type) ?? t.letter_type}
                     </span>
+                    <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-slate-400">
+                      {t.kind === "agency_static" ? "Agency Template" : "AI Prompt"}
+                    </span>
                     {t.is_system ? (
                       <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
                         System
