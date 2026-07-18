@@ -66,6 +66,29 @@ function injectVariables(template: string, variables: Record<string, string>): s
 }
 
 /**
+ * Make the staff-picked dispute reason/instruction authoritative on the AI
+ * path. The template-fill path substitutes {{dispute_reason}}/{{instruction}}
+ * directly, but the AI path only saw those values when the template body
+ * happened to reference them — and the stock system templates don't, so the
+ * pick was silently ignored out of the box. Appending an explicit directive to
+ * the user prompt steers Claude around the chosen basis regardless of template
+ * authorship. No-op when neither was picked; harmless reinforcement if the
+ * template already interpolated them.
+ */
+function appendDisputeDirective(prompt: string, params: GenerateLetterParams): string {
+  const reason = params.reasonLabel?.trim();
+  const instruction = params.instructionLabel?.trim();
+  if (!reason && !instruction) return prompt;
+  const lines: string[] = [];
+  if (reason) lines.push(`- Dispute reason: ${reason}`);
+  if (instruction) lines.push(`- Requested action: ${instruction}`);
+  return `${prompt}
+
+The consumer has specified the basis for this dispute. Write the letter around the following — do not substitute a different rationale or requested action:
+${lines.join("\n")}`;
+}
+
+/**
  * Deterministic FCRA dispute letter used when ANTHROPIC_API_KEY is not set.
  * Lets the whole round → letters → PDF flow be previewed with no API calls.
  */
@@ -236,7 +259,10 @@ export async function generateDisputeLetter(
   }
 
   const variables = buildPromptVariables(params);
-  const prompt = injectVariables(params.template.prompt_template, variables);
+  const prompt = appendDisputeDirective(
+    injectVariables(params.template.prompt_template, variables),
+    params
+  );
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
