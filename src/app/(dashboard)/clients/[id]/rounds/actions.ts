@@ -37,6 +37,9 @@ export interface RoundItemSelection {
   negativeItemId: string;
   bureau: Bureau;
   letterType: LetterType;
+  reasonId: string;
+  instructionId: string;
+  useTemplate: boolean;
 }
 
 export type CreateRoundResult =
@@ -139,6 +142,9 @@ export async function createRound(
     negative_item_id: s.negativeItemId,
     bureau: s.bureau,
     letter_type: s.letterType,
+    dispute_reason_id: s.reasonId,
+    dispute_instruction_id: s.instructionId,
+    letter_source: s.useTemplate ? "agency_template" : "ai",
     result: "pending" as DisputeResult,
   }));
 
