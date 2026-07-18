@@ -110,13 +110,16 @@ function checkVariableInjection(letterContent: string, promptTemplate: string): 
 
 export function validateLetterCompliance(
   letterContent: string,
-  promptTemplate: string
+  promptTemplate: string,
+  opts?: { skipNearIdenticalCheck?: boolean }
 ): ComplianceResult {
   const checks = [
     checkCitation(letterContent, promptTemplate),
     checkPlaceholders(letterContent),
     checkLength(letterContent),
-    checkVariableInjection(letterContent, promptTemplate),
+    ...(opts?.skipNearIdenticalCheck
+      ? []
+      : [checkVariableInjection(letterContent, promptTemplate)]),
   ];
   return {
     status: checks.every((c) => c.passed) ? "pass" : "flagged",
