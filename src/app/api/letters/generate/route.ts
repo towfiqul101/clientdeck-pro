@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 import { getSessionContext } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { findBestTemplate } from "@/lib/claude/template-matcher";
-import { generateDisputeLetter } from "@/lib/claude/generate-letter";
+import { generateDisputeLetter, fillTemplateLetter } from "@/lib/claude/generate-letter";
 import type { ComplianceResult } from "@/lib/compliance/validate-letter";
-import type { Client, Dispute, NegativeItem } from "@/types";
+import type { Client, Dispute, LetterSource, NegativeItem } from "@/types";
 
 export const maxDuration = 300; // letter generation can take a while for big rounds
 
 interface DisputeWithJoins extends Dispute {
   negative_item: NegativeItem;
   client: Client;
+  dispute_reason: { label: string } | null;
+  dispute_instruction: { label: string } | null;
 }
 
 // Latest prior result for an item, excluding the current round.
@@ -37,23 +39,30 @@ async function generateForDispute(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   dispute: DisputeWithJoins,
   agencyId: string,
-  agencyName: string
+  agencyName: string,
+  forceSource?: LetterSource
 ): Promise<{ disputeId: string; ok: true; content: string; compliance: ComplianceResult } | {
   disputeId: string;
   ok: false;
   error: string;
 }> {
   try {
+    const effectiveSource: LetterSource = forceSource ?? dispute.letter_source;
+
     const template = await findBestTemplate(
       agencyId,
       dispute.negative_item.negative_type,
-      dispute.letter_type
+      dispute.letter_type,
+      effectiveSource === "agency_template" ? "agency_static" : "ai_prompt"
     );
     if (!template) {
       return {
         disputeId: dispute.id,
         ok: false,
-        error: "No matching letter template found.",
+        error:
+          effectiveSource === "agency_template"
+            ? "No matching agency template found for this item type."
+            : "No matching letter template found.",
       };
     }
 
@@ -64,14 +73,21 @@ async function generateForDispute(
       dispute.round_id
     );
 
-    const { content, compliance } = await generateDisputeLetter({
+    const genParams = {
       client: dispute.client,
       item: dispute.negative_item,
       dispute,
       template,
       agencyName,
       previousResult,
-    });
+      reasonLabel: dispute.dispute_reason?.label,
+      instructionLabel: dispute.dispute_instruction?.label,
+    };
+
+    const { content, compliance } =
+      effectiveSource === "agency_template"
+        ? fillTemplateLetter(genParams)
+        : await generateDisputeLetter(genParams);
 
     const { error } = await supabase
       .from("disputes")
@@ -80,6 +96,9 @@ async function generateForDispute(
         compliance_status: compliance.status,
         compliance_checks: compliance.checks,
         compliance_checked_at: new Date().toISOString(),
+        ...(forceSource && forceSource !== dispute.letter_source
+          ? { letter_source: forceSource }
+          : {}),
       })
       .eq("id", dispute.id);
     if (error) {
@@ -131,7 +150,7 @@ async function maybeMarkGenerated(
 }
 
 const DISPUTE_SELECT =
-  "*, negative_item:negative_items(*), client:clients(*)";
+  "*, negative_item:negative_items(*), client:clients(*), dispute_reason:dispute_reasons(label), dispute_instruction:dispute_instructions(label)";
 
 export async function POST(req: Request) {
   const session = await getSessionContext();
@@ -139,7 +158,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { disputeId?: string; roundId?: string };
+  let body: { disputeId?: string; roundId?: string; forceSource?: LetterSource };
   try {
     body = await req.json();
   } catch {
@@ -170,7 +189,8 @@ export async function POST(req: Request) {
       supabase,
       dispute,
       agencyId,
-      agencyName
+      agencyName,
+      body.forceSource
     );
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 502 });
