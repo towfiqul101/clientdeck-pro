@@ -17,6 +17,8 @@ export type DisputeStatus = "not_disputed" | "in_dispute" | "deleted" | "updated
 
 export type RoundStatus = "preparing" | "letters_generated" | "sent" | "awaiting_response" | "complete";
 export type LetterType = "initial_dispute" | "method_of_verification" | "escalation" | "goodwill" | "debt_validation" | "cfpb_complaint" | "identity_theft" | "custom";
+export type TemplateKind = "ai_prompt" | "agency_static";
+export type LetterSource = "ai" | "agency_template";
 export type DisputeResult = "pending" | "deleted" | "updated" | "verified" | "no_response" | "in_progress";
 
 export type DocumentCategory = "id_document" | "proof_of_address" | "credit_report" | "dispute_letter" | "bureau_response" | "agreement" | "other";
@@ -280,6 +282,9 @@ export interface Dispute {
   negative_item_id: string;
   bureau: Bureau;
   letter_type: LetterType;
+  dispute_reason_id: string | null;
+  dispute_instruction_id: string | null;
+  letter_source: LetterSource;
   letter_content: string | null;
   letter_pdf_url: string | null;
   certified_mail_number: string | null;
@@ -298,6 +303,7 @@ export interface Dispute {
 export interface LetterTemplate {
   id: string;
   agency_id: string | null;
+  kind: TemplateKind;
   name: string;
   description: string | null;
   negative_type: string | null;
@@ -308,6 +314,26 @@ export interface LetterTemplate {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface DisputeReason {
+  id: string;
+  agency_id: string | null;
+  label: string;
+  is_system: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface DisputeInstruction {
+  id: string;
+  agency_id: string | null;
+  label: string;
+  is_system: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
 }
 
 export interface Document {

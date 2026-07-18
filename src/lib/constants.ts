@@ -6,10 +6,12 @@ import type {
   CreditScoreRange,
   DisputeStatus,
   EmploymentStatus,
+  LetterSource,
   LetterType,
   NegativeType,
   PaymentStatus,
   ResultsTimeline,
+  TemplateKind,
 } from "@/types";
 
 export const US_STATES: { value: string; label: string }[] = [
@@ -134,6 +136,16 @@ export const LETTER_TYPES: { value: LetterType; label: string }[] = [
   { value: "cfpb_complaint", label: "CFPB Complaint" },
   { value: "identity_theft", label: "Identity Theft" },
   { value: "custom", label: "Custom" },
+];
+
+export const TEMPLATE_KINDS: { value: TemplateKind; label: string }[] = [
+  { value: "ai_prompt", label: "AI Prompt" },
+  { value: "agency_static", label: "Agency Template" },
+];
+
+export const LETTER_SOURCES: { value: LetterSource; label: string }[] = [
+  { value: "ai", label: "Generate with AI" },
+  { value: "agency_template", label: "Use our template" },
 ];
 
 /** Official consumer-dispute mailing addresses for the three bureaus. */
